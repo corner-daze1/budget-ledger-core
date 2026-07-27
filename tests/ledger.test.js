@@ -189,6 +189,16 @@ test('recordRefund keeps cumulative budget restoration capped in an open mixed e
   assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-cap').reduce((sum, item) => sum - item.budgetImpactCents, 0), 7000);
   assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-cap').reduce((sum, item) => sum + item.rewardImpactCents, 0), 3000);
 });
+test('recordRefund keeps the original reward deduction exact across three partial refunds', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-three', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+  const first = recordRefund(spent, { id: 'mixed-three-refund-1', date: '2028-01-13', originalTransactionId: 'mixed-three', amountCents: 7000 });
+  const second = recordRefund(first, { id: 'mixed-three-refund-2', date: '2028-01-14', originalTransactionId: 'mixed-three', amountCents: 1000 });
+  const third = recordRefund(second, { id: 'mixed-three-refund-3', date: '2028-01-15', originalTransactionId: 'mixed-three', amountCents: 2000 });
+  const refunds = third.transactions.filter((item) => item.relatedTransactionId === 'mixed-three');
+  assert.equal(refunds.reduce((sum, item) => sum - item.budgetImpactCents, 0), 7000);
+  assert.equal(refunds.reduce((sum, item) => sum + item.rewardImpactCents, 0), 3000);
+  assert.equal(third.rewardBalanceCents, 10000);
+});
 test('recordRefund of a closed mixed expense follows the closed-period reward rule without changing budget spend', () => {
   const spent = recordExpense(freshLedger(), { id: 'mixed-closed', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
   const closed = closeBudgetPeriod(spent, 'p1');
