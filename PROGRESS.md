@@ -55,3 +55,4 @@
 - 初始化截图显示真实设置表单，首页显示真实预算模型，记账页显示“上一笔同类 / 暂无记录”，账单页显示真实空状态。
 - CLI `quit` 后再 `open` 的重启尝试出现开发者工具白屏；在此前可见运行状态中 Console 已报告 `Errors 6 / Warnings 2` 和 `err_code=41002 appid missing`，所以真实保存账单、同类已有记录和 Console 0 错误仍未通过，详见 `BLOCKED.md`。
 - 纯生成包 `node --check` 四个文件均退出 0；当前自动化验收为 128 passed、0 failed、0 skipped、0 todo，`npm run check` 与 `npm run check:mini` 均通过。
+- 追加恢复尝试均无效：`quit/open`、等待、再次 `open` 和 `open --disable-gpu` 都返回 0，但开发者工具仍白屏；未进行删除本地数据或猜测身份等越界操作。
