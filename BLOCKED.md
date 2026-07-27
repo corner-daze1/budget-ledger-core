@@ -1,7 +1,7 @@
 第二阶段真实工具阻塞（已确认）
 
-- `D:\微信\微信web开发者工具\cli.bat islogin --lang zh` 返回 `{"login":true}`；`open --project C:\Users\Administrator\Desktop\记账小程序 --lang zh` 退出码为 0，动态 HTTP 端口为 `51166`。
-- `open --help` 和 `preview --help` 只暴露项目、AppID 和第三方 AppID 参数，没有游客/测试身份；项目只能保持空 AppID，不能猜测或伪造。
-- 开发者工具真实渲染四页，但 Console 计数为 Errors 6、Warnings 2，并报告 `err_code=41002`、`webapi_getwxaasyncsecinfo:fail appid missing`。
-- 因此不能诚实声称“控制台 0 错误”或完成带有效初始余额的真实保存/重启闭环；自动化应用层、生成包检查和真实页面截图仍继续完成。
-- 后续安全恢复尝试：CLI `quit`→`open`、等待加载、再次 `open`、以及 `open --disable-gpu` 均退出码 0，但窗口持续白屏；未删除本地数据、未伪造 AppID、未提交私有配置。
+- `project.config.json` 已使用测试 AppID `wx9567fb4ff6336d0b`；`cli.bat islogin --lang zh` 返回 `{"login":true}`，重新 `open` 退出码为 0。
+- 清空旧 Console 后重新加载，开发者工具仍新增真实 `Error: timeout`；当前面板为 `Errors: 1, Warnings: 3`。错误来自 `WAServiceMainContext`，不能隐藏或清空后宣称零错误。
+- 重新加载后页面可见，设置页显示已有本地状态：月度预算 ¥3000.00、现金 ¥0.00。设置页只有已初始化的只读摘要，没有可通过页面增加余额的入口。
+- 为完成真实“设置→记账→上一笔同类→账单→关闭重开”闭环，需要非零资产账户；直接清理模拟器本地数据属于删除本地数据，且会破坏现有持久化证据，本轮未执行。
+- 因此四张闭环截图未更新，不能用空账单或人工注入数据冒充完成；自动化测试、项目检查和生成包检查仍已完成。

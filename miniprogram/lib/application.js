@@ -1,6 +1,6 @@
 // GENERATED FILE. Run npm run build:mini.
-const { actualBudgetCents, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance } = require('./domain/budget.js');
-const { addBudgetPeriod, createLedger, recordExpense, recordFixedExpense } = require('./domain/ledger.js');
+const { actualBudgetCents, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance, settleBudgetCycle } = require('./domain/budget.js');
+const { addBudgetPeriod, closeBudgetPeriod, createLedger, recordExpense, recordFixedExpense } = require('./domain/ledger.js');
 const { restoreBackup, serializeBackup } = require('./domain/storage.js');
 
 const STORAGE_KEY = 'yongdu-ledger-v1';
@@ -66,6 +66,14 @@ function currentPeriod(state, date) {
   return found;
 }
 
+function openPeriodWaitingForSettlement(state, date) {
+  assertDate(date);
+  const candidates = state.budgetPeriods
+    .filter((item) => item.status === 'open' && date > item.endDate)
+    .sort((left, right) => left.endDate.localeCompare(right.endDate));
+  return candidates.length ? candidates[candidates.length - 1] : null;
+}
+
 function withSettings(state, settings) {
   const next = clone(state);
   next.appSettings = { ...settings };
@@ -105,7 +113,30 @@ function savePersisted(storage, state) {
 }
 
 function getHomeModel(state, date) {
-  const activePeriod = currentPeriod(state, date);
+  const activePeriod = state.budgetPeriods.find((item) => date >= item.startDate && date <= item.endDate);
+  if (!activePeriod) {
+    const pendingPeriod = openPeriodWaitingForSettlement(state, date);
+    if (pendingPeriod) {
+      const settlement = getSettlementModel(state, date);
+      return {
+        date,
+        periodId: pendingPeriod.id,
+        needsSettlement: true,
+        todayFreeCents: 0,
+        todayFree: formatCents(0),
+        prepaidCents: 0,
+        prepaid: formatCents(0),
+        fullSingleDayQuotaCents: 0,
+        fullSingleDayQuota: formatCents(0),
+        earliestRecoveryDate: null,
+        actualBudgetCents: settlement.actualBudgetCents,
+        budgetDebtCents: settlement.budgetDebtCents,
+        netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
+        settlement,
+      };
+    }
+    throw new Error(`no budget period covers ${date}`);
+  }
   const elapsedDays = Math.min(activePeriod.totalDays || dateDistance(activePeriod.startDate, date) + 1, Math.max(1, dateDistance(activePeriod.startDate, date) + 1));
   const rawActualBudgetCents = activePeriod.baseBudgetCents + activePeriod.carryCents;
   const snapshot = budgetSnapshot({ actualBudgetCents: rawActualBudgetCents, elapsedDays, totalDays: activePeriod.totalDays || dateDistance(activePeriod.startDate, activePeriod.endDate) + 1, netBudgetSpendCents: activePeriod.netBudgetSpendCents, startDate: activePeriod.startDate });
@@ -125,6 +156,71 @@ function getHomeModel(state, date) {
   };
 }
 
+function getSettlementModel(state, date) {
+  const pendingPeriod = openPeriodWaitingForSettlement(state, date);
+  if (!pendingPeriod) return null;
+  const settlement = settleBudgetCycle({
+    baseBudgetCents: pendingPeriod.baseBudgetCents,
+    carryCents: pendingPeriod.carryCents,
+    netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
+    positiveMode: 'carry',
+    overspendMode: 'carry',
+    rewardBalanceCents: state.rewardBalanceCents,
+    rewardOffsetCents: 0,
+  });
+  return {
+    periodId: pendingPeriod.id,
+    periodEndDate: pendingPeriod.endDate,
+    baseBudgetCents: pendingPeriod.baseBudgetCents,
+    carryCents: pendingPeriod.carryCents,
+    actualBudgetCents: settlement.actualBudgetCents,
+    actualBudget: formatCents(settlement.actualBudgetCents),
+    budgetDebtCents: settlement.budgetDebtCents,
+    budgetDebt: formatCents(settlement.budgetDebtCents),
+    netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
+    netBudgetSpend: formatCents(pendingPeriod.netBudgetSpendCents),
+    positiveSurplusCents: settlement.positiveSurplusCents,
+    positiveSurplus: formatCents(settlement.positiveSurplusCents),
+    grossDebtCents: settlement.grossDebtCents,
+    grossDebt: formatCents(settlement.grossDebtCents),
+    rewardBalanceCents: state.rewardBalanceCents,
+    rewardBalance: formatCents(state.rewardBalanceCents),
+    positiveChoiceRequired: settlement.positiveSurplusCents > 0,
+    overspendChoiceRequired: settlement.grossDebtCents > 0,
+    rewardCanOffsetDebt: state.rewardBalanceCents >= settlement.grossDebtCents,
+  };
+}
+
+function settleCurrentPeriod(state, date, { positiveMode = null, overspendMode = null } = {}) {
+  const model = getSettlementModel(state, date);
+  if (!model) throw new Error('no budget period is waiting for settlement');
+  if (model.positiveChoiceRequired && !['carry', 'reward'].includes(positiveMode)) throw new Error('请选择结余处理方式');
+  if (model.overspendChoiceRequired && !['carry', 'reward'].includes(overspendMode)) throw new Error('请选择超支处理方式');
+  const selectedPositiveMode = model.positiveChoiceRequired ? positiveMode : 'carry';
+  const selectedOverspendMode = model.overspendChoiceRequired ? overspendMode : 'carry';
+  if (selectedOverspendMode === 'reward' && !model.rewardCanOffsetDebt) throw new Error('奖励余额不足，请选择带入下期');
+  const result = settleBudgetCycle({
+    baseBudgetCents: model.baseBudgetCents,
+    carryCents: model.carryCents,
+    netBudgetSpendCents: model.netBudgetSpendCents,
+    positiveMode: selectedPositiveMode,
+    overspendMode: selectedOverspendMode,
+    rewardBalanceCents: state.rewardBalanceCents,
+    rewardOffsetCents: selectedOverspendMode === 'reward' ? model.grossDebtCents : 0,
+  });
+  const closed = closeBudgetPeriod(state, model.periodId);
+  closed.rewardBalanceCents = result.rewardBalanceAfterCents;
+  const nextCycle = cycleForDate(date, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
+  return addBudgetPeriod(closed, {
+    id: `period-${state.budgetPeriods.length + 1}`,
+    startDate: nextCycle.startDate,
+    endDate: nextCycle.endDate,
+    baseBudgetCents: nextCycle.baseBudgetCents,
+    carryCents: result.nextCarryCents,
+    status: 'open',
+  });
+}
+
 function setTransactionNote(state, transactionId, note) {
   const next = clone(state);
   const transaction = next.transactions.find((item) => item.id === transactionId);
@@ -136,11 +232,18 @@ function recordEntry(state, { amountYuan, date, accountId, categoryLevel1, categ
   const amountCents = parseYuanToCents(amountYuan);
   assertDate(date);
   if (!categoryLevel1 || !categoryLevel2) throw new Error('请选择完整的两级分类');
-  const activePeriod = currentPeriod(state, date);
   const details = { id: `entry-${state.transactions.length + 1}`, date, accountId, amountCents, categoryLevel1, categoryLevel2 };
-  const next = includeControlledBudget
-    ? recordExpense(state, { ...details, budgetPeriodId: activePeriod.id })
-    : recordFixedExpense(state, details);
+  let next;
+  if (includeControlledBudget) {
+    const activePeriod = state.budgetPeriods.find((item) => date >= item.startDate && date <= item.endDate);
+    if (!activePeriod) {
+      if (openPeriodWaitingForSettlement(state, date)) throw new Error('请先完成本期预算结算');
+      throw new Error('当前日期没有可用预算周期');
+    }
+    next = recordExpense(state, { ...details, budgetPeriodId: activePeriod.id });
+  } else {
+    next = recordFixedExpense(state, details);
+  }
   return setTransactionNote(next, details.id, note);
 }
 
@@ -151,7 +254,7 @@ function findPreviousSimilar(state, { categoryLevel1, categoryLevel2 }) {
   const exact = categoryLevel2 ? expenses.filter(({ item }) => item.categoryLevel2 === categoryLevel2) : [];
   const candidates = exact.length ? exact : expenses.filter(({ item }) => item.categoryLevel1 === categoryLevel1);
   candidates.sort((left, right) => left.item.date.localeCompare(right.item.date) || left.index - right.index);
-  const latest = candidates.at(-1)?.item;
+  const latest = candidates.length ? candidates[candidates.length - 1].item : undefined;
   return latest ? { amountCents: latest.amountCents, amount: formatCents(latest.amountCents), date: latest.date } : null;
 }
 
@@ -183,4 +286,4 @@ function getSettingsModel(state) {
   };
 }
 
-module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, getHomeModel, recordEntry, findPreviousSimilar, listRecentBills, getSettingsModel, STORAGE_KEY, CATEGORY_TREE };
+module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, getHomeModel, getSettlementModel, settleCurrentPeriod, recordEntry, findPreviousSimilar, listRecentBills, getSettingsModel, STORAGE_KEY, CATEGORY_TREE };

@@ -9,6 +9,9 @@
 .hero-card .card-title { color: #c7bdb1; }
 .hero-number { margin: 12rpx 0; font-size: 76rpx; font-weight: 600; letter-spacing: 1rpx; }
 .hero-caption { color: #c7bdb1; font-size: 23rpx; }
+.settlement-card { margin: 34rpx 0 22rpx; padding: 30rpx; border: 1rpx solid #d9c5b7; border-radius: 28rpx; background: #fffaf5; }
+.settlement-line { display: flex; justify-content: space-between; margin: 14rpx 0; color: #756b63; }
+.settlement-line text:last-child { color: #2f302b; font-weight: 600; }
 .status-card { padding: 24rpx 30rpx; border-radius: 22rpx; background: #efe5db; }
 .status-line { display: flex; justify-content: space-between; margin: 8rpx 0; color: #756b63; }
 .status-value { color: #9b4d3a; font-weight: 600; }

@@ -3,17 +3,34 @@
   <view class="title">今天，慢一点花</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
 
-  <view class="hero-card">
+  <view wx:if="{{model.needsSettlement}}" class="settlement-card">
+    <view class="card-title">本期已结束，先结算</view>
+    <view class="hint">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>
+    <view class="settlement-line"><text>本期可控预算</text><text>{{model.settlement.actualBudget}}</text></view>
+    <view class="settlement-line"><text>本期净支出</text><text>{{model.settlement.netBudgetSpend}}</text></view>
+    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field">
+      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>
+      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>
+    </view>
+    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field">
+      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>
+      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>
+    </view>
+    <view wx:if="{{model.settlement.overspendChoiceRequired && !model.settlement.rewardCanOffsetDebt}}" class="hint">奖励余额 {{model.settlement.rewardBalance}} 不足以抵扣全部超支，只能带入下期。</view>
+    <button class="primary-button" bindtap="settlePeriod">确认结算并进入下期</button>
+  </view>
+
+  <view wx:else class="hero-card">
     <view class="card-title">今日可自由花</view>
     <view class="hero-number">{{model.todayFree}}</view>
     <view class="hero-caption">已按实际天数累计释放，并扣除本期可控支出</view>
   </view>
 
-  <view wx:if="{{model.prepaidCents > 0}}" class="status-card">
+  <view wx:if="{{!model.needsSettlement && model.prepaidCents > 0}}" class="status-card">
     <view class="status-line"><text>已预支未来额度</text><text class="status-value">{{model.prepaid}}</text></view>
     <view class="status-line"><text>预计{{model.earliestRecoveryDate}}恢复至每日</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
   </view>
-  <view wx:else class="status-card">
+  <view wx:elif="{{!model.needsSettlement}}" class="status-card">
     <view class="status-line"><text>完整单日额度</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
   </view>
 

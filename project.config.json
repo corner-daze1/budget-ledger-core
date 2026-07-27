@@ -14,7 +14,7 @@
     "compileHotReLoad": true,
     "minifyWXML": true
   },
-  "appid": "",
+  "appid": "wx9567fb4ff6336d0b",
   "compileType": "miniprogram",
   "miniprogramRoot": "miniprogram/",
   "projectname": "yongdu-phase2",
