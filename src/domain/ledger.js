@@ -309,7 +309,9 @@ export function recordRefund(state, { id, date, originalTransactionId, amountCen
       const budgetRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, -(item.budgetImpactCents || 0)), 0);
       const rewardRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, item.rewardImpactCents || 0), 0);
       const originalBudgetImpactCents = Math.max(0, original.budgetImpactCents || 0);
-      const originalRewardOffsetCents = Math.max(0, -(original.rewardImpactCents || 0));
+      const originalRewardOffsetCents = original.rewardImpactCents === undefined
+        ? Math.max(0, original.amountCents - originalBudgetImpactCents)
+        : Math.max(0, -original.rewardImpactCents);
       const remainingBudgetToRestore = Math.max(0, originalBudgetImpactCents - budgetRestoredSoFar);
       const remainingRewardToRestore = Math.max(0, originalRewardOffsetCents - rewardRestoredSoFar);
       const budgetRestoreCents = Math.min(amountCents, remainingBudgetToRestore);
