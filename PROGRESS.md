@@ -1,5 +1,17 @@
 # Progress
 
+- 第二阶段目标：把已验证财务内核接入原生微信小程序核心闭环：设置、首页、记一笔、最近账单，并让本地数据可恢复。
+- 顺序：任务0复跑基线与工具 → 任务1应用层和测试 → 任务2四页界面 → 任务3构建、开发者工具闭环、截图和反向验收。
+- 最大风险：小程序不能直接复用 ESM、页面误算预算/余额、损坏存储白屏，以及开发者工具真实运行条件不足。
+- 当前：基线与 CLI 登录检查已通过；任务1应用层已完成，126项测试全绿，应用层不接平台API。
+- 第二阶段边界：只改任务书白名单；不改 src/domain、旧三份测试或旧校验器，不做 AI、云端、图表、资产全量管理或真实提醒。
+
+## Phase 2 task 1
+
+- 应用层入口：`src/application/app-core.js`；页面只通过它初始化、读取首页模型、记账、同类检索和账单排序。
+- 本地持久化使用既有版本化 JSON 备份函数；损坏文本由应用层原样返回给页面，不清空。
+- `tests/application.test.js` 与 `tests/miniprogram.test.js` 已加入 32 项真实应用/项目结构测试；总测试数 126。
+
 - 目标：交付整数分预算内核、资产与流水账、可恢复备份迁移和 CSV 导出；不做 UI、AI、云端或提醒。
 - 顺序：任务0初始化与校验器 → 任务1预算规则 → 任务2资金账 → 任务3恢复与导出 → 最终验收。
 - 最大风险：周期边界、负结转、累计取整、信用卡还款与退款可能造成重复计账。
@@ -25,4 +37,4 @@
 
 - `recordRefund` now allocates each open-period mixed refund against the remaining original budget impact first and the remaining original reward offset second; cumulative restoration cannot exceed either component.
 - Added full, split, reversed-order, open-period, closed-period, and credit-card mixed-refund regressions.
-- Git tracking baseline is being established for all 13 delivery files.
+- Refund fix and its regression tests are tracked in commit `57bed81`; `npm test` now reports 127 passed, 0 failed, 0 skipped, 0 todo.
