@@ -1,0 +1,22 @@
+{
+  "description": "用度（暂定）核心闭环",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "compileType": "miniprogram",
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": false,
+    "urlCheck": false,
+    "compileHotReLoad": true,
+    "minifyWXML": true
+  },
+  "appid": "",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "projectname": "yongdu-phase2",
+  "condition": {}
+}

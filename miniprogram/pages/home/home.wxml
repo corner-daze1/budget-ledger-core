@@ -1,0 +1,22 @@
+<view class="page" wx:if="{{model}}">
+  <view class="eyebrow">YONGDU / TODAY</view>
+  <view class="title">今天，慢一点花</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view class="hero-card">
+    <view class="card-title">今日可自由花</view>
+    <view class="hero-number">{{model.todayFree}}</view>
+    <view class="hero-caption">已按实际天数累计释放，并扣除本期可控支出</view>
+  </view>
+
+  <view wx:if="{{model.prepaidCents > 0}}" class="status-card">
+    <view class="status-line"><text>已预支未来额度</text><text class="status-value">{{model.prepaid}}</text></view>
+    <view class="status-line"><text>预计{{model.earliestRecoveryDate}}恢复至每日</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
+  </view>
+  <view wx:else class="status-card">
+    <view class="status-line"><text>完整单日额度</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
+  </view>
+
+  <button class="primary-button" bindtap="goEntry">＋ 记一笔</button>
+  <view class="nav-row"><button class="secondary-button nav-button" bindtap="goBills">最近账单</button><button class="secondary-button nav-button" bindtap="goSettings">设置</button></view>
+</view>

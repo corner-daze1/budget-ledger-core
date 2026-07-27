@@ -3,14 +3,14 @@
 - 第二阶段目标：把已验证财务内核接入原生微信小程序核心闭环：设置、首页、记一笔、最近账单，并让本地数据可恢复。
 - 顺序：任务0复跑基线与工具 → 任务1应用层和测试 → 任务2四页界面 → 任务3构建、开发者工具闭环、截图和反向验收。
 - 最大风险：小程序不能直接复用 ESM、页面误算预算/余额、损坏存储白屏，以及开发者工具真实运行条件不足。
-- 当前：基线与 CLI 登录检查已通过；任务1应用层已完成，126项测试全绿，应用层不接平台API。
+- 当前：基线与 CLI 登录检查已通过；任务1应用层、任务2四页和生成构建已完成，127项测试全绿，应用层不接平台API；任务3真实工具证据待补最终审计。
 - 第二阶段边界：只改任务书白名单；不改 src/domain、旧三份测试或旧校验器，不做 AI、云端、图表、资产全量管理或真实提醒。
 
 ## Phase 2 task 1
 
 - 应用层入口：`src/application/app-core.js`；页面只通过它初始化、读取首页模型、记账、同类检索和账单排序。
 - 本地持久化使用既有版本化 JSON 备份函数；损坏文本由应用层原样返回给页面，不清空。
-- `tests/application.test.js` 与 `tests/miniprogram.test.js` 已加入 32 项真实应用/项目结构测试；总测试数 126。
+- `tests/application.test.js` 与 `tests/miniprogram.test.js` 已加入真实应用/项目结构测试；当前总测试数 128。
 
 - 目标：交付整数分预算内核、资产与流水账、可恢复备份迁移和 CSV 导出；不做 UI、AI、云端或提醒。
 - 顺序：任务0初始化与校验器 → 任务1预算规则 → 任务2资金账 → 任务3恢复与导出 → 最终验收。
@@ -37,4 +37,21 @@
 
 - `recordRefund` now allocates each open-period mixed refund against the remaining original budget impact first and the remaining original reward offset second; cumulative restoration cannot exceed either component.
 - Added full, split, reversed-order, open-period, closed-period, and credit-card mixed-refund regressions.
-- Refund fix and its regression tests are tracked in commit `57bed81`; `npm test` now reports 127 passed, 0 failed, 0 skipped, 0 todo.
+- Refund fix and its regression tests are tracked in commits `57bed81` and `ef90a9e`; current `npm test` reports 128 passed, 0 failed, 0 skipped, 0 todo.
+
+## Phase 2 continuation
+
+- 已读断点并核对现状：四页、应用层、生成包和项目检查脚本存在；`npm test` 为 127/127，`npm run check` 通过。
+- 待办顺序：复跑 CLI/基线 → 同步生成包 → 真实工具闭环与截图 → 两次红绿反向验证 → 白名单、冻结目录和 Git 审计。
+
+## Phase 2 reverse validation
+
+- 反向一：临时把 30 天周期首日完整额度期望从 `10000` 改为 `10001`；`npm test` 红，实际 `10000 !== 10001`，退出码 1；还原后 128 passed、0 failed、0 skipped、0 todo。
+- 反向二：临时把 `miniprogram/app.json` 的设置页改成 `pages/settings/broken`；`npm run check:mini` 红，报告 `app.json must declare the four phase-two pages in order`，退出码 1；还原后检查通过，随后 `npm test` 128 passed。
+
+## Phase 2 real-tool evidence
+
+- 已用微信开发者工具真实导入并渲染设置、首页、记一笔和最近账单；四张截图位于 `artifacts/phase2/01-settings.png` 至 `04-bills.png`。
+- 初始化截图显示真实设置表单，首页显示真实预算模型，记账页显示“上一笔同类 / 暂无记录”，账单页显示真实空状态。
+- CLI `quit` 后再 `open` 的重启尝试出现开发者工具白屏；在此前可见运行状态中 Console 已报告 `Errors 6 / Warnings 2` 和 `err_code=41002 appid missing`，所以真实保存账单、同类已有记录和 Console 0 错误仍未通过，详见 `BLOCKED.md`。
+- 纯生成包 `node --check` 四个文件均退出 0；当前自动化验收为 128 passed、0 failed、0 skipped、0 todo，`npm run check` 与 `npm run check:mini` 均通过。

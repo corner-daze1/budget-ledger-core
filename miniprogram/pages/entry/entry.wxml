@@ -1,0 +1,23 @@
+<view class="page">
+  <view class="eyebrow">YONGDU / ENTRY</view>
+  <view class="title">记一笔</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view class="card form-card">
+    <view class="amount-label">金额</view>
+    <input class="amount-input" type="digit" value="{{amountYuan}}" bindinput="onAmountInput" placeholder="0.00" />
+    <view class="field"><text class="field-label">日期</text><picker class="field-input" mode="date" value="{{date}}" bindchange="onDateChange"><view class="picker-value">{{date}}</view></picker></view>
+    <view class="field"><text class="field-label">账户</text><picker class="field-input" range="{{accounts}}" range-key="name" value="{{accountIndex}}" bindchange="onAccountChange"><view class="picker-value">{{accounts[accountIndex].name}}</view></picker></view>
+    <view class="field"><text class="field-label">一级分类</text><picker class="field-input" range="{{categories}}" range-key="level1" value="{{level1Index}}" bindchange="onLevel1Change"><view class="picker-value">{{categories[level1Index].level1}}</view></picker></view>
+    <view class="field"><text class="field-label">二级分类</text><picker class="field-input" range="{{level2Options}}" value="{{level2Index}}" bindchange="onLevel2Change"><view class="picker-value">{{level2Options[level2Index]}}</view></picker></view>
+    <view class="field"><text class="field-label">备注</text><input class="field-input" value="{{note}}" bindinput="onNoteInput" placeholder="可选" /></view>
+    <view class="switch-row"><text>计入可控预算</text><switch checked="{{includeControlledBudget}}" color="#b85c45" bindchange="onControlledChange" /></view>
+  </view>
+
+  <view class="previous-card">
+    <view class="card-title">上一笔同类</view>
+    <view wx:if="{{previous}}" class="previous-text">{{previous.amount}} · {{previous.date}}</view>
+    <view wx:else class="hint">暂无记录</view>
+  </view>
+  <button class="primary-button" bindtap="submit">保存这笔</button>
+</view>

@@ -1,0 +1,35 @@
+<view class="page">
+  <view class="eyebrow">YONGDU / SETUP</view>
+  <view class="title">先把规则设好</view>
+  <view class="subtitle">预算只管每月可自由安排的部分，固定开支会单独记录。</view>
+
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view wx:if="{{!initialized}}" class="card">
+    <view class="card-title">预算周期</view>
+    <view class="field"><text class="field-label">月度可控预算</text><input class="field-input" type="digit" value="{{monthlyBudgetYuan}}" bindinput="onBudgetInput" placeholder="例如 3000" /></view>
+    <view class="field"><text class="field-label">周期起始日</text><input class="field-input" type="number" value="{{startDay}}" bindinput="onStartDayInput" placeholder="1—31" /></view>
+    <view class="hint">起始日可以作为发薪日；没有该日的月份会按月末处理。修改规则不会移动旧账。</view>
+  </view>
+
+  <view wx:if="{{!initialized}}" class="card">
+    <view class="card-title">初始资产账户</view>
+    <block wx:for="{{accounts}}" wx:key="index">
+      <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{item.name}}" data-index="{{index}}" bindinput="onAccountNameInput" /></view>
+      <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{accountTypes}}" value="{{item.typeIndex}}" data-index="{{index}}" bindchange="onAccountTypeChange"><view class="picker-value">{{accountTypes[item.typeIndex]}}</view></picker></view>
+      <view class="field"><text class="field-label">当前余额</text><input class="field-input" type="digit" value="{{item.balanceYuan}}" data-index="{{index}}" bindinput="onAccountBalanceInput" /></view>
+      <button wx:if="{{accounts.length > 1}}" class="link-button" data-index="{{index}}" bindtap="removeAccount">移除账户</button>
+    </block>
+    <button class="secondary-button" bindtap="addAccount">＋再加一个账户</button>
+    <view class="hint">首版只开放现金、储蓄卡和电子钱包；账户可创建多个。</view>
+  </view>
+
+  <view wx:if="{{initialized}}" class="card">
+    <view class="card-title">当前设置</view>
+    <view class="field"><text class="field-label">月度可控预算</text><text class="field-input">{{settings.monthlyBudget}}</text></view>
+    <view class="field"><text class="field-label">周期起始日</text><text class="field-input">每月 {{settings.startDay}} 日</text></view>
+    <view wx:for="{{settings.accounts}}" wx:key="id" class="field"><text class="field-label">{{item.name}}</text><text class="field-input">{{item.balance}}</text></view>
+  </view>
+
+  <button class="primary-button" bindtap="submit">{{initialized ? '回到首页' : '开始使用'}}</button>
+</view>

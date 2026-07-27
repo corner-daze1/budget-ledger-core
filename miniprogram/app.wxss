@@ -1,0 +1,109 @@
+page {
+  background: #f7f4ef;
+  color: #282521;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 28rpx;
+}
+
+.page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 40rpx 32rpx 64rpx;
+}
+
+.eyebrow {
+  color: #9c8f83;
+  font-size: 24rpx;
+  letter-spacing: 3rpx;
+}
+
+.title {
+  margin: 10rpx 0 30rpx;
+  font-size: 48rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.subtitle {
+  color: #756b63;
+  line-height: 1.7;
+}
+
+.card {
+  margin: 22rpx 0;
+  padding: 30rpx;
+  border-radius: 24rpx;
+  background: #fffdfa;
+  box-shadow: 0 10rpx 30rpx rgba(66, 52, 39, 0.07);
+}
+
+.card-title {
+  margin-bottom: 18rpx;
+  color: #756b63;
+  font-size: 24rpx;
+}
+
+.primary-button,
+.secondary-button {
+  margin: 20rpx 0;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+}
+
+.primary-button {
+  color: #fffdfa;
+  background: #b85c45;
+}
+
+.secondary-button {
+  color: #6d5147;
+  background: #eadbd2;
+}
+
+.link-button {
+  margin: 0;
+  padding: 0 14rpx;
+  color: #b85c45;
+  background: transparent;
+  font-size: 26rpx;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  min-height: 86rpx;
+  border-bottom: 1rpx solid #eee6dd;
+}
+
+.field-label {
+  width: 190rpx;
+  color: #756b63;
+}
+
+.field-input,
+.picker-value {
+  flex: 1;
+  color: #282521;
+  text-align: right;
+}
+
+.hint {
+  margin-top: 16rpx;
+  color: #9c8f83;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.empty {
+  padding: 100rpx 20rpx;
+  color: #9c8f83;
+  text-align: center;
+}
+
+.error {
+  padding: 22rpx;
+  color: #9b3f32;
+  border-radius: 16rpx;
+  background: #f7dfd8;
+  line-height: 1.6;
+}

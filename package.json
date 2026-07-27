@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node scripts/validate-project.js"
+    "check": "node scripts/validate-project.js",
+    "build:mini": "node scripts/build-miniprogram.js",
+    "check:mini": "node scripts/check-miniprogram.js"
   }
 }

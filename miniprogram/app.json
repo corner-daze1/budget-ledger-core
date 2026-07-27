@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/settings/settings",
+    "pages/home/home",
+    "pages/entry/entry",
+    "pages/bills/bills"
+  ],
+  "window": {
+    "navigationBarTitleText": "用度",
+    "navigationBarBackgroundColor": "#f7f4ef",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f7f4ef",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,6 @@
+.form-card { padding-top: 22rpx; }
+.amount-label { color: #756b63; font-size: 24rpx; }
+.amount-input { margin: 8rpx 0 22rpx; font-size: 70rpx; font-weight: 600; }
+.switch-row { display: flex; justify-content: space-between; align-items: center; min-height: 90rpx; color: #756b63; }
+.previous-card { margin: 24rpx 0; padding: 24rpx 30rpx; border-left: 6rpx solid #b85c45; border-radius: 4rpx 18rpx 18rpx 4rpx; background: #fffdfa; }
+.previous-text { color: #b85c45; font-size: 30rpx; }

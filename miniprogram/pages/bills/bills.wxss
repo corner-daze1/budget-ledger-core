@@ -1,0 +1,6 @@
+.bill-card { margin: 16rpx 0; padding: 24rpx 26rpx; border-radius: 20rpx; background: #fffdfa; box-shadow: 0 8rpx 24rpx rgba(66, 52, 39, 0.05); }
+.bill-top, .bill-bottom { display: flex; justify-content: space-between; align-items: center; }
+.bill-category { max-width: 66%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bill-amount { color: #9b4d3a; font-size: 32rpx; font-weight: 600; }
+.bill-meta { margin-top: 12rpx; color: #9c8f83; font-size: 23rpx; }
+.bill-note { margin-top: 12rpx; color: #756b63; font-size: 24rpx; }
