@@ -66,3 +66,4 @@
 - `cli.bat islogin --lang zh` 返回 `{"login":true}`；仅针对当前项目/AppID 清理了 storage、session、file、compile 缓存，并重新加载。
 - 清空旧 Console 后重新编译：当前 Console 错误数为 0，`timeout` 为 0；但模拟器仍显示 `./pages/settings/settings.wxml not found`，无法真实进入设置页并完成闭环截图。
 - 因此本轮不伪造或覆盖四张闭环截图；该外部工具渲染阻塞详见 `BLOCKED.md`。未扩展第三阶段。
+- 追加一次只读重载尝试后，最新 WeappLog 仍显示 `isMiniAppProject=false`，编译缓存键仍漏掉 `miniprogram/`；未改动只读配置或白名单外文件，闭环仍阻塞。
