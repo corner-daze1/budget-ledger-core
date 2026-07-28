@@ -67,3 +67,4 @@
 - 清空旧 Console 后重新编译：当前 Console 错误数为 0，`timeout` 为 0；但模拟器仍显示 `./pages/settings/settings.wxml not found`，无法真实进入设置页并完成闭环截图。
 - 因此本轮不伪造或覆盖四张闭环截图；该外部工具渲染阻塞详见 `BLOCKED.md`。未扩展第三阶段。
 - 追加一次只读重载尝试后，最新 WeappLog 仍显示 `isMiniAppProject=false`，编译缓存键仍漏掉 `miniprogram/`；未改动只读配置或白名单外文件，闭环仍阻塞。
+- 再次重启并用 CLI 打开根项目后，RC 仍出现项目脚本错误、`41002 appid missing` 和 `routeTo appLaunch timeout`；将 `miniprogram` 子目录单独打开又因缺 `project.config.json` 退出码 10，随后已恢复根项目入口。
