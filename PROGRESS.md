@@ -70,3 +70,12 @@
 - 再次重启并用 CLI 打开根项目后，RC 仍出现项目脚本错误、`41002 appid missing` 和 `routeTo appLaunch timeout`；将 `miniprogram` 子目录单独打开又因缺 `project.config.json` 退出码 10，随后已恢复根项目入口。
 - `--disable-gpu` 重启及开发者工具项目菜单重载均未改变根目录识别结果；没有修改只读配置、注入模拟器数据或生成不实截图。
 - 第三次连续重载仍显示 17 个 Console 错误与 `settings.wxml not found`；三轮均不是纯 timeout，按任务书停止，真实闭环和四张截图仍未完成。
+
+## Phase 2 Stable acceptance
+
+- 使用微信开发者工具 Stable `2.01.2510290` 打开根项目；Stable 自动补全后的 `project.config.json` 已保留，测试 AppID `wx9567fb4ff6336d0b` 与 `miniprogramRoot: miniprogram/` 未改变。
+- 经用户授权，仅清除当前项目模拟器数据；按月预算 3000、周期起始日 1、现金 1000 重新完成真实闭环：早餐 50 后第二次记账显示“上一笔同类 ¥50.00”，再保存早餐 80，账单按 80、50 展示。
+- 关闭并重开 Stable 后，两笔账单仍存在，设置页现金余额为 ¥870.00，首页今日可自由花为 ¥2579.67；持久化验证通过。
+- 清空旧 Console 后重新编译并重载，闭环全过程未再出现 `timeout`，Console 错误数为 0；基础库为 `3.17.0`。
+- 四张真实证据已更新到 `artifacts/phase2/01-settings.png`、`02-home.png`、`03-entry.png`、`04-bills.png`；未使用空账单或注入数据替代。
+- 本轮只完成第二阶段验收与文档收尾，未开发第三阶段。
