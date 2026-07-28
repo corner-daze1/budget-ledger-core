@@ -68,3 +68,4 @@
 - 因此本轮不伪造或覆盖四张闭环截图；该外部工具渲染阻塞详见 `BLOCKED.md`。未扩展第三阶段。
 - 追加一次只读重载尝试后，最新 WeappLog 仍显示 `isMiniAppProject=false`，编译缓存键仍漏掉 `miniprogram/`；未改动只读配置或白名单外文件，闭环仍阻塞。
 - 再次重启并用 CLI 打开根项目后，RC 仍出现项目脚本错误、`41002 appid missing` 和 `routeTo appLaunch timeout`；将 `miniprogram` 子目录单独打开又因缺 `project.config.json` 退出码 10，随后已恢复根项目入口。
+- `--disable-gpu` 重启及开发者工具项目菜单重载均未改变根目录识别结果；没有修改只读配置、注入模拟器数据或生成不实截图。
