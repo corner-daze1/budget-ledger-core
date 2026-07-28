@@ -185,6 +185,10 @@ function getSettlementModel(state, date) {
     grossDebt: formatCents(settlement.grossDebtCents),
     rewardBalanceCents: state.rewardBalanceCents,
     rewardBalance: formatCents(state.rewardBalanceCents),
+    rewardOffsetCents: Math.min(state.rewardBalanceCents, settlement.grossDebtCents),
+    rewardOffset: formatCents(Math.min(state.rewardBalanceCents, settlement.grossDebtCents)),
+    remainingDebtCents: Math.max(0, settlement.grossDebtCents - Math.min(state.rewardBalanceCents, settlement.grossDebtCents)),
+    remainingDebt: formatCents(Math.max(0, settlement.grossDebtCents - Math.min(state.rewardBalanceCents, settlement.grossDebtCents))),
     positiveChoiceRequired: settlement.positiveSurplusCents > 0,
     overspendChoiceRequired: settlement.grossDebtCents > 0,
     rewardCanOffsetDebt: state.rewardBalanceCents >= settlement.grossDebtCents,
@@ -198,15 +202,14 @@ function settleCurrentPeriod(state, date, { positiveMode = null, overspendMode =
   if (model.overspendChoiceRequired && !['carry', 'reward'].includes(overspendMode)) throw new Error('请选择超支处理方式');
   const selectedPositiveMode = model.positiveChoiceRequired ? positiveMode : 'carry';
   const selectedOverspendMode = model.overspendChoiceRequired ? overspendMode : 'carry';
-  if (selectedOverspendMode === 'reward' && !model.rewardCanOffsetDebt) throw new Error('奖励余额不足，请选择带入下期');
   const result = settleBudgetCycle({
     baseBudgetCents: model.baseBudgetCents,
     carryCents: model.carryCents,
     netBudgetSpendCents: model.netBudgetSpendCents,
     positiveMode: selectedPositiveMode,
-    overspendMode: selectedOverspendMode,
+    overspendMode: selectedOverspendMode === 'reward' ? 'carry' : selectedOverspendMode,
     rewardBalanceCents: state.rewardBalanceCents,
-    rewardOffsetCents: selectedOverspendMode === 'reward' ? model.grossDebtCents : 0,
+    rewardOffsetCents: selectedOverspendMode === 'reward' ? model.rewardOffsetCents : 0,
   });
   const closed = closeBudgetPeriod(state, model.periodId);
   closed.rewardBalanceCents = result.rewardBalanceAfterCents;

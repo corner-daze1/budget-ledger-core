@@ -115,6 +115,57 @@ test('settleCurrentPeriod uses reward balance only when the user chooses reward 
   assert.equal(settled.budgetPeriods[2].carryCents, 0);
   assert.equal(settled.rewardBalanceCents, 200000);
 });
+test('settleCurrentPeriod uses all available reward balance when it fully covers overspend debt', () => {
+  const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
+  const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const spent = recordEntry(surplus, { amountYuan: '3200', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const settled = settleCurrentPeriod(spent, '2028-03-01', { overspendMode: 'reward' });
+  assert.equal(settled.rewardBalanceCents, 0);
+  assert.equal(settled.budgetPeriods[2].carryCents, 0);
+});
+test('settleCurrentPeriod partially offsets overspend with insufficient reward and carries the remainder', () => {
+  const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
+  const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const spent = recordEntry(surplus, { amountYuan: '3500', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const model = getSettlementModel(spent, '2028-03-01');
+  assert.equal(model.rewardOffsetCents, 20000);
+  assert.equal(model.remainingDebtCents, 30000);
+  const settled = settleCurrentPeriod(spent, '2028-03-01', { overspendMode: 'reward' });
+  assert.equal(settled.rewardBalanceCents, 0);
+  assert.equal(settled.budgetPeriods[2].carryCents, -30000);
+});
+test('settleCurrentPeriod keeps overspend as debt when reward balance is zero', () => {
+  const state = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '5000' }] });
+  const spent = recordEntry(state, { amountYuan: '3500', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const settled = settleCurrentPeriod(spent, '2028-02-01', { overspendMode: 'reward' });
+  assert.equal(settled.rewardBalanceCents, 0);
+  assert.equal(settled.budgetPeriods[1].carryCents, -50000);
+});
+test('settleCurrentPeriod applies reward offset after inherited debt is included', () => {
+  const state = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '15000' }] });
+  const firstSpent = recordEntry(state, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const rewardState = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const overspent = recordEntry(rewardState, { amountYuan: '8000', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const first = settleCurrentPeriod(overspent, '2028-03-01', { overspendMode: 'carry' });
+  const secondSpent = recordEntry(first, { amountYuan: '3200', date: '2028-03-01', accountId: 'cash', categoryLevel1: '餐饮', categoryLevel2: '早餐', includeControlledBudget: true });
+  const settled = settleCurrentPeriod(secondSpent, '2028-04-01', { overspendMode: 'reward' });
+  assert.equal(settled.rewardBalanceCents, 0);
+  assert.equal(settled.budgetPeriods[3].carryCents, -500000);
+});
+test('settlement model survives backup round trip with partial reward offset values', () => {
+  const storage = memoryStorage();
+  const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
+  const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const spent = recordEntry(surplus, { amountYuan: '3500', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  savePersisted(storage, spent);
+  const restored = loadPersisted(storage);
+  const model = getSettlementModel(restored.state, '2028-03-01');
+  assert.equal(model.rewardOffsetCents, 20000);
+  assert.equal(model.remainingDebtCents, 30000);
+});
 test('recordEntry preserves note, two-level category and selected account in the transaction', () => {
   const state = recordEntry(readyState(), { amountYuan: '20', date: '2028-01-01', accountId: 'bank', categoryLevel1: '交通', categoryLevel2: '打车', note: '回家', includeControlledBudget: true });
   assert.deepEqual(state.transactions[0], { id: 'entry-1', date: '2028-01-01', kind: 'controlled_expense', amountCents: 2000, currency: 'CNY', accountId: 'bank', counterpartyAccountId: null, categoryLevel1: '交通', categoryLevel2: '打车', expenseKind: 'controlled', budgetPeriodId: 'period-1', budgetImpactCents: 2000, rewardImpactCents: 0, source: null, relatedTransactionId: null, refundedCents: 0, note: '回家' });

@@ -1,7 +1,7 @@
-第二阶段真实工具阻塞（已确认）
+第二阶段真实工具阻塞（当前仍未解除）
 
 - `project.config.json` 已使用测试 AppID `wx9567fb4ff6336d0b`；`cli.bat islogin --lang zh` 返回 `{"login":true}`，重新 `open` 退出码为 0。
-- 清空旧 Console 后重新加载，开发者工具仍新增真实 `Error: timeout`；当前面板为 `Errors: 1, Warnings: 3`。错误来自 `WAServiceMainContext`，不能隐藏或清空后宣称零错误。
-- 重新加载后页面可见，设置页显示已有本地状态：月度预算 ¥3000.00、现金 ¥0.00。设置页只有已初始化的只读摘要，没有可通过页面增加余额的入口。
-- 为完成真实“设置→记账→上一笔同类→账单→关闭重开”闭环，需要非零资产账户；直接清理模拟器本地数据属于删除本地数据，且会破坏现有持久化证据，本轮未执行。
-- 因此四张闭环截图未更新，不能用空账单或人工注入数据冒充完成；自动化测试、项目检查和生成包检查仍已完成。
+- 已实际清理当前项目/AppID 的 storage、session、file、compile 缓存，并重新编译；清空旧 Console 后，当前面板未再出现 `timeout`，错误数为 0。
+- 但模拟器仍显示 `./pages/settings/settings.wxml not found`；磁盘上的 `miniprogram/pages/settings/settings.wxml` 确实存在，且本阶段白名单禁止修改设置页和 `project.config.json`。因此不能继续真实点击“设置→记账→上一笔同类→账单→关闭重开”。
+- 曾出现过的 `summer-compiler miss js file`、`import.meta` 与 AppID `41002` 记录已通过重启及定向缓存清理消失；没有隐藏错误或用清空 Console 伪造零错误。
+- 四张闭环截图未更新；不能用旧空账单、人工注入数据或静态截图冒充完成。自动化测试、项目检查和生成包检查均已完成。

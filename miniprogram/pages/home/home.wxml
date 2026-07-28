@@ -16,7 +16,7 @@
       <text class="field-label">超支 {{model.settlement.grossDebt}}</text>
       <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>
     </view>
-    <view wx:if="{{model.settlement.overspendChoiceRequired && !model.settlement.rewardCanOffsetDebt}}" class="hint">奖励余额 {{model.settlement.rewardBalance}} 不足以抵扣全部超支，只能带入下期。</view>
+    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="hint">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>
     <button class="primary-button" bindtap="settlePeriod">确认结算并进入下期</button>
   </view>
 

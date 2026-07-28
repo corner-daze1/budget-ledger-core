@@ -57,3 +57,12 @@
 - 重新加载后页面不再持续白屏，但本地模拟器已有状态现金为 ¥0.00，且设置页无增加余额入口；本轮未删除本地模拟器数据，也未注入账单。
 - 因此四张“设置→记账→上一笔同类→账单→关闭重开”闭环截图未更新；旧空账单截图不作为本轮闭环证据，详见 `BLOCKED.md`。
 - `node --check` 生成包文件退出 0；当前自动化验收为 134 passed、0 failed、0 skipped、0 todo，`npm run check` 与 `npm run check:mini` 均通过。
+
+## Phase 2 continuation — current run
+
+- 奖励余额不足时，结算模型现在按 `min(奖励余额, 超支总额)` 计算抵扣；未抵扣部分明确带入下期，奖励余额不会变负；新增 5 项真实应用层回归。
+- `npm run build:mini`：通过；`npm test`：139 passed, 0 failed, 0 skipped, 0 todo；`npm run check` 与 `npm run check:mini`：通过。
+- 反向测试：临时将部分结转期望 `-30000` 改为 `-30001`，`npm test` 以 138 passed / 1 failed、退出码 1 变红；还原后恢复 139 全绿。
+- `cli.bat islogin --lang zh` 返回 `{"login":true}`；仅针对当前项目/AppID 清理了 storage、session、file、compile 缓存，并重新加载。
+- 清空旧 Console 后重新编译：当前 Console 错误数为 0，`timeout` 为 0；但模拟器仍显示 `./pages/settings/settings.wxml not found`，无法真实进入设置页并完成闭环截图。
+- 因此本轮不伪造或覆盖四张闭环截图；该外部工具渲染阻塞详见 `BLOCKED.md`。未扩展第三阶段。
