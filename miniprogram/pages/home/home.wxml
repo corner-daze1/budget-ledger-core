@@ -35,5 +35,6 @@
   </view>
 
   <button class="primary-button" bindtap="goEntry">＋ 记一笔</button>
-  <view class="nav-row"><button class="secondary-button nav-button" bindtap="goBills">最近账单</button><button class="secondary-button nav-button" bindtap="goSettings">设置</button></view>
+  <button class="asset-button" bindtap="goAssets">资产中心</button>
+  <view class="nav-row"><button class="secondary-button nav-button" bindtap="goBills">最近流水</button><button class="secondary-button nav-button" bindtap="goSettings">设置</button></view>
 </view>

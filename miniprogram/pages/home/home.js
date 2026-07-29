@@ -37,6 +37,7 @@ Page({
   goEntry() { wx.navigateTo({ url: '/pages/entry/entry' }); },
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },
   goSettings() { wx.navigateTo({ url: '/pages/settings/settings' }); },
+  goAssets() { wx.navigateTo({ url: '/pages/settings/settings' }); },
   onPositiveModeChange(event) {
     const index = Number(event.detail.value);
     this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });

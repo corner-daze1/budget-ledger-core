@@ -4,3 +4,4 @@
 .bill-amount { color: #9b4d3a; font-size: 32rpx; font-weight: 600; }
 .bill-meta { margin-top: 12rpx; color: #9c8f83; font-size: 23rpx; }
 .bill-note { margin-top: 12rpx; color: #756b63; font-size: 24rpx; }
+.bill-budget { margin-top: 10rpx; padding: 5rpx 12rpx; border-radius: 10rpx; color: #756b63; background: #efe5db; font-size: 21rpx; }

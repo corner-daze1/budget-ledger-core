@@ -1,4 +1,4 @@
-第二阶段真实工具阻塞（当前仍未解除）
+第二阶段历史阻塞（已解除）
 
 - `project.config.json` 已使用测试 AppID `wx9567fb4ff6336d0b`；`cli.bat islogin --lang zh` 返回 `{"login":true}`，重新 `open` 退出码为 0。
 - 已实际清理当前项目/AppID 的 storage、session、file、compile 缓存，并重新编译；清空旧 Console 后，当前面板未再出现 `timeout`，错误数为 0。
@@ -15,3 +15,9 @@
 - 微信开发者工具 Stable `2.01.2510290` 能正确识别 `miniprogramRoot` 并编译当前测试 AppID；仅清除本项目模拟器数据后，已真实走通设置、两次记账、上一笔同类、账单列表和关闭重开持久化。
 - Stable 重载后 Console 错误数为 0，未再出现 `timeout`；两笔账单、现金 ¥870.00 和今日可自由花 ¥2579.67 均在重启后保持不变。
 - 上述历史阻塞记录保留用于追溯，当前第二阶段不再阻塞。
+
+## 第三阶段无新增阻塞
+
+- 删除确认已获得，且仅清除当前“记账小程序”的模拟器数据；六类账户和九步真实验收闭环均已完成。
+- Stable `2.01.2510290` 清空旧 Console 后重新编译为 0 Errors、0 Warnings；关闭并重开项目后数据保持，Console 为 0 Errors，均未出现 `timeout`。
+- 六张截图已更新到 `artifacts/phase3/`；第三阶段当前无阻塞。

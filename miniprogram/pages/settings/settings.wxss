@@ -1,1 +1,15 @@
 .field-input { min-width: 0; }
+.notice { margin: 18rpx 0; padding: 20rpx; border-radius: 16rpx; color: #46624b; background: #e1eee2; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin: 26rpx 0; }
+.summary-card { display: flex; flex-direction: column; padding: 24rpx; border-radius: 20rpx; background: #fffdfa; }
+.summary-card text { color: #8b7d72; font-size: 23rpx; }
+.summary-card strong { margin-top: 10rpx; font-size: 32rpx; }
+.summary-card.liability strong { color: #9b4d3a; }
+.summary-card.net { color: #fffdfa; background: #2f302b; }
+.summary-card.net text { color: #c7bdb1; }
+.section-title { margin: 34rpx 0 14rpx; font-size: 34rpx; font-weight: 600; }
+.account-card { display: flex; justify-content: space-between; align-items: center; margin: 12rpx 0; padding: 24rpx 26rpx; border-radius: 20rpx; background: #fffdfa; }
+.account-name { font-size: 30rpx; font-weight: 600; }
+.account-type { margin-top: 8rpx; color: #9c8f83; font-size: 22rpx; }
+.account-balance { font-size: 32rpx; font-weight: 600; }
+.account-balance.debt { color: #9b4d3a; }

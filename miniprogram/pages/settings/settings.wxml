@@ -1,35 +1,69 @@
 <view class="page">
-  <view class="eyebrow">YONGDU / SETUP</view>
-  <view class="title">先把规则设好</view>
-  <view class="subtitle">预算只管每月可自由安排的部分，固定开支会单独记录。</view>
+  <view class="eyebrow">YONGDU / ASSETS</view>
+  <view class="title">{{initialized ? '资产中心' : '先把规则设好'}}</view>
+  <view class="subtitle">{{initialized ? '资产、负债和预算各守各的账。' : '预算只管每月可自由安排的部分，固定开支会单独记录。'}}</view>
 
   <view wx:if="{{error}}" class="error">{{error}}</view>
+  <view wx:if="{{notice}}" class="notice">{{notice}}</view>
 
-  <view wx:if="{{!initialized}}" class="card">
-    <view class="card-title">预算周期</view>
-    <view class="field"><text class="field-label">月度可控预算</text><input class="field-input" type="digit" value="{{monthlyBudgetYuan}}" bindinput="onBudgetInput" placeholder="例如 3000" /></view>
-    <view class="field"><text class="field-label">周期起始日</text><input class="field-input" type="number" value="{{startDay}}" bindinput="onStartDayInput" placeholder="1—31" /></view>
-    <view class="hint">起始日可以作为发薪日；没有该日的月份会按月末处理。修改规则不会移动旧账。</view>
-  </view>
+  <block wx:if="{{!initialized}}">
+    <view class="card">
+      <view class="card-title">预算周期</view>
+      <view class="field"><text class="field-label">月度可控预算</text><input class="field-input" type="digit" value="{{monthlyBudgetYuan}}" bindinput="onBudgetInput" placeholder="例如 3000" /></view>
+      <view class="field"><text class="field-label">周期起始日</text><input class="field-input" type="number" value="{{startDay}}" bindinput="onStartDayInput" placeholder="1—31" /></view>
+      <view class="hint">起始日可以作为发薪日；没有该日的月份会按月末处理。修改规则不会移动旧账。</view>
+    </view>
 
-  <view wx:if="{{!initialized}}" class="card">
-    <view class="card-title">初始资产账户</view>
-    <block wx:for="{{accounts}}" wx:key="index">
-      <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{item.name}}" data-index="{{index}}" bindinput="onAccountNameInput" /></view>
-      <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{accountTypes}}" value="{{item.typeIndex}}" data-index="{{index}}" bindchange="onAccountTypeChange"><view class="picker-value">{{accountTypes[item.typeIndex]}}</view></picker></view>
-      <view class="field"><text class="field-label">当前余额</text><input class="field-input" type="digit" value="{{item.balanceYuan}}" data-index="{{index}}" bindinput="onAccountBalanceInput" /></view>
-      <button wx:if="{{accounts.length > 1}}" class="link-button" data-index="{{index}}" bindtap="removeAccount">移除账户</button>
-    </block>
-    <button class="secondary-button" bindtap="addAccount">＋再加一个账户</button>
-    <view class="hint">首版只开放现金、储蓄卡和电子钱包；账户可创建多个。</view>
-  </view>
+    <view class="card">
+      <view class="card-title">初始资产账户</view>
+      <block wx:for="{{accounts}}" wx:key="index">
+        <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{item.name}}" data-index="{{index}}" bindinput="onAccountNameInput" /></view>
+        <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{accountTypes}}" value="{{item.typeIndex}}" data-index="{{index}}" bindchange="onAccountTypeChange"><view class="picker-value">{{accountTypes[item.typeIndex]}}</view></picker></view>
+        <view class="field"><text class="field-label">当前余额</text><input class="field-input" type="digit" value="{{item.balanceYuan}}" data-index="{{index}}" bindinput="onAccountBalanceInput" /></view>
+        <button wx:if="{{accounts.length > 1}}" class="link-button" data-index="{{index}}" bindtap="removeAccount">移除账户</button>
+      </block>
+      <button class="secondary-button" bindtap="addInitialAccount">＋再加一个账户</button>
+      <view class="hint">首次设置先建立现金、储蓄卡或电子钱包；进入资产中心后可补齐信用卡、借贷和投资。</view>
+    </view>
+    <button class="primary-button" bindtap="submit">开始使用</button>
+  </block>
 
-  <view wx:if="{{initialized}}" class="card">
-    <view class="card-title">当前设置</view>
-    <view class="field"><text class="field-label">月度可控预算</text><text class="field-input">{{settings.monthlyBudget}}</text></view>
-    <view class="field"><text class="field-label">周期起始日</text><text class="field-input">每月 {{settings.startDay}} 日</text></view>
-    <view wx:for="{{settings.accounts}}" wx:key="id" class="field"><text class="field-label">{{item.name}}</text><text class="field-input">{{item.balance}}</text></view>
-  </view>
+  <block wx:if="{{initialized && assets}}">
+    <view class="summary-grid">
+      <view class="summary-card"><text>总资产</text><strong>{{assets.totalAssets}}</strong></view>
+      <view class="summary-card liability"><text>总负债</text><strong>{{assets.totalLiabilities}}</strong></view>
+      <view class="summary-card net"><text>净资产</text><strong>{{assets.netAssets}}</strong></view>
+      <view class="summary-card"><text>奖励余额</text><strong>{{assets.rewardBalance}}</strong></view>
+    </view>
 
-  <button class="primary-button" bindtap="submit">{{initialized ? '回到首页' : '开始使用'}}</button>
+    <view class="section-title">账户</view>
+    <view wx:for="{{assets.accounts}}" wx:key="id" class="account-card">
+      <view>
+        <view class="account-name">{{item.name}}</view>
+        <view class="account-type">{{item.typeLabel}}{{item.isInvestment ? ' · 投入成本 ' + item.costBasis : ''}}</view>
+      </view>
+      <view class="account-balance {{item.isLiability ? 'debt' : ''}}">{{item.balance}}</view>
+    </view>
+
+    <view class="card">
+      <view class="card-title">新增账户</view>
+      <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{newAccountName}}" bindinput="onNewAccountNameInput" placeholder="例如 工资卡" /></view>
+      <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{allAccountTypeLabels}}" value="{{newAccountTypeIndex}}" bindchange="onNewAccountTypeChange"><view class="picker-value">{{allAccountTypeLabels[newAccountTypeIndex]}}</view></picker></view>
+      <view class="field"><text class="field-label">{{newAccountTypeIndex === 3 || newAccountTypeIndex === 4 ? '当前欠款' : '当前余额'}}</text><input class="field-input" type="digit" value="{{newAccountBalanceYuan}}" bindinput="onNewAccountBalanceInput" /></view>
+      <view wx:if="{{newAccountTypeIndex === 5}}" class="field"><text class="field-label">投入成本</text><input class="field-input" type="digit" value="{{newAccountCostBasisYuan}}" bindinput="onNewAccountCostInput" /></view>
+      <button class="secondary-button" bindtap="addAssetAccount">添加账户</button>
+    </view>
+
+    <view class="card">
+      <view class="card-title">债务与投资专项操作</view>
+      <view class="field"><text class="field-label">操作</text><picker class="field-input" range="{{operationLabels}}" value="{{operationIndex}}" bindchange="onOperationChange"><view class="picker-value">{{operationLabels[operationIndex]}}</view></picker></view>
+      <view wx:if="{{operationNeedsSource}}" class="field"><text class="field-label">{{operationIndex === 1 ? '收款账户' : '资金账户'}}</text><picker class="field-input" range="{{sourceAccounts}}" range-key="name" value="{{sourceIndex}}" bindchange="onSourceChange"><view class="picker-value">{{sourceAccounts.length ? sourceAccounts[sourceIndex].name : '请先创建'}}</view></picker></view>
+      <view class="field"><text class="field-label">{{operationIndex === 0 ? '信用卡' : operationIndex <= 3 ? '贷款账户' : '投资账户'}}</text><picker class="field-input" range="{{targetAccounts}}" range-key="name" value="{{targetIndex}}" bindchange="onTargetChange"><view class="picker-value">{{targetAccounts.length ? targetAccounts[targetIndex].name : '请先创建'}}</view></picker></view>
+      <view class="field"><text class="field-label">{{operationValueLabel}}</text><input class="field-input" type="digit" value="{{operationAmountYuan}}" bindinput="onOperationAmountInput" placeholder="0.00" /></view>
+      <view class="hint">还款、借贷、还本、利息和投资操作都不会占用可控预算；投资现值仅手工填写。</view>
+      <button class="primary-button" bindtap="performOperation">确认记录</button>
+    </view>
+
+    <button class="secondary-button" bindtap="submit">回到首页</button>
+  </block>
 </view>

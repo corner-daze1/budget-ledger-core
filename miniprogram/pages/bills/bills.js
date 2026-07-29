@@ -1,7 +1,7 @@
 const core = require('../../lib/application.js');
 
 Page({
-  data: { bills: [], error: '' },
+  data: { flows: [], error: '' },
 
   onShow() {
     const app = getApp();
@@ -9,6 +9,6 @@ Page({
       wx.redirectTo({ url: '/pages/settings/settings' });
       return;
     }
-    this.setData({ bills: core.listRecentBills(app.globalData.state), error: app.globalData.storageError || '' });
+    this.setData({ flows: core.listRecentTransactions(app.globalData.state), error: app.globalData.storageError || '' });
   },
 });

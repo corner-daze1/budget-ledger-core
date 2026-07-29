@@ -17,3 +17,4 @@
 .status-value { color: #9b4d3a; font-weight: 600; }
 .nav-row { display: flex; gap: 18rpx; }
 .nav-button { flex: 1; }
+.asset-button { margin: 18rpx 0 4rpx; border: 1rpx solid #b85c45; border-radius: 16rpx; color: #9b4d3a; background: transparent; }

@@ -4,6 +4,6 @@
     "src/domain/budget.js": "ec7b4c392f1f22c112617a3880d17af78b4a0aab2d2c819301b969bd76d64a43",
     "src/domain/ledger.js": "affbc7c237f4a7fb447f06af0860e655da115e419690f0607c669e4dfd1b1769",
     "src/domain/storage.js": "19dc9ffe504ab300f9d57f57213a10761d11646b2b185a053d1917bc7f16110f",
-    "src/application/app-core.js": "e504c4cfac493fac287ee7645f1658baf0a8f6fc96eeb6fbf8db30609d986429"
+    "src/application/app-core.js": "d6e2a2cb8525b83042f9017625b0d99fcfde03070f238a8c3f5492b87946a2d4"
   }
 }
