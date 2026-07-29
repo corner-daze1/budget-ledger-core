@@ -1,11 +1,14 @@
 import {
   actualBudgetCents,
+  addDays,
   applyBudgetChange,
   budgetDebtCents,
   budgetSnapshot,
   cycleForDate,
   dateDistance,
+  parseDate,
   planStartDayTransition,
+  prorateMonthlyBudgetCents,
   settleBudgetCycle,
 } from '../domain/budget.js';
 import {
@@ -127,7 +130,11 @@ function nextAccountId(state, type) {
 }
 
 function assertDate(date) {
-  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new TypeError('date must be YYYY-MM-DD');
+  try {
+    parseDate(date);
+  } catch {
+    throw new Error('日期无效，请检查年月日');
+  }
 }
 
 export function parseYuanToCents(input) {
@@ -390,7 +397,8 @@ export function settleCurrentPeriod(state, date, { positiveMode = null, overspen
     delete next.appSettings.pendingStartDayChange;
     return next;
   }
-  const nextCycle = cycleForDate(date, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
+  const nextPeriodStartDate = addDays(model.periodEndDate, 1);
+  const nextCycle = cycleForDate(nextPeriodStartDate, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
   return addBudgetPeriod(closed, {
     id: nextBudgetPeriodId(closed),
     startDate: nextCycle.startDate,
@@ -416,9 +424,12 @@ export function changeBudgetSettings(state, { newBudgetYuan, scope, date }) {
     newBudgetCents,
     scope,
   });
+  const changedCurrentBudgetCents = activePeriod?.kind === 'transition' && scope !== 'next_and_future'
+    ? prorateMonthlyBudgetCents(newBudgetCents, activePeriod.startDate, activePeriod.totalDays || dateDistance(activePeriod.startDate, activePeriod.endDate) + 1)
+    : changed.currentBudgetCents;
   const next = clone(state);
   if (activePeriod && scope !== 'next_and_future') {
-    next.budgetPeriods.find((item) => item.id === activePeriod.id).baseBudgetCents = changed.currentBudgetCents;
+    next.budgetPeriods.find((item) => item.id === activePeriod.id).baseBudgetCents = changedCurrentBudgetCents;
   }
   next.defaultBudgetCents = changed.defaultBudgetCents;
   next.appSettings = {
@@ -441,7 +452,12 @@ export function previewStartDayChange(state, { newStartDay, date }) {
   const immediateCycle = cycleForDate(date, newStartDay, state.defaultBudgetCents);
   const previousPeriods = state.budgetPeriods.filter((item) => item.id !== activePeriod.id && item.endDate < activePeriod.startDate);
   const latestPreviousEndDate = previousPeriods.sort((left, right) => right.endDate.localeCompare(left.endDate))[0]?.endDate || null;
-  if (state.transactions.length === 0 && (!latestPreviousEndDate || immediateCycle.startDate > latestPreviousEndDate)) {
+  const activePeriodHasFlow = state.transactions.some((item) => (
+    item.budgetPeriodId === activePeriod.id
+    || (item.date >= activePeriod.startDate && item.date <= activePeriod.endDate)
+  ));
+  const keepsPreviousBoundary = !latestPreviousEndDate || immediateCycle.startDate === addDays(latestPreviousEndDate, 1);
+  if (!activePeriodHasFlow && keepsPreviousBoundary) {
     const cycle = immediateCycle;
     return {
       mode: 'immediate',

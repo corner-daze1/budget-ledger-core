@@ -16,7 +16,7 @@ import {
   savePersisted,
   settleCurrentPeriod,
 } from '../src/application/app-core.js';
-import { planStartDayTransition } from '../src/domain/budget.js';
+import { addDays, planStartDayTransition } from '../src/domain/budget.js';
 
 const ROOT = new URL('..', import.meta.url);
 
@@ -44,6 +44,12 @@ function memoryStorage() {
     get(key) { return values.get(key); },
     set(key, value) { values.set(key, value); },
   };
+}
+
+function nineDayTransitionState() {
+  let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
+  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  return state;
 }
 
 test('仅本周期修改只更新基础预算并逐字段保留财务历史', () => {
@@ -282,4 +288,90 @@ test('设置页契约包含三个预算范围二次确认起始日预览取消�
     assert.equal(js.includes(text) || wxml.includes(text), true, `missing lifecycle contract: ${text}`);
   }
   assert.match(wxml, /房租、房贷、车贷/);
+});
+
+test('预算与起始日修改拒绝三类非法公历日期且失败保持原状态', () => {
+  const state = baseState({ date: '2026-02-01' });
+  const before = structuredClone(state);
+  for (const invalidDate of ['2026-02-29', '2026-02-30', '2026-04-31']) {
+    assert.throws(
+      () => changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'only_current', date: invalidDate }),
+      /日期无效，请检查年月日/,
+    );
+    assert.throws(
+      () => changeStartDay(state, { newStartDay: 15, date: invalidDate }),
+      /日期无效，请检查年月日/,
+    );
+    assert.deepEqual(state, before);
+  }
+});
+
+test('结算后的空周期改起始日遇到前置周期时改为待生效并保持所有周期连续', () => {
+  let state = baseState({ date: '2026-06-15' });
+  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'reward' });
+  state = changeStartDay(state, { newStartDay: 15, date: '2026-07-20' });
+  assert.equal(state.appSettings.startDay, 1);
+  assert.equal(state.appSettings.pendingStartDayChange.newStartDay, 15);
+  assert.deepEqual(
+    { startDate: state.budgetPeriods[1].startDate, endDate: state.budgetPeriods[1].endDate },
+    { startDate: '2026-07-01', endDate: '2026-07-31' },
+  );
+  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-15', { positiveMode: 'reward' });
+  assert.deepEqual(
+    state.budgetPeriods.map((period) => [period.startDate, period.endDate, period.kind || 'regular']),
+    [
+      ['2026-06-01', '2026-06-30', 'regular'],
+      ['2026-07-01', '2026-07-31', 'regular'],
+      ['2026-08-01', '2026-08-14', 'transition'],
+      ['2026-08-15', '2026-09-14', 'regular'],
+    ],
+  );
+  for (let index = 1; index < state.budgetPeriods.length; index += 1) {
+    assert.equal(state.budgetPeriods[index].startDate, addDays(state.budgetPeriods[index - 1].endDate, 1));
+  }
+});
+
+test('延迟结算仍从上一周期次日创建下一周期而不按操作日期跳月', () => {
+  const state = settleCurrentPeriod(baseState({ date: '2026-06-15' }), '2026-08-20', { positiveMode: 'reward' });
+  assert.deepEqual(
+    state.budgetPeriods.map((period) => [period.startDate, period.endDate]),
+    [
+      ['2026-06-01', '2026-06-30'],
+      ['2026-07-01', '2026-07-31'],
+    ],
+  );
+  assert.equal(state.budgetPeriods[1].startDate, addDays(state.budgetPeriods[0].endDate, 1));
+});
+
+test('过渡周期仅本周期按新月度基准折算为90000分且财务历史不变', () => {
+  const state = nineDayTransitionState();
+  const before = structuredClone(state);
+  const changed = changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'only_current', date: '2026-08-01' });
+  assert.equal(changed.budgetPeriods[1].baseBudgetCents, 90000);
+  assert.equal(changed.defaultBudgetCents, 300000);
+  assert.equal(changed.appSettings.monthlyBudgetCents, 300000);
+  assert.equal(changed.budgetPeriods[1].carryCents, before.budgetPeriods[1].carryCents);
+  assert.equal(changed.budgetPeriods[1].netBudgetSpendCents, before.budgetPeriods[1].netBudgetSpendCents);
+  assert.deepEqual(changed.accounts, before.accounts);
+  assert.deepEqual(changed.transactions, before.transactions);
+  assert.equal(changed.rewardBalanceCents, before.rewardBalanceCents);
+  assert.deepEqual(state, before);
+});
+
+test('过渡周期本期及以后折算当前预算并只把完整月度基准写入未来默认', () => {
+  const state = nineDayTransitionState();
+  const changed = changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'current_and_future', date: '2026-08-01' });
+  assert.equal(changed.budgetPeriods[1].baseBudgetCents, 90000);
+  assert.equal(changed.defaultBudgetCents, 310000);
+  assert.equal(changed.appSettings.monthlyBudgetCents, 310000);
+});
+
+test('过渡周期下周期及以后只改完整月度默认且不改当前折算预算', () => {
+  const state = nineDayTransitionState();
+  const beforeCurrentBudget = state.budgetPeriods[1].baseBudgetCents;
+  const changed = changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'next_and_future', date: '2026-08-01' });
+  assert.equal(changed.budgetPeriods[1].baseBudgetCents, beforeCurrentBudget);
+  assert.equal(changed.defaultBudgetCents, 310000);
+  assert.equal(changed.appSettings.monthlyBudgetCents, 310000);
 });

@@ -145,3 +145,23 @@
 - 清空旧 Console 后的本轮编译、修改、取消及关闭重开过程中，当前可见 Console 为 0 Errors，未出现 `timeout`；没有通过隐藏或再次清空错误伪造结果。
 - 五张真实证据位于 `artifacts/phase4/01-original.png` 至 `05-reopen.png`，覆盖原始状态、三范围结果、待生效起始日、恢复后的首页和关闭重开持久化。
 - 最终自动化：`npm run build:mini` 生成 5 个文件；`npm test` 为 183 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini`、9 个小程序 JavaScript 语法检查和 `git diff --check` 均退出 0。
+
+## Phase 4 hidden-acceptance repair kickoff
+
+- 基线 HEAD `c778e7b64d747d750462f9efd3531190a0a6bc21`，工作区干净，183 passed、0 failed/skipped/todo。
+- `npm run check` 与 `npm run check:mini` 均退出 0。
+- 目标：拒绝非法公历日期、消除空周期改起始日造成的断档、按实际天数折算过渡周期预算修改。
+- 顺序：日期校验与原子失败 → 周期连续性 → 过渡预算折算 → 回归和反向红绿 → 构建、Stable 只读复验、提交。
+- 最大风险：修复空周期立即调整时误伤首次设置能力，或折算当前过渡预算时错误改写 carry、流水和未来默认值。
+- 边界：只修改任务书八个白名单文件；不改页面、schema、校验器、截图或模拟器数据。
+
+## Phase 4 hidden-acceptance implementation
+
+- 应用日期入口现在复用领域层真实公历解析，非闰年2月29日、2月30日和4月31日均以“日期无效，请检查年月日”拒绝，传入状态不变。
+- 空周期立即改起始日要求新周期开始日严格等于前一期结束日次日；不满足时保存待生效规则。普通延迟结算也从上一周期次日创建下一周期，不再按操作日跳月。
+- 过渡周期修改本期预算时，把输入视为完整月度基准，按过渡开始月份实际天数折算；仅“本期及以后”与“下期及以后”更新未来默认预算。
+- 新增6项真实回归，总测试预计189项；第四阶段单文件27 passed、0 failed/skipped/todo。
+- 反向验证：临时把过渡周期正确期望90000改为90001，`npm test` 以188 passed / 1 failed变红，错误为 `90000 !== 90001`；还原后189 passed、0 failed/skipped/todo。
+- Stable `2.01.2510290` 仅用 `Ctrl+B` 重新编译并只读查看：当前/默认预算均为 ¥3000、起始日1、无待生效规则；资产 ¥5700、负债 ¥4020、净资产 ¥1680。
+- Stable Console 显示 Errors: 0、Warnings: 3（环境提示），当前日志无 `timeout`；未点击设置修改、未清除或注入模拟器数据。
+- 最终验收：`npm run build:mini` 生成5个文件；`npm test` 189 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini` 与 `git diff --check` 均退出0，差异严格限于8个白名单文件。

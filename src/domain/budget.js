@@ -41,6 +41,13 @@ export function dateDistance(startDate, endDate) {
   return Math.round((end - start) / 86400000);
 }
 
+export function prorateMonthlyBudgetCents(monthlyBudgetCents, startDate, totalDays) {
+  nonNegativeInteger(monthlyBudgetCents, 'monthlyBudgetCents');
+  positiveDays(totalDays);
+  const start = parseDate(startDate);
+  return Math.floor(monthlyBudgetCents * totalDays / daysInMonth(start.year, start.month));
+}
+
 export function normalizedStartDay(year, month, startDay) {
   integer(startDay, 'startDay');
   if (startDay < 1 || startDay > 31) throw new RangeError('startDay must be between 1 and 31');
@@ -79,12 +86,11 @@ export function planStartDayTransition({ currentPeriodEndDate, newStartDay, defa
   const transitionStartDate = addDays(currentPeriodEndDate, 1);
   const newCycleStartDate = nextCycleStartOnOrAfter(transitionStartDate, newStartDay);
   const transitionDays = dateDistance(transitionStartDate, newCycleStartDate);
-  const transitionMonth = parseDate(transitionStartDate);
   const transition = transitionDays === 0 ? null : {
     startDate: transitionStartDate,
     endDate: addDays(newCycleStartDate, -1),
     totalDays: transitionDays,
-    baseBudgetCents: Math.floor(defaultMonthlyBudgetCents * transitionDays / daysInMonth(transitionMonth.year, transitionMonth.month)),
+    baseBudgetCents: prorateMonthlyBudgetCents(defaultMonthlyBudgetCents, transitionStartDate, transitionDays),
     kind: 'transition',
   };
   return {
