@@ -229,3 +229,31 @@
 - 全文件复查未再发现 `text` 标签选择器；统计逻辑、领域层、存储、路由、依赖和模拟器业务数据均未修改。
 - 指定顺序验收通过：构建生成5个文件，253 passed、0 failed/skipped/todo，两个项目检查与 `git diff --check` 均退出0。
 - Stable `2.01.2510290` 点击编译按钮后重新产生本次日志；禁用选择器告警已消失，Console为0 Errors且无 `timeout`。其余当前可见内容仅为自动热重载、SharedArrayBuffer、HarmonyOS兼容与灰度基础库环境提示，不将Warning数量写成固定验收值。
+
+## Phase 7 kickoff
+
+- 基线 HEAD `cf202edab7cb37f4664921cbd674a4605a41be01`，工作区干净，253 passed、0 failed/skipped/todo。
+- `npm run check`、`npm run build:mini`、`npm run check:mini` 均退出0。
+- 目标：接通完整JSON备份、CSV查看导出、原子恢复和精确清除，同时保持离线与原账安全。
+- 顺序：规格/纯契约 → 文件适配与设置页 → ≥28项测试 → 反向红绿 → Stable非破坏验收 → 提交。
+- 最大风险：主键替换中途失败导致数据丢失、超大文件卡死、恢复时提前执行计划，以及清除误伤无关键。
+- Stable实测 `getFileSystemManager/chooseMessageFile/shareFileMessage/setClipboardData` 与文件管理器 `writeFile/readFile/stat/unlink/readdir` 均为函数，`wx.env.USER_DATA_PATH`为字符串；后备复制仍只允许用户主动点击。
+- 边界：仅改阶段七白名单，不改领域、schema、路由、依赖、网络或模拟器业务数据；不采用与离线边界冲突的Coze远程工作流。
+
+## Phase 7 implementation
+
+- 应用层复用 `schemaVersion: 1`、领域 JSON 序列化和固定列 CSV；新增本地时间文件名、UTF-8 5 MiB 双重限制、中文预检摘要、重复标识与账户/周期/关联流水引用校验。旧 v0 备份以确定默认值补齐应用设置，schema 1 缺少应用设置则明确拒绝。
+- 原子恢复先完整校验候选，再按“原主键读取→临时键写读→主键写读→清临时键”执行；失败时按实际写入阶段回滚并复核原主键，原主键首次读取失败时零写入零删除，回滚和清理均有一次重试与持续失败明示，恢复函数不运行到期计划。
+- 设置页底部拆成“完整备份、恢复预览、CSV账单、危险操作、隐私说明”五个独立区块；支持主动生成、分享、手动复制、单个 JSON 选择、粘贴预检、“恢复”与“清除”双确认，文件写入失败仍保留显式复制后备，原始 JSON 预检后立即从页面展示状态移除。
+- 精确清除只处理主键、恢复临时键和用户目录中两类严格匹配的生成文件，不使用 `clearStorage`，不扫描其他目录；任一存储键删除失败时回滚两键，避免半清除。
+- 新增53项真实测试；单文件53 passed、0 failed/skipped/todo。覆盖适配器真实边界、扩展名与 stat 前置限流、必需字段、迁移、零副作用预检、恢复/回滚/清理失败和清除回滚；全量测试为306项。
+- 收口反向验证再次把“主键写入失败仍保留原数据”的正确期望改成错误字符串；定向命令以0 passed / 1 failed变红，actual仍为 `{"original":true}`，还原后同命令1 passed / 0 failed。
+
+## Phase 7 Stable acceptance
+
+- Stable `2.01.2510290` 使用测试 AppID 重新加载；真实生成 `yongdu-backup-20260729-234538.json`（4.0 KiB）和 CSV（858 B），JSON/CSV用途提示正确，用户主动复制出现“内容已复制”反馈。
+- `wx.chooseMessageFile` 真实打开系统文件选择器；先取消一次，再选择刚生成的 JSON。预检显示 schema `1 → 1`、CNY、6个账户、9笔流水、1个周期、0个计划、0个待确认项、最近流水 `2026-07-29`、生成时间未知，页面未显示 JSON 原文。
+- 输入“恢复”和“清除”均真实进入最终确认弹窗并选择取消；取消后资产 ¥5700、负债 ¥4020、净资产 ¥1680、奖励 ¥0 保持不变，未执行恢复或删除。
+- 完成审计后重新编译并清空旧 Console：Stable 当前为0 Errors，当前日志无 `timeout`；可见 Warning 为基础库灰度、SharedArrayBuffer 和 `WAWroker.js reportRealtimeAction` 等开发者工具环境提示，不是项目源码告警。
+- Stable 的 `shareFileMessage` 明确返回“开发者工具暂时不支持此 API”，页面保留手动复制后备；未自动分享或上传。五张无 JSON 原文截图位于 `artifacts/phase7/`。
+- 最终固定顺序验收：`npm run build:mini` 生成5个文件；`npm test` 为306 passed、0 failed/skipped/todo；`npm run check` 确认306个测试声明；`npm run check:mini` 与 `git diff --check` 均退出0。

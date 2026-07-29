@@ -1,9 +1,11 @@
 // GENERATED FILE. Run npm run build:mini.
 const { actualBudgetCents, addDays, applyBudgetChange, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance, parseDate, planStartDayTransition, prorateMonthlyBudgetCents, settleBudgetCycle } = require('./domain/budget.js');
 const { addAccount, addBudgetPeriod, advanceFixedPlan, closeBudgetPeriod, createFixedPlan, createLedger, editFixedPlan, executeFixedPlan, fixedPlanOccurrenceKey, markLegacyPlanPending, recordBorrowing, recordCreditCardRepayment, recordExpense, recordFixedExpense, recordIncome, recordInvestmentTrade, recordLoanInterestPayment, recordLoanPrincipalRepayment, recordTransfer, retryFixedPlanPending, revokeFixedPlan, setInvestmentValue, totals } = require('./domain/ledger.js');
-const { restoreBackup, serializeBackup } = require('./domain/storage.js');
+const { CURRENT_SCHEMA_VERSION, exportTransactionsCsv, restoreBackup, serializeBackup } = require('./domain/storage.js');
 
 const STORAGE_KEY = 'yongdu-ledger-v1';
+const RESTORE_TEMP_KEY = `${STORAGE_KEY}-restore-temp`;
+const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 
 function todayIso(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -209,6 +211,339 @@ function savePersisted(storage, state) {
   const rawData = serializeBackup(state);
   storage.set(STORAGE_KEY, rawData);
   return { ok: true, rawData };
+}
+
+function utf8ByteLength(text) {
+  let bytes = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    if (code < 0x80) bytes += 1;
+    else if (code < 0x800) bytes += 2;
+    else if (code >= 0xd800 && code <= 0xdbff && index + 1 < text.length) {
+      const next = text.charCodeAt(index + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        bytes += 4;
+        index += 1;
+      } else bytes += 3;
+    } else bytes += 3;
+  }
+  return bytes;
+}
+
+function localTimestamp(now) {
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    '-',
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0'),
+    String(now.getSeconds()).padStart(2, '0'),
+  ].join('');
+}
+
+function assertWithinBackupLimit(sizeBytes) {
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) throw new Error('文件大小无效');
+  if (sizeBytes > MAX_BACKUP_BYTES) throw new Error('文件超过 5 MiB 限制');
+}
+
+function chineseBackupError(error) {
+  const message = String(error?.message || error || '');
+  const rules = [
+    [/unsupported schema version:\s*(.+)/, (match) => `不支持的备份版本：${match[1]}`],
+    [/only CNY backups are supported/, () => '仅支持人民币 CNY 备份'],
+    [/backup field ([A-Za-z]+) must be an array/, (match) => `备份缺少或损坏字段：${match[1]}`],
+    [/backup root must be an object/, () => '备份根节点必须是对象'],
+    [/backup contains an invalid or duplicate account id/, () => '备份包含无效或重复的账户标识'],
+    [/backup contains an invalid or duplicate transaction id/, () => '备份包含无效或重复的流水标识'],
+    [/defaultBudgetCents must be a non-negative integer/, () => '默认预算金额无效'],
+    [/rewardBalanceCents must be a non-negative integer/, () => '奖励余额金额无效'],
+    [/invalid balance for account/, () => '账户余额无效'],
+    [/invalid transaction amount/, () => '流水金额无效'],
+    [/invalid transaction impact/, () => '流水预算或奖励影响金额无效'],
+    [/backup data must be a string/, () => '备份内容必须是文本'],
+  ];
+  for (const [pattern, translate] of rules) {
+    const match = message.match(pattern);
+    if (match) return translate(match);
+  }
+  return /[一-龥]/.test(message) ? message : '备份数据校验失败';
+}
+
+function assertUniqueIds(items, label) {
+  const ids = new Set();
+  for (const item of items) {
+    if (!item || typeof item.id !== 'string' || item.id.length === 0) throw new Error(`${label}存在无效标识`);
+    if (ids.has(item.id)) throw new Error(`${label}存在重复标识：${item.id}`);
+    ids.add(item.id);
+  }
+}
+
+function assertApplicationBackup(candidate) {
+  if (!candidate.appSettings || typeof candidate.appSettings !== 'object' || Array.isArray(candidate.appSettings)) {
+    throw new Error('备份缺少或损坏设置字段');
+  }
+  if (!Number.isInteger(candidate.appSettings.startDay) || candidate.appSettings.startDay < 1 || candidate.appSettings.startDay > 31) {
+    throw new Error('备份周期起始日设置无效');
+  }
+  if (!Number.isInteger(candidate.appSettings.monthlyBudgetCents) || candidate.appSettings.monthlyBudgetCents < 0) {
+    throw new Error('备份默认预算设置无效');
+  }
+  assertUniqueIds(candidate.accounts, '账户');
+  assertUniqueIds(candidate.transactions, '流水');
+  assertUniqueIds(candidate.budgetPeriods, '预算周期');
+  assertUniqueIds(candidate.plans, '计划');
+  assertUniqueIds(candidate.pendingItems, '待确认项');
+  for (const transaction of candidate.transactions) {
+    if (transaction.accountId && !candidate.accounts.some((item) => item.id === transaction.accountId)) {
+      throw new Error(`流水引用了不存在的账户：${transaction.id}`);
+    }
+    if (transaction.counterpartyAccountId && !candidate.accounts.some((item) => item.id === transaction.counterpartyAccountId)) {
+      throw new Error(`流水引用了不存在的对方账户：${transaction.id}`);
+    }
+    if (transaction.budgetPeriodId && !candidate.budgetPeriods.some((item) => item.id === transaction.budgetPeriodId)) {
+      throw new Error(`流水引用了不存在的预算周期：${transaction.id}`);
+    }
+    if (transaction.relatedTransactionId && !candidate.transactions.some((item) => item.id === transaction.relatedTransactionId)) {
+      throw new Error(`流水引用了不存在的关联流水：${transaction.id}`);
+    }
+  }
+  for (const plan of candidate.plans) {
+    if (plan.accountId && !candidate.accounts.some((item) => item.id === plan.accountId)) {
+      throw new Error(`计划引用了不存在的账户：${plan.id}`);
+    }
+    if (plan.targetLiabilityAccountId && !candidate.accounts.some((item) => item.id === plan.targetLiabilityAccountId)) {
+      throw new Error(`计划引用了不存在的负债账户：${plan.id}`);
+    }
+  }
+  for (const pendingItem of candidate.pendingItems) {
+    if (pendingItem.accountId && !candidate.accounts.some((item) => item.id === pendingItem.accountId)) {
+      throw new Error(`待确认项引用了不存在的账户：${pendingItem.id}`);
+    }
+  }
+  return candidate;
+}
+
+function createBackupExport(state, now = new Date()) {
+  try {
+    const content = serializeBackup(state);
+    const sizeBytes = utf8ByteLength(content);
+    assertWithinBackupLimit(sizeBytes);
+    return {
+      kind: 'backup',
+      filename: `yongdu-backup-${localTimestamp(now)}.json`,
+      content,
+      sizeBytes,
+      mimeType: 'application/json',
+      canRestore: true,
+    };
+  } catch (error) {
+    throw new Error(`完整备份生成失败：${chineseBackupError(error)}`);
+  }
+}
+
+function createTransactionsCsvExport(state, now = new Date()) {
+  try {
+    const content = exportTransactionsCsv(state);
+    const sizeBytes = utf8ByteLength(content);
+    assertWithinBackupLimit(sizeBytes);
+    return {
+      kind: 'transactions',
+      filename: `yongdu-transactions-${localTimestamp(now)}.csv`,
+      content,
+      sizeBytes,
+      mimeType: 'text/csv',
+      canRestore: false,
+      warning: 'CSV 仅供查看账单，不能用于恢复。',
+    };
+  } catch (error) {
+    throw new Error(`CSV 生成失败：${chineseBackupError(error)}`);
+  }
+}
+
+function previewBackupRestore(rawData, { fileName = '粘贴的 JSON', sizeBytes = null } = {}) {
+  if (typeof rawData !== 'string') return { ok: false, error: '备份内容必须是文本', rawData };
+  const actualSizeBytes = utf8ByteLength(rawData);
+  try {
+    if (sizeBytes !== null) assertWithinBackupLimit(sizeBytes);
+    assertWithinBackupLimit(actualSizeBytes);
+    let source;
+    try {
+      source = JSON.parse(rawData);
+    } catch {
+      throw new Error('JSON 格式损坏，未对现有数据做任何修改');
+    }
+    const restored = restoreBackup(rawData);
+    if (!restored.ok) throw new Error(chineseBackupError(restored.error));
+    const migrated = clone(restored.data);
+    if (source.schemaVersion === 0 && migrated.appSettings === undefined) {
+      migrated.appSettings = {
+        startDay: 1,
+        monthlyBudgetCents: migrated.defaultBudgetCents,
+      };
+    }
+    const candidate = assertApplicationBackup(migrated);
+    const canonicalRawData = serializeBackup(candidate);
+    assertWithinBackupLimit(utf8ByteLength(canonicalRawData));
+    const transactionDates = candidate.transactions
+      .map((item) => item.date)
+      .filter((date) => typeof date === 'string')
+      .sort();
+    const latestTransactionDate = transactionDates.length ? transactionDates[transactionDates.length - 1] : '无';
+    return {
+      ok: true,
+      candidate,
+      canonicalRawData,
+      preview: {
+        fileName,
+        sizeBytes: actualSizeBytes,
+        sourceSchemaVersion: source.schemaVersion,
+        targetSchemaVersion: CURRENT_SCHEMA_VERSION,
+        currency: candidate.currency,
+        accountCount: candidate.accounts.length,
+        transactionCount: candidate.transactions.length,
+        budgetPeriodCount: candidate.budgetPeriods.length,
+        planCount: candidate.plans.length,
+        pendingItemCount: candidate.pendingItems.length,
+        latestTransactionDate,
+        generatedAt: '未知',
+      },
+    };
+  } catch (error) {
+    return { ok: false, error: `备份预检失败：${error.message}`, rawData };
+  }
+}
+
+function sameSnapshot(left, right) {
+  return serializeBackup(left) === serializeBackup(right);
+}
+
+function tryTwice(operation) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      operation();
+      return null;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  return lastError;
+}
+
+function commitBackupRestore(storage, candidate, { phrase, confirmed } = {}) {
+  if (phrase !== '恢复') return { ok: false, error: '请输入“恢复”后再继续' };
+  if (confirmed !== true) return { ok: false, cancelled: true, error: '已取消恢复，现有数据未改变' };
+  let canonicalRawData;
+  try {
+    canonicalRawData = serializeBackup(assertApplicationBackup(clone(candidate)));
+    assertWithinBackupLimit(utf8ByteLength(canonicalRawData));
+  } catch (error) {
+    return { ok: false, error: `恢复预检失败：${chineseBackupError(error)}` };
+  }
+  let oldRaw;
+  let hadOldValue = false;
+  let oldReadSucceeded = false;
+  let tempWriteAttempted = false;
+  let mainWriteAttempted = false;
+  try {
+    try {
+      oldRaw = storage.get(STORAGE_KEY);
+    } catch {
+      throw new Error('原数据读取失败');
+    }
+    oldReadSucceeded = true;
+    hadOldValue = oldRaw !== undefined && oldRaw !== null;
+    tempWriteAttempted = true;
+    try {
+      storage.set(RESTORE_TEMP_KEY, canonicalRawData);
+    } catch {
+      throw new Error('临时数据写入失败');
+    }
+    let tempRaw;
+    try {
+      tempRaw = storage.get(RESTORE_TEMP_KEY);
+    } catch {
+      throw new Error('临时数据读回失败');
+    }
+    const tempCheck = restoreBackup(tempRaw);
+    if (!tempCheck.ok || !sameSnapshot(tempCheck.data, candidate)) throw new Error('临时备份写入校验失败');
+    mainWriteAttempted = true;
+    try {
+      storage.set(STORAGE_KEY, canonicalRawData);
+    } catch {
+      throw new Error('主数据写入失败');
+    }
+    let mainRaw;
+    try {
+      mainRaw = storage.get(STORAGE_KEY);
+    } catch {
+      throw new Error('主数据读回失败');
+    }
+    const mainCheck = restoreBackup(mainRaw);
+    if (!mainCheck.ok || !sameSnapshot(mainCheck.data, candidate)) throw new Error('主数据写入校验失败');
+    try {
+      storage.remove(RESTORE_TEMP_KEY);
+    } catch {
+      throw new Error('临时数据清理失败');
+    }
+    return { ok: true, state: clone(candidate), rawData: canonicalRawData };
+  } catch (error) {
+    const rollbackError = oldReadSucceeded && mainWriteAttempted ? tryTwice(() => {
+      if (hadOldValue) storage.set(STORAGE_KEY, oldRaw);
+      else storage.remove(STORAGE_KEY);
+      const rolledBack = storage.get(STORAGE_KEY);
+      if (hadOldValue ? rolledBack !== oldRaw : rolledBack !== undefined && rolledBack !== null) throw new Error('原数据回滚校验失败');
+    }) : null;
+    const cleanupError = tempWriteAttempted ? tryTwice(() => storage.remove(RESTORE_TEMP_KEY)) : null;
+    const suffix = [
+      rollbackError ? '；原数据回滚失败' : '',
+      !oldReadSucceeded ? '；原数据读取失败，未尝试改写主数据' : '',
+      cleanupError ? '；临时数据清理失败' : '',
+    ].join('');
+    return { ok: false, error: `恢复失败，已尝试保留原数据：${error.message}${suffix}` };
+  }
+}
+
+function clearLocalLedger(storage, { phrase, confirmed } = {}) {
+  if (phrase !== '清除') return { ok: false, error: '请输入“清除”后再继续' };
+  if (confirmed !== true) return { ok: false, cancelled: true, error: '已取消清除，现有数据未改变' };
+  let oldMain;
+  let oldTemp;
+  try {
+    oldMain = storage.get(STORAGE_KEY);
+    oldTemp = storage.get(RESTORE_TEMP_KEY);
+  } catch {
+    return { ok: false, error: '清除失败：无法读取现有本地数据，未执行删除' };
+  }
+  const hadMain = oldMain !== undefined && oldMain !== null;
+  const hadTemp = oldTemp !== undefined && oldTemp !== null;
+  let deletionAttempted = false;
+  try {
+    deletionAttempted = true;
+    storage.remove(STORAGE_KEY);
+    const mainAfterRemoval = storage.get(STORAGE_KEY);
+    if (mainAfterRemoval !== undefined && mainAfterRemoval !== null) throw new Error('主数据删除校验失败');
+    storage.remove(RESTORE_TEMP_KEY);
+    const tempAfterRemoval = storage.get(RESTORE_TEMP_KEY);
+    if (tempAfterRemoval !== undefined && tempAfterRemoval !== null) throw new Error('临时数据删除校验失败');
+    return { ok: true, removedKeys: [STORAGE_KEY, RESTORE_TEMP_KEY] };
+  } catch (error) {
+    const rollbackError = deletionAttempted ? tryTwice(() => {
+      if (hadMain) storage.set(STORAGE_KEY, oldMain);
+      else storage.remove(STORAGE_KEY);
+      if (hadTemp) storage.set(RESTORE_TEMP_KEY, oldTemp);
+      else storage.remove(RESTORE_TEMP_KEY);
+      const main = storage.get(STORAGE_KEY);
+      const temp = storage.get(RESTORE_TEMP_KEY);
+      if (hadMain ? main !== oldMain : main !== undefined && main !== null) throw new Error('主数据恢复校验失败');
+      if (hadTemp ? temp !== oldTemp : temp !== undefined && temp !== null) throw new Error('临时数据恢复校验失败');
+    }) : null;
+    return {
+      ok: false,
+      error: `清除失败：本地数据删除或校验失败${rollbackError ? '；原数据回滚失败' : '；原数据已保留'}`,
+    };
+  }
 }
 
 function getHomeModel(state, date, planSummary = null) {
@@ -1227,4 +1562,4 @@ function getSettingsModel(state, date = todayIso()) {
   };
 }
 
-module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, createScheduledPlan, editScheduledPlan, disableScheduledPlan, processDuePlans, retryPendingPlan, dismissOverduePlanBanner, listRecentTransactions, getBillAnalysisModel, getSettingsModel, STORAGE_KEY, CATEGORY_TREE };
+module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, createBackupExport, createTransactionsCsvExport, previewBackupRestore, commitBackupRestore, clearLocalLedger, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, createScheduledPlan, editScheduledPlan, disableScheduledPlan, processDuePlans, retryPendingPlan, dismissOverduePlanBanner, listRecentTransactions, getBillAnalysisModel, getSettingsModel, STORAGE_KEY, RESTORE_TEMP_KEY, MAX_BACKUP_BYTES, CATEGORY_TREE };

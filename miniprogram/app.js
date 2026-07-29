@@ -54,4 +54,18 @@ App({
       throw error;
     }
   },
+
+  storageAdapter() {
+    return {
+      get: (key) => wx.getStorageSync(key),
+      set: (key, value) => wx.setStorageSync(key, value),
+      remove: (key) => wx.removeStorageSync(key),
+    };
+  },
+
+  applyRestoredState(state) {
+    this.globalData.state = state;
+    this.globalData.storageError = null;
+    this.globalData.planRunSummary = null;
+  },
 });

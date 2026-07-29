@@ -27,3 +27,9 @@
 .plan-actions { display: flex; justify-content: flex-end; gap: 12rpx; }
 .plan-actions button { margin: 0; }
 .danger { color: #9b4d3a; }
+.data-card button { margin-top: 18rpx; }
+.file-result { margin-top: 20rpx; padding: 20rpx; border-radius: 16rpx; background: #f2eee8; overflow-wrap: anywhere; }
+.backup-input { box-sizing: border-box; width: 100%; min-height: 180rpx; margin: 20rpx 0; padding: 20rpx; border: 1rpx solid #ded5ca; border-radius: 16rpx; background: #fff; font-size: 24rpx; }
+.privacy-card { border: 2rpx solid #ded5ca; }
+.privacy-line { margin: 14rpx 0; color: #6f6258; font-size: 24rpx; line-height: 1.65; }
+.danger-button { color: #9b4d3a; border-color: #cda99d; }

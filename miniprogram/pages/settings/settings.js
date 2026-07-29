@@ -1,4 +1,5 @@
 const core = require('../../lib/application.js');
+const { createDataFiles } = require('../../utils/data-files.js');
 
 const OPERATION_LABELS = ['信用卡还款', '借款', '归还本金', '支付利息', '投资买入', '投资卖出', '手工估值'];
 const BUDGET_SCOPE_LABELS = ['仅本周期', '本周期及以后', '下周期及以后'];
@@ -56,6 +57,16 @@ Page({
     planTargetIndex: 0,
     error: '',
     notice: '',
+    backupPreview: null,
+    restorePhrase: '',
+    clearPhrase: '',
+    pastedBackupText: '',
+    generatedFileName: '',
+    generatedFileSize: '',
+    generatedFileKind: '',
+    generatedFileType: '',
+    canShareGeneratedFile: false,
+    canCopyGeneratedText: false,
   },
 
   onShow() {
@@ -414,6 +425,175 @@ Page({
           app.saveState();
           this.setData({ notice: '计划已停用', error: '' });
           this.refreshAssetCenter();
+        } catch (error) {
+          this.setData({ error: error.message, notice: '' });
+        }
+      },
+    });
+  },
+  dataFiles() {
+    if (!this._dataFiles) this._dataFiles = createDataFiles(wx);
+    return this._dataFiles;
+  },
+  formatFileSize(sizeBytes) {
+    return sizeBytes < 1024 ? `${sizeBytes} B` : `${(sizeBytes / 1024).toFixed(1)} KiB`;
+  },
+  async exportData(kind) {
+    let generated = null;
+    try {
+      const state = getApp().globalData.state;
+      if (!state) throw new Error('当前没有可导出的账本');
+      generated = kind === 'backup'
+        ? core.createBackupExport(state)
+        : core.createTransactionsCsvExport(state);
+      this._generatedFile = generated;
+      const file = await this.dataFiles().writeGeneratedFile(generated);
+      this._generatedFile = file;
+      this.setData({
+        generatedFileName: file.filename,
+        generatedFileSize: this.formatFileSize(file.sizeBytes),
+        generatedFileKind: kind === 'backup' ? 'JSON 完整备份，可用于恢复' : 'CSV 账单，仅供查看，不能恢复',
+        generatedFileType: kind,
+        canShareGeneratedFile: true,
+        canCopyGeneratedText: true,
+        notice: `已生成 ${file.filename}，仅在你主动操作时分享或复制`,
+        error: '',
+      });
+    } catch (error) {
+      this.setData({
+        error: `${error.message}；如平台不支持文件，可使用下方手动复制`,
+        notice: '',
+        canShareGeneratedFile: false,
+        canCopyGeneratedText: Boolean(generated?.content),
+        generatedFileName: generated ? `${generated.filename}（未写入文件）` : '',
+        generatedFileSize: generated ? this.formatFileSize(generated.sizeBytes) : '',
+        generatedFileKind: generated ? (kind === 'backup' ? 'JSON 完整备份，可复制后保存并用于恢复' : 'CSV 账单，可复制后保存，仅供查看') : '',
+        generatedFileType: generated ? kind : '',
+      });
+    }
+  },
+  exportBackup() { return this.exportData('backup'); },
+  exportCsv() { return this.exportData('csv'); },
+  async shareGeneratedFile() {
+    if (!this._generatedFile?.filePath) {
+      this.setData({ error: '请先生成文件' });
+      return;
+    }
+    try {
+      await this.dataFiles().shareFile(this._generatedFile.filePath);
+      this.setData({ notice: '已交给微信分享面板；是否发送由你决定', error: '' });
+    } catch (error) {
+      this.setData({ error: `${error.message}；可改用手动复制`, notice: '' });
+    }
+  },
+  async copyGeneratedText() {
+    if (!this._generatedFile?.content) {
+      this.setData({ error: '请先生成 JSON 或 CSV' });
+      return;
+    }
+    try {
+      await this.dataFiles().copyText(this._generatedFile.content);
+      this.setData({ notice: '已按你的操作复制内容，请自行选择存放位置', error: '' });
+    } catch (error) {
+      this.setData({ error: error.message, notice: '' });
+    }
+  },
+  onPastedBackupInput(event) {
+    this.setData({ pastedBackupText: event.detail.value, backupPreview: null, restorePhrase: '' });
+    this._restoreCandidate = null;
+  },
+  previewBackupText(text, metadata) {
+    const result = core.previewBackupRestore(text, metadata);
+    if (!result.ok) {
+      this._restoreCandidate = null;
+      this.setData({ backupPreview: null, error: result.error, notice: '' });
+      return;
+    }
+    this._restoreCandidate = result.candidate;
+    this.setData({
+      backupPreview: {
+        ...result.preview,
+        displaySize: this.formatFileSize(result.preview.sizeBytes),
+      },
+      pastedBackupText: '',
+      restorePhrase: '',
+      error: '',
+      notice: '预检通过；尚未写入，恢复前还需输入确认词并确认弹窗',
+    });
+  },
+  previewPastedBackup() {
+    this.previewBackupText(this.data.pastedBackupText, { fileName: '粘贴的 JSON' });
+  },
+  async chooseBackupFile() {
+    try {
+      const chosen = await this.dataFiles().chooseBackupText(core.MAX_BACKUP_BYTES);
+      if (chosen.cancelled) {
+        this.setData({ notice: '已取消选择，现有数据未改变', error: '' });
+        return;
+      }
+      this.previewBackupText(chosen.text, { fileName: chosen.fileName, sizeBytes: chosen.sizeBytes });
+    } catch (error) {
+      this.setData({ error: error.message, notice: '' });
+    }
+  },
+  onRestorePhraseInput(event) { this.setData({ restorePhrase: event.detail.value }); },
+  requestRestore() {
+    if (!this._restoreCandidate) {
+      this.setData({ error: '请先选择或粘贴 JSON 并通过预检' });
+      return;
+    }
+    if (this.data.restorePhrase !== '恢复') {
+      this.setData({ error: '请输入“恢复”后再继续' });
+      return;
+    }
+    wx.showModal({
+      title: '最终确认恢复',
+      content: '恢复将替换当前本地账本。已预检的备份会经过临时写入和主数据写后读校验；取消则不做任何修改。',
+      confirmText: '确认恢复',
+      success: ({ confirm }) => {
+        if (!confirm) {
+          this.setData({ notice: '已取消恢复，现有数据未改变', error: '' });
+          return;
+        }
+        const result = core.commitBackupRestore(getApp().storageAdapter(), this._restoreCandidate, {
+          phrase: this.data.restorePhrase,
+          confirmed: true,
+        });
+        if (!result.ok) {
+          this.setData({ error: result.error, notice: '' });
+          return;
+        }
+        getApp().applyRestoredState(result.state);
+        this._restoreCandidate = null;
+        this.setData({ pastedBackupText: '', backupPreview: null, restorePhrase: '', notice: '恢复成功', error: '' });
+        wx.redirectTo({ url: '/pages/home/home' });
+      },
+    });
+  },
+  onClearPhraseInput(event) { this.setData({ clearPhrase: event.detail.value }); },
+  requestClearData() {
+    if (this.data.clearPhrase !== '清除') {
+      this.setData({ error: '请输入“清除”后再继续' });
+      return;
+    }
+    wx.showModal({
+      title: '最终确认清除',
+      content: '只会清除用度主数据、恢复临时数据和本应用生成的备份/CSV 文件；其他微信存储不会被触碰。',
+      confirmText: '确认清除',
+      confirmColor: '#9b4d3a',
+      success: async ({ confirm }) => {
+        if (!confirm) {
+          this.setData({ notice: '已取消清除，现有数据未改变', error: '' });
+          return;
+        }
+        try {
+          await this.dataFiles().removeGeneratedFiles();
+          const result = core.clearLocalLedger(getApp().storageAdapter(), { phrase: '清除', confirmed: true });
+          if (!result.ok) throw new Error(result.error);
+          getApp().globalData.state = null;
+          getApp().globalData.storageError = null;
+          getApp().globalData.planRunSummary = null;
+          wx.reLaunch({ url: '/pages/settings/settings' });
         } catch (error) {
           this.setData({ error: error.message, notice: '' });
         }

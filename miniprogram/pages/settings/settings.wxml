@@ -126,4 +126,67 @@
 
     <button class="secondary-button" bindtap="submit">回到首页</button>
   </block>
+
+  <view class="section-title">数据管理</view>
+  <view class="card data-card">
+    <view class="card-title">1. 完整备份</view>
+    <view class="hint">生成包含账户、流水、预算周期、计划、待处理和设置的 JSON。文件只在本地生成，不会自动分享、复制或上传。</view>
+    <button class="secondary-button" bindtap="exportBackup">生成 JSON 完整备份</button>
+    <view wx:if="{{generatedFileType === 'backup'}}" class="file-result">
+      <view>{{generatedFileName}}</view>
+      <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
+      <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile">主动分享这个文件</button>
+      <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText">复制备份文本</button>
+    </view>
+  </view>
+
+  <view class="card data-card">
+    <view class="card-title">2. 恢复预览</view>
+    <view class="hint">只会读取你主动选择的一个 JSON，或你在下方手工粘贴的文本。选择与预检不会改写当前数据。</view>
+    <button class="secondary-button" bindtap="chooseBackupFile">选择一个 JSON 文件</button>
+    <textarea class="backup-input" value="{{pastedBackupText}}" bindinput="onPastedBackupInput" placeholder="也可在此手工粘贴 JSON；不会自动读取剪贴板" maxlength="-1"></textarea>
+    <button class="secondary-button" bindtap="previewPastedBackup">预检粘贴内容</button>
+    <view wx:if="{{backupPreview}}" class="preview-card">
+      <view class="setting-line"><text>名称</text><text>{{backupPreview.fileName}}</text></view>
+      <view class="setting-line"><text>大小</text><text>{{backupPreview.displaySize}}</text></view>
+      <view class="setting-line"><text>版本</text><text>{{backupPreview.sourceSchemaVersion}} → {{backupPreview.targetSchemaVersion}}</text></view>
+      <view class="setting-line"><text>币种</text><text>{{backupPreview.currency}}</text></view>
+      <view class="setting-line"><text>账户 / 流水</text><text>{{backupPreview.accountCount}} / {{backupPreview.transactionCount}}</text></view>
+      <view class="setting-line"><text>周期 / 计划 / 待确认</text><text>{{backupPreview.budgetPeriodCount}} / {{backupPreview.planCount}} / {{backupPreview.pendingItemCount}}</text></view>
+      <view class="setting-line"><text>最近流水</text><text>{{backupPreview.latestTransactionDate}}</text></view>
+      <view class="setting-line"><text>生成时间</text><text>{{backupPreview.generatedAt}}</text></view>
+      <view class="field"><text class="field-label">输入“恢复”</text><input class="field-input" value="{{restorePhrase}}" bindinput="onRestorePhraseInput" /></view>
+      <button class="primary-button" bindtap="requestRestore">进入最终恢复确认</button>
+    </view>
+  </view>
+
+  <view class="card data-card">
+    <view class="card-title">3. CSV 账单</view>
+    <view class="hint">CSV 复用固定账单列，仅供查看，不能恢复账本。</view>
+    <button class="secondary-button" bindtap="exportCsv">生成 CSV 账单</button>
+    <view wx:if="{{generatedFileType === 'csv'}}" class="file-result">
+      <view>{{generatedFileName}}</view>
+      <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
+      <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile">主动分享这个文件</button>
+      <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText">复制 CSV</button>
+    </view>
+  </view>
+
+  <view class="card privacy-card">
+    <view class="card-title">4. 危险操作</view>
+    <view class="warning">清除会删除用度主数据、恢复临时数据和用度生成文件。清除后如果没有 JSON 备份，数据无法恢复。</view>
+    <view class="field"><text class="field-label">输入“清除”</text><input class="field-input" value="{{clearPhrase}}" bindinput="onClearPhraseInput" /></view>
+    <button class="secondary-button danger-button" bindtap="requestClearData">进入最终清除确认</button>
+  </view>
+
+  <view class="section-title">数据与隐私</view>
+  <view class="card privacy-card">
+    <view class="card-title">5. 隐私说明</view>
+    <view class="privacy-line">数据默认仅存在本机，不上传、不用于 AI。</view>
+    <view class="privacy-line">只有你主动导出、分享或复制时，数据才会离开小程序。</view>
+    <view class="privacy-line">卸载小程序、清理微信缓存或设备故障可能导致数据丢失，请定期保存 JSON 完整备份。</view>
+    <view class="privacy-line">JSON 备份与 CSV 是未加密明文，可能包含敏感财务信息，请自行保管。</view>
+    <view class="privacy-line">不会读取剪贴板或扫描设备；本阶段没有云同步、账号恢复或加密承诺。</view>
+    <view class="privacy-line">以上是产品说明，不代表已完成平台法律合规。</view>
+  </view>
 </view>
