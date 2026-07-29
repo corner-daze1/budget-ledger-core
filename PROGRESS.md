@@ -257,3 +257,16 @@
 - 完成审计后重新编译并清空旧 Console：Stable 当前为0 Errors，当前日志无 `timeout`；可见 Warning 为基础库灰度、SharedArrayBuffer 和 `WAWroker.js reportRealtimeAction` 等开发者工具环境提示，不是项目源码告警。
 - Stable 的 `shareFileMessage` 明确返回“开发者工具暂时不支持此 API”，页面保留手动复制后备；未自动分享或上传。五张无 JSON 原文截图位于 `artifacts/phase7/`。
 - 最终固定顺序验收：`npm run build:mini` 生成5个文件；`npm test` 为306 passed、0 failed/skipped/todo；`npm run check` 确认306个测试声明；`npm run check:mini` 与 `git diff --check` 均退出0。
+
+## Phase 7 generated-file whitelist repair
+
+- 基线：HEAD `da86bd6e40cd073a16edfe47a73a68a7d09ebaa9`，工作区干净；阶段七53/53、全量306/306通过，skip/todo均为0。
+- 目标：把备份前缀只绑定 `.json`，把账单前缀只绑定 `.csv`；交叉扩展名一律不可写、不可删。
+- 顺序：先补真实适配器边界红测 → 最小修改共享正则 → 临时还原故障正则验证红 → 恢复正确实现并全量验收 → 提交。
+- 最大风险：写入与删除白名单分叉，或误删名称相似但不属于“用度”的用户文件。
+- 边界：只修改 `data-files.js`、阶段七测试、`PROGRESS.md`、`BLOCKED.md`；不执行真实清除、恢复、分享或上传。
+- 已新增3项真实边界测试，覆盖规范映射、交叉扩展名拒写零调用，以及混合文件列表仅删除两个规范文件。
+- 最小修复只改共享正则，`writeGeneratedFile()` 与 `removeGeneratedFiles()` 继续复用同一规则。
+- 反向验证：临时恢复旧正则后新增测试0 passed / 3 failed；恢复正确正则后3 passed / 0 failed。
+- 最终验收：构建生成5个文件；阶段七56/56、全量309/309通过，failed/skipped/todo均为0；两个项目检查与 `git diff --check` 退出0。
+- 提交：`fix: bind generated file extensions to prefixes`；最终提交号以本节所在提交的 `git log -1` 为准。

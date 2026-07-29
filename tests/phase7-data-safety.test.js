@@ -574,12 +574,33 @@ test('generated-file matcher accepts only the two exact timestamped Yongdu filen
   assert.equal(GENERATED_FILE_PATTERN.exec('yongdu-backup-any.json'), null);
 });
 
+test('generated-file matcher binds each Yongdu prefix to its required extension', () => {
+  assert.notEqual(GENERATED_FILE_PATTERN.exec('yongdu-backup-20280102-030405.json'), null);
+  assert.notEqual(GENERATED_FILE_PATTERN.exec('yongdu-transactions-20280102-030405.csv'), null);
+  assert.equal(GENERATED_FILE_PATTERN.exec('yongdu-backup-20280102-030405.csv'), null);
+  assert.equal(GENERATED_FILE_PATTERN.exec('yongdu-transactions-20280102-030405.json'), null);
+});
+
 test('file adapter writes a generated file only inside the mini-program user directory', async () => {
   const boundary = fakeWxBoundary();
   const adapter = createDataFiles(boundary.wxApi);
   const result = await adapter.writeGeneratedFile({ filename: 'yongdu-backup-20280102-030405.json', content: '{}', sizeBytes: 2 });
   assert.equal(result.filePath, '/wx-user/yongdu-backup-20280102-030405.json');
   assert.deepEqual(boundary.calls[0].slice(0, 2), ['writeFile', '/wx-user/yongdu-backup-20280102-030405.json']);
+});
+
+test('file adapter refuses both crossed generated extensions before any write', async () => {
+  const boundary = fakeWxBoundary();
+  const adapter = createDataFiles(boundary.wxApi);
+  await assert.rejects(
+    adapter.writeGeneratedFile({ filename: 'yongdu-backup-20280102-030405.csv', content: 'x' }),
+    /生成文件名不合法/,
+  );
+  await assert.rejects(
+    adapter.writeGeneratedFile({ filename: 'yongdu-transactions-20280102-030405.json', content: '{}' }),
+    /生成文件名不合法/,
+  );
+  assert.equal(boundary.calls.filter(([operation]) => operation === 'writeFile').length, 0);
 });
 
 test('file adapter rejects a selected non-JSON file before reading it', async () => {
@@ -647,6 +668,29 @@ test('file adapter deletes only exact generated filenames and preserves unrelate
     '/wx-user/yongdu-backup-20280102-030405.json',
     '/wx-user/yongdu-transactions-20280102-030405.csv',
   ]);
+});
+
+test('file adapter deletes the two canonical files but preserves crossed extensions and ordinary files', async () => {
+  const boundary = fakeWxBoundary({
+    files: [
+      'yongdu-backup-20280102-030405.json',
+      'yongdu-transactions-20280102-030405.csv',
+      'yongdu-backup-20280102-030405.csv',
+      'yongdu-transactions-20280102-030405.json',
+      'notes.json',
+    ],
+  });
+  const removed = await createDataFiles(boundary.wxApi).removeGeneratedFiles();
+  assert.deepEqual(Array.from(removed), [
+    'yongdu-backup-20280102-030405.json',
+    'yongdu-transactions-20280102-030405.csv',
+  ]);
+  const unlinked = boundary.calls.filter(([operation]) => operation === 'unlink').map(([, path]) => path);
+  assert.deepEqual(unlinked, [
+    '/wx-user/yongdu-backup-20280102-030405.json',
+    '/wx-user/yongdu-transactions-20280102-030405.csv',
+  ]);
+  assert.equal(unlinked.length, 2);
 });
 
 test('file adapter invokes sharing and clipboard only after their explicit methods are called', async () => {

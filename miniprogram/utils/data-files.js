@@ -1,4 +1,4 @@
-const GENERATED_FILE_PATTERN = /^yongdu-(?:backup|transactions)-\d{8}-\d{6}\.(?:json|csv)$/;
+const GENERATED_FILE_PATTERN = /^(?:yongdu-backup-\d{8}-\d{6}\.json|yongdu-transactions-\d{8}-\d{6}\.csv)$/;
 
 function callbackPromise(register, failureMessage) {
   return new Promise((resolve, reject) => register({
