@@ -194,3 +194,31 @@
 - 当前 Console 为 Errors: 0、Warnings: 5；警告均为开发者工具/基础库环境提示，当前日志未出现 `timeout`。未清除、注入或修改模拟器业务数据。
 - 两张证据位于 `artifacts/phase5/01-settings-plans.png` 与 `02-home-empty.png`。
 - 最终自动化：`npm run build:mini` 生成5个文件；`npm test` 为223 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini`、9个小程序 JavaScript 语法检查和 `git diff --check` 均退出0。
+
+## Phase 6 kickoff
+
+- 基线 HEAD `1e562200408e6fc1bd6e712f768d186b41ad930e`，工作区干净，223 passed、0 failed/skipped/todo。
+- `npm run check`、`npm run build:mini`、`npm run check:mini` 均退出0。
+- 目标：把最近流水升级为由应用层唯一统计的账单分析，覆盖每日净支出、分类占比和真实预算周期趋势。
+- 顺序：统计模型 → ≥20项真实测试 → bills/home界面 → 反向红绿 → Stable只读验收 → 提交。
+- 最大风险：退款发生日与分类继承、可控/全部口径分离、关闭周期历史不被改写，以及跨期趋势的真实预算值。
+- 边界：仅改阶段六白名单，不改领域、schema、存储、路由、依赖、校验器或模拟器业务数据。
+- 未采用 Coze 远程项目工作流：本任务禁止网络、云服务和白名单外状态，继续使用现有本地原生构建与测试。
+
+## Phase 6 implementation
+
+- `getBillAnalysisModel` 成为唯一统计入口：按真实预算周期输出每日净支出、一级分类净额占比、最近6个真实周期预算/可控支出趋势和最近流水，传入状态保持逐字段不变。
+- 可控/全部支出口径、退款发生日与原分类、关闭周期退款、跨期退款、自然日补零、未来排除、过渡周期和正负结转均由应用层整数分计算。
+- bills页已升级为账单分析，提供两种范围、三张原生Canvas图、完整WXML金额/图例/空状态兜底和底部最近流水；首页入口已改为“账单分析”。
+- 新增30项真实测试；构建后全量253 passed、0 failed/skipped/todo，原223项无回退。
+- 反向验证：临时把“关闭周期退款不改写历史可控支出”期望从10000改为10001，单文件27 passed / 1 failed，错误为 `10000 !== 10001`；还原后全量253项全绿。
+
+## Phase 6 Stable acceptance
+
+- Stable `2.01.2510290` 未清除、注入或修改业务数据；重新编译后真实打开账单分析，可控口径显示 ¥120、全部口径显示 ¥170，固定利息只进入全部口径。
+- 每日折线、一级分类占比、真实周期双序列趋势均成功绘制；普通WXML同时显示日期金额、分类金额/占比、预算/支出图例、周期状态和底部最近流水。
+- 关闭项目并从Stable项目管理器重开后，可控合计仍为 ¥120、分析周期仍为 `2026-07-01` 至 `2026-07-31`，既有资产和流水保持。
+- 当前 Console 为 Errors: 0、Warnings: 8，警告为开发者工具、基础库、Canvas接口建议和worker环境提示；当前日志无 `timeout`，未靠清空错误冒充。
+- 五张真实截图位于 `artifacts/phase6/01-controlled-scope.png` 至 `05-reopen.png`。
+- 最终验收按指定顺序执行：`npm run build:mini` 生成5个文件；`npm test` 为253 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini`、`git diff --check` 均退出0。
+- 差异仅在阶段六白名单；`src/domain/*`、既有测试、路由、依赖、schema、存储和模拟器业务数据均未修改。

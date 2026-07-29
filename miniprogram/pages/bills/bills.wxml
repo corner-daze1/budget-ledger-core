@@ -1,7 +1,65 @@
-<view class="page">
-  <view class="eyebrow">YONGDU / FLOWS</view>
-  <view class="title">最近流水</view>
+<view class="page" wx:if="{{model}}">
+  <view class="eyebrow">YONGDU / ANALYSIS</view>
+  <view class="title">账单分析</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view class="scope-switch" aria-label="分析范围">
+    <button class="scope-option {{scope === 'controlled' ? 'active' : ''}}" data-scope="controlled" bindtap="onScopeTap">可控支出</button>
+    <button class="scope-option {{scope === 'all' ? 'active' : ''}}" data-scope="all" bindtap="onScopeTap">全部支出</button>
+  </view>
+
+  <view wx:if="{{model.emptyText}}" class="card empty">{{model.emptyText}}</view>
+  <block wx:else>
+    <view class="period-summary">
+      <text>{{model.period.kindLabel}} · {{model.period.statusLabel}}</text>
+      <text>{{model.period.label}}</text>
+    </view>
+
+    <view class="analysis-card">
+      <view class="chart-heading">
+        <view><view class="card-title">每日净支出</view><view class="chart-subtitle">{{model.scopeLabel}} · {{model.daily.startDate}} 至 {{model.daily.endDate}}</view></view>
+        <text class="summary-value">{{model.daily.total}}</text>
+      </view>
+      <canvas id="dailyChart" canvas-id="dailyChart" class="line-canvas"></canvas>
+      <scroll-view scroll-x class="text-fallback">
+        <view class="point-row">
+          <view wx:for="{{model.daily.points}}" wx:key="date" class="point-cell">
+            <text>{{item.label}}</text><text class="{{item.amountCents < 0 ? 'negative' : ''}}">{{item.amount}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="analysis-card">
+      <view class="chart-heading">
+        <view><view class="card-title">一级分类净支出占比</view><view class="chart-subtitle">净额小于等于0的分类不画扇区</view></view>
+        <text class="summary-value">{{model.categories.netTotal}}</text>
+      </view>
+      <view wx:if="{{model.categories.empty}}" class="chart-empty">本周期还没有支出</view>
+      <canvas wx:else id="categoryChart" canvas-id="categoryChart" class="pie-canvas"></canvas>
+      <view wx:for="{{model.categories.items}}" wx:key="name" class="legend-row">
+        <view class="legend-name"><text class="legend-dot" style="background: {{item.color}}"></text><text class="legend-label">{{item.name}}</text></view>
+        <text>{{item.amount}} · {{item.share}}</text>
+      </view>
+    </view>
+
+    <view class="analysis-card">
+      <view class="card-title">最近预算周期趋势</view>
+      <view class="chart-subtitle">实际可用预算 vs 可控净支出 · 最多6个真实周期</view>
+      <view class="series-legend"><text><text class="series-dot budget"></text>实际可用预算</text><text><text class="series-dot spend"></text>可控净支出</text></view>
+      <view wx:if="{{model.trend.empty}}" class="chart-empty">{{model.trend.emptyText}}</view>
+      <canvas wx:else id="trendChart" canvas-id="trendChart" class="line-canvas"></canvas>
+      <view wx:for="{{model.trend.periods}}" wx:key="id" class="period-row">
+        <view class="period-copy">
+          <text>{{item.fullLabel}}</text>
+          <text class="period-meta">{{item.kindLabel}} · {{item.statusLabel}}</text>
+        </view>
+        <view class="period-values"><text>预算 {{item.actualBudget}}</text><text>支出 {{item.netBudgetSpend}}</text></view>
+      </view>
+    </view>
+  </block>
+
+  <view class="section-title">最近流水</view>
   <view wx:if="{{!flows.length}}" class="card empty">还没有流水，记下第一笔吧。</view>
   <view wx:for="{{flows}}" wx:key="id" class="bill-card">
     <view class="bill-top"><text class="bill-category">{{item.typeLabel}} · {{item.category}}</text><text class="bill-amount">{{item.amount}}</text></view>

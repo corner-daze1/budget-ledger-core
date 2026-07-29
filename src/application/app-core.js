@@ -988,6 +988,224 @@ export function listRecentTransactions(state) {
     });
 }
 
+const ALL_EXPENSE_KINDS = new Set([
+  'controlled_expense',
+  'fixed_expense',
+  'reward_payment',
+  'loan_interest_accrual',
+]);
+
+function analysisPeriodForDate(state, today) {
+  const covering = state.budgetPeriods.find((item) => today >= item.startDate && today <= item.endDate);
+  if (covering) return covering;
+  const ended = state.budgetPeriods
+    .filter((item) => item.endDate < today)
+    .sort((left, right) => right.endDate.localeCompare(left.endDate) || right.startDate.localeCompare(left.startDate));
+  return ended[0] || null;
+}
+
+function transactionAnalysisEntry(state, item, scope) {
+  if (scope === 'controlled') {
+    if (item.kind === 'controlled_expense') {
+      return { amountCents: item.budgetImpactCents || 0, categoryLevel1: item.categoryLevel1 || null };
+    }
+    if (item.kind !== 'refund') return null;
+    const original = state.transactions.find((candidate) => candidate.id === item.relatedTransactionId);
+    if (!original || original.kind !== 'controlled_expense') return null;
+    return {
+      amountCents: item.budgetImpactCents || 0,
+      categoryLevel1: original.categoryLevel1 || null,
+    };
+  }
+
+  if (ALL_EXPENSE_KINDS.has(item.kind)) {
+    return {
+      amountCents: item.amountCents,
+      categoryLevel1: item.categoryLevel1 || (item.kind === 'loan_interest_accrual' ? '利息' : null),
+    };
+  }
+  if (item.kind !== 'refund') return null;
+  const original = state.transactions.find((candidate) => candidate.id === item.relatedTransactionId);
+  if (!original || !ALL_EXPENSE_KINDS.has(original.kind)) return null;
+  return {
+    amountCents: -item.amountCents,
+    categoryLevel1: original.categoryLevel1 || (original.kind === 'loan_interest_accrual' ? '利息' : null),
+  };
+}
+
+function normalizedSeries(values) {
+  const minimum = Math.min(0, ...values);
+  const maximum = Math.max(0, ...values);
+  const span = maximum - minimum;
+  return {
+    minimumCents: minimum,
+    maximumCents: maximum,
+    zeroRatio: span === 0 ? 0.5 : maximum / span,
+    ratios: values.map((value) => (span === 0 ? 0.5 : (maximum - value) / span)),
+  };
+}
+
+function dailyAnalysis(state, period, today, scope) {
+  if (!period) {
+    return {
+      points: [],
+      totalCents: 0,
+      total: formatCents(0),
+      minimumCents: 0,
+      maximumCents: 0,
+      zeroRatio: 0.5,
+      empty: true,
+    };
+  }
+  const todayInside = today >= period.startDate && today <= period.endDate;
+  const endDate = todayInside && today < period.endDate ? today : period.endDate;
+  const days = dateDistance(period.startDate, endDate) + 1;
+  const amounts = new Map();
+  for (const item of state.transactions) {
+    if (item.date < period.startDate || item.date > endDate) continue;
+    const entry = transactionAnalysisEntry(state, item, scope);
+    if (!entry) continue;
+    amounts.set(item.date, (amounts.get(item.date) || 0) + entry.amountCents);
+  }
+  const rawPoints = Array.from({ length: days }, (_, index) => {
+    const date = addDays(period.startDate, index);
+    return { date, amountCents: amounts.get(date) || 0 };
+  });
+  const normalized = normalizedSeries(rawPoints.map((item) => item.amountCents));
+  const points = rawPoints.map((item, index) => ({
+    ...item,
+    amount: formatCents(item.amountCents),
+    label: item.date.slice(5),
+    xRatio: pointsRatio(index, rawPoints.length),
+    yRatio: normalized.ratios[index],
+  }));
+  const totalCents = points.reduce((sum, item) => sum + item.amountCents, 0);
+  return {
+    startDate: period.startDate,
+    endDate,
+    points,
+    totalCents,
+    total: formatCents(totalCents),
+    minimumCents: normalized.minimumCents,
+    maximumCents: normalized.maximumCents,
+    zeroRatio: normalized.zeroRatio,
+    empty: points.every((item) => item.amountCents === 0),
+  };
+}
+
+function pointsRatio(index, count) {
+  return count <= 1 ? 0.5 : index / (count - 1);
+}
+
+function categoryAnalysis(state, period, daily, scope) {
+  const totalsByCategory = new Map();
+  if (period) {
+    for (const item of state.transactions) {
+      if (item.date < period.startDate || item.date > daily.endDate) continue;
+      const entry = transactionAnalysisEntry(state, item, scope);
+      if (!entry || !entry.categoryLevel1) continue;
+      totalsByCategory.set(entry.categoryLevel1, (totalsByCategory.get(entry.categoryLevel1) || 0) + entry.amountCents);
+    }
+  }
+  const positive = [...totalsByCategory.entries()]
+    .filter(([, amountCents]) => amountCents > 0)
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], 'zh-CN'));
+  const positiveTotalCents = positive.reduce((sum, [, amountCents]) => sum + amountCents, 0);
+  let cumulativeBasisPoints = 0;
+  const items = positive.map(([name, amountCents], index) => {
+    const shareBasisPoints = index === positive.length - 1
+      ? 10000 - cumulativeBasisPoints
+      : Math.floor((amountCents * 10000) / positiveTotalCents);
+    const startBasisPoints = cumulativeBasisPoints;
+    cumulativeBasisPoints += shareBasisPoints;
+    return {
+      name,
+      amountCents,
+      amount: formatCents(amountCents),
+      shareBasisPoints,
+      share: `${(shareBasisPoints / 100).toFixed(1)}%`,
+      startRatio: startBasisPoints / 10000,
+      endRatio: cumulativeBasisPoints / 10000,
+    };
+  });
+  return {
+    items,
+    netTotalCents: daily.totalCents,
+    netTotal: daily.total,
+    positiveTotalCents,
+    empty: items.length === 0,
+    emptyText: items.length ? '' : '本周期还没有支出',
+  };
+}
+
+function budgetTrend(state, today) {
+  const periods = [...state.budgetPeriods]
+    .sort((left, right) => left.startDate.localeCompare(right.startDate) || left.id.localeCompare(right.id))
+    .slice(-6);
+  const values = periods.flatMap((item) => [
+    actualBudgetCents(item.baseBudgetCents, item.carryCents),
+    item.netBudgetSpendCents,
+  ]);
+  const normalized = normalizedSeries(values);
+  return {
+    periods: periods.map((item, index) => {
+      const actualCents = actualBudgetCents(item.baseBudgetCents, item.carryCents);
+      const spendCents = item.netBudgetSpendCents;
+      const valueIndex = index * 2;
+      const ongoing = today >= item.startDate && today <= item.endDate;
+      return {
+        id: item.id,
+        startDate: item.startDate,
+        endDate: item.endDate,
+        label: `${item.startDate.slice(5)}–${item.endDate.slice(5)}`,
+        fullLabel: `${item.startDate} 至 ${item.endDate}`,
+        kind: item.kind || 'regular',
+        kindLabel: item.kind === 'transition' ? '过渡周期' : '预算周期',
+        statusLabel: ongoing ? '进行中' : '已结束',
+        actualBudgetCents: actualCents,
+        actualBudget: formatCents(actualCents),
+        netBudgetSpendCents: spendCents,
+        netBudgetSpend: formatCents(spendCents),
+        xRatio: pointsRatio(index, periods.length),
+        budgetYRatio: normalized.ratios[valueIndex],
+        spendYRatio: normalized.ratios[valueIndex + 1],
+      };
+    }),
+    minimumCents: normalized.minimumCents,
+    maximumCents: normalized.maximumCents,
+    zeroRatio: normalized.zeroRatio,
+    empty: periods.length === 0,
+    emptyText: periods.length ? '' : '还没有真实预算周期',
+  };
+}
+
+export function getBillAnalysisModel(state, { today = todayIso(), scope = 'controlled' } = {}) {
+  assertDate(today);
+  if (!['controlled', 'all'].includes(scope)) throw new Error('请选择账单分析范围');
+  const period = analysisPeriodForDate(state, today);
+  const daily = dailyAnalysis(state, period, today, scope);
+  const categories = categoryAnalysis(state, period, daily, scope);
+  const trend = budgetTrend(state, today);
+  return {
+    scope,
+    scopeLabel: scope === 'controlled' ? '可控支出' : '全部支出',
+    period: period ? {
+      id: period.id,
+      startDate: period.startDate,
+      endDate: period.endDate,
+      label: `${period.startDate} 至 ${period.endDate}`,
+      kind: period.kind || 'regular',
+      kindLabel: period.kind === 'transition' ? '过渡周期' : '预算周期',
+      statusLabel: today >= period.startDate && today <= period.endDate ? '进行中' : '已结束',
+    } : null,
+    daily,
+    categories,
+    trend,
+    flows: listRecentTransactions(state),
+    emptyText: period ? '' : '暂无可分析预算周期',
+  };
+}
+
 function scheduledPlanModel(plan) {
   const reminderDays = plan.reminderDays || [1, 0];
   return {
