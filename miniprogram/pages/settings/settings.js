@@ -1,6 +1,8 @@
 const core = require('../../lib/application.js');
 
 const OPERATION_LABELS = ['信用卡还款', '借款', '归还本金', '支付利息', '投资买入', '投资卖出', '手工估值'];
+const BUDGET_SCOPE_LABELS = ['仅本周期', '本周期及以后', '下周期及以后'];
+const BUDGET_SCOPE_VALUES = ['only_current', 'current_and_future', 'next_and_future'];
 
 Page({
   data: {
@@ -12,6 +14,10 @@ Page({
     accounts: [{ name: '现金', typeIndex: 0, balanceYuan: '0' }],
     settings: null,
     assets: null,
+    budgetEditYuan: '',
+    budgetScopeLabels: BUDGET_SCOPE_LABELS,
+    startDayEdit: '',
+    startDayPreview: null,
     allAccountTypeLabels: ['现金', '储蓄卡', '电子钱包', '信用卡', '借贷', '投资'],
     allAccountTypeValues: ['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment'],
     newAccountName: '',
@@ -42,8 +48,14 @@ Page({
 
   refreshAssetCenter() {
     const state = getApp().globalData.state;
-    const settings = core.getSettingsModel(state);
-    this.setData({ settings, assets: settings.assets, error: '' });
+    const settings = core.getSettingsModel(state, core.todayIso());
+    this.setData({
+      settings,
+      assets: settings.assets,
+      budgetEditYuan: this.data.budgetEditYuan || String(settings.defaultBudgetCents / 100),
+      startDayEdit: this.data.startDayEdit || String(settings.pendingStartDay || settings.startDay),
+      error: '',
+    });
     this.refreshOperationAccounts(this.data.operationIndex);
   },
 
@@ -75,6 +87,101 @@ Page({
 
   onBudgetInput(event) { this.setData({ monthlyBudgetYuan: event.detail.value }); },
   onStartDayInput(event) { this.setData({ startDay: event.detail.value }); },
+  onBudgetEditInput(event) { this.setData({ budgetEditYuan: event.detail.value }); },
+  chooseBudgetScope() {
+    wx.showActionSheet({
+      itemList: BUDGET_SCOPE_LABELS,
+      success: ({ tapIndex }) => {
+        const scope = BUDGET_SCOPE_VALUES[tapIndex];
+        const label = BUDGET_SCOPE_LABELS[tapIndex];
+        if (this.data.settings.needsSettlement && scope !== 'next_and_future') {
+          this.setData({ error: '本期待结算，只能修改下周期及以后的默认预算', notice: '' });
+          return;
+        }
+        wx.showModal({
+          title: '确认修改预算',
+          content: `新预算 ${this.data.budgetEditYuan || '未填写'} 元，范围：${label}。历史流水和已发生消费不会改变。`,
+          confirmText: '确认修改',
+          success: ({ confirm }) => {
+            if (!confirm) return;
+            try {
+              const app = getApp();
+              app.globalData.state = core.changeBudgetSettings(app.globalData.state, {
+                newBudgetYuan: this.data.budgetEditYuan,
+                scope,
+                date: core.todayIso(),
+              });
+              app.saveState();
+              this.setData({ notice: `预算已按“${label}”更新`, error: '' });
+              this.refreshAssetCenter();
+            } catch (error) {
+              this.setData({ error: error.message, notice: '' });
+            }
+          },
+        });
+      },
+    });
+  },
+  onStartDayEditInput(event) {
+    this.setData({ startDayEdit: event.detail.value, startDayPreview: null });
+  },
+  previewStartDayChange() {
+    try {
+      const preview = core.previewStartDayChange(getApp().globalData.state, {
+        newStartDay: Number(this.data.startDayEdit),
+        date: core.todayIso(),
+      });
+      this.setData({ startDayPreview: preview, error: '', notice: '' });
+    } catch (error) {
+      this.setData({ startDayPreview: null, error: error.message, notice: '' });
+    }
+  },
+  confirmStartDayChange() {
+    const preview = this.data.startDayPreview;
+    if (!preview) {
+      this.setData({ error: '请先预览起始日变更' });
+      return;
+    }
+    wx.showModal({
+      title: preview.mode === 'immediate' ? '确认立即调整' : '确认待生效规则',
+      content: `${preview.explanation}。历史账单不会移动。`,
+      confirmText: '确认设置',
+      success: ({ confirm }) => {
+        if (!confirm) return;
+        try {
+          const app = getApp();
+          app.globalData.state = core.changeStartDay(app.globalData.state, {
+            newStartDay: Number(this.data.startDayEdit),
+            date: core.todayIso(),
+          });
+          app.saveState();
+          this.setData({ startDayPreview: null, notice: preview.mode === 'immediate' ? '空周期已立即调整' : '待生效起始日已保存', error: '' });
+          this.refreshAssetCenter();
+        } catch (error) {
+          this.setData({ error: error.message, notice: '' });
+        }
+      },
+    });
+  },
+  cancelPendingStartDayChange() {
+    wx.showModal({
+      title: '取消待生效规则',
+      content: '取消后继续沿用当前周期起始日，历史账单不受影响。',
+      confirmText: '确认取消',
+      success: ({ confirm }) => {
+        if (!confirm) return;
+        try {
+          const app = getApp();
+          app.globalData.state = core.cancelPendingStartDayChange(app.globalData.state, { date: core.todayIso() });
+          app.saveState();
+          this.setData({ startDayPreview: null, startDayEdit: String(app.globalData.state.appSettings.startDay), notice: '待生效起始日已取消', error: '' });
+          this.refreshAssetCenter();
+        } catch (error) {
+          this.setData({ error: error.message, notice: '' });
+        }
+      },
+    });
+  },
   onAccountNameInput(event) {
     const accounts = this.data.accounts.slice();
     accounts[event.currentTarget.dataset.index].name = event.detail.value;

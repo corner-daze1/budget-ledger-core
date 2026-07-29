@@ -1,4 +1,13 @@
-import { actualBudgetCents, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance, settleBudgetCycle } from '../domain/budget.js';
+import {
+  actualBudgetCents,
+  applyBudgetChange,
+  budgetDebtCents,
+  budgetSnapshot,
+  cycleForDate,
+  dateDistance,
+  planStartDayTransition,
+  settleBudgetCycle,
+} from '../domain/budget.js';
 import {
   addAccount,
   addBudgetPeriod,
@@ -166,6 +175,30 @@ function withSettings(state, settings) {
   return next;
 }
 
+function nextBudgetPeriodId(state) {
+  let suffix = state.budgetPeriods.length + 1;
+  let id = `period-${suffix}`;
+  while (state.budgetPeriods.some((item) => item.id === id)) {
+    suffix += 1;
+    id = `period-${suffix}`;
+  }
+  return id;
+}
+
+function activePeriodForDate(state, date) {
+  assertDate(date);
+  return state.budgetPeriods.find((item) => item.status === 'open' && date >= item.startDate && date <= item.endDate) || null;
+}
+
+function waitingPeriodForDate(state, date) {
+  return openPeriodWaitingForSettlement(state, date);
+}
+
+function assertStartDay(startDay) {
+  integer(startDay, 'startDay');
+  if (startDay < 1 || startDay > 31) throw new Error('周期起始日必须是1到31');
+}
+
 export function initializeState({ monthlyBudgetYuan, startDay = 1, nowDate, accounts }) {
   assertDate(nowDate);
   integer(startDay, 'startDay');
@@ -207,6 +240,8 @@ export function getHomeModel(state, date) {
       return {
         date,
         periodId: pendingPeriod.id,
+        periodStartDate: pendingPeriod.startDate,
+        periodEndDate: pendingPeriod.endDate,
         needsSettlement: true,
         todayFreeCents: 0,
         todayFree: formatCents(0),
@@ -218,6 +253,7 @@ export function getHomeModel(state, date) {
         actualBudgetCents: settlement.actualBudgetCents,
         budgetDebtCents: settlement.budgetDebtCents,
         netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
+        pendingStartDay: state.appSettings?.pendingStartDayChange?.newStartDay ?? null,
         settlement,
       };
     }
@@ -229,6 +265,8 @@ export function getHomeModel(state, date) {
   return {
     date,
     periodId: activePeriod.id,
+    periodStartDate: activePeriod.startDate,
+    periodEndDate: activePeriod.endDate,
     todayFreeCents: snapshot.todayAvailableCents,
     todayFree: formatCents(snapshot.todayAvailableCents),
     prepaidCents: snapshot.prepaidCents,
@@ -239,6 +277,7 @@ export function getHomeModel(state, date) {
     actualBudgetCents: actualBudgetCents(activePeriod.baseBudgetCents, activePeriod.carryCents),
     budgetDebtCents: budgetDebtCents(activePeriod.baseBudgetCents, activePeriod.carryCents),
     netBudgetSpendCents: activePeriod.netBudgetSpendCents,
+    pendingStartDay: state.appSettings?.pendingStartDayChange?.newStartDay ?? null,
   };
 }
 
@@ -299,15 +338,172 @@ export function settleCurrentPeriod(state, date, { positiveMode = null, overspen
   });
   const closed = closeBudgetPeriod(state, model.periodId);
   closed.rewardBalanceCents = result.rewardBalanceAfterCents;
+  const pending = state.appSettings?.pendingStartDayChange;
+  if (pending?.stage === 'transition' && pending.transitionPeriodId === model.periodId) {
+    const nextCycle = cycleForDate(pending.regularStartDate, pending.newStartDay, closed.defaultBudgetCents);
+    let next = addBudgetPeriod(closed, {
+      id: nextBudgetPeriodId(closed),
+      startDate: pending.regularStartDate,
+      endDate: nextCycle.endDate,
+      baseBudgetCents: closed.defaultBudgetCents,
+      carryCents: result.nextCarryCents,
+      status: 'open',
+    });
+    next.appSettings = { ...next.appSettings, startDay: pending.newStartDay };
+    delete next.appSettings.pendingStartDayChange;
+    return next;
+  }
+  if (pending?.stage === 'pending' && pending.appliesAfterPeriodId === model.periodId) {
+    const planned = planStartDayTransition({
+      currentPeriodEndDate: model.periodEndDate,
+      newStartDay: pending.newStartDay,
+      defaultMonthlyBudgetCents: closed.defaultBudgetCents,
+    });
+    if (planned.transition) {
+      const transitionPeriodId = nextBudgetPeriodId(closed);
+      let next = addBudgetPeriod(closed, {
+        id: transitionPeriodId,
+        startDate: planned.transition.startDate,
+        endDate: planned.transition.endDate,
+        baseBudgetCents: planned.transition.baseBudgetCents,
+        carryCents: result.nextCarryCents,
+        status: 'open',
+      });
+      next.budgetPeriods.find((item) => item.id === transitionPeriodId).kind = 'transition';
+      next.appSettings.pendingStartDayChange = {
+        ...pending,
+        stage: 'transition',
+        transitionPeriodId,
+        regularStartDate: planned.nextCycle.startDate,
+      };
+      return next;
+    }
+    let next = addBudgetPeriod(closed, {
+      id: nextBudgetPeriodId(closed),
+      startDate: planned.nextCycle.startDate,
+      endDate: planned.nextCycle.endDate,
+      baseBudgetCents: closed.defaultBudgetCents,
+      carryCents: result.nextCarryCents,
+      status: 'open',
+    });
+    next.appSettings = { ...next.appSettings, startDay: pending.newStartDay };
+    delete next.appSettings.pendingStartDayChange;
+    return next;
+  }
   const nextCycle = cycleForDate(date, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
   return addBudgetPeriod(closed, {
-    id: `period-${state.budgetPeriods.length + 1}`,
+    id: nextBudgetPeriodId(closed),
     startDate: nextCycle.startDate,
     endDate: nextCycle.endDate,
     baseBudgetCents: nextCycle.baseBudgetCents,
     carryCents: result.nextCarryCents,
     status: 'open',
   });
+}
+
+export function changeBudgetSettings(state, { newBudgetYuan, scope, date }) {
+  assertDate(date);
+  const newBudgetCents = parseYuanToCents(newBudgetYuan);
+  const activePeriod = activePeriodForDate(state, date);
+  const waitingPeriod = waitingPeriodForDate(state, date);
+  if (waitingPeriod && scope !== 'next_and_future') throw new Error('本期待结算，只能修改下周期及以后的默认预算');
+  if (!activePeriod && !waitingPeriod) throw new Error('当前日期没有可修改的预算周期');
+  if (!['only_current', 'current_and_future', 'next_and_future'].includes(scope)) throw new Error('请选择预算修改范围');
+  const currentBudgetCents = activePeriod?.baseBudgetCents ?? waitingPeriod.baseBudgetCents;
+  const changed = applyBudgetChange({
+    currentBudgetCents,
+    defaultBudgetCents: state.defaultBudgetCents,
+    newBudgetCents,
+    scope,
+  });
+  const next = clone(state);
+  if (activePeriod && scope !== 'next_and_future') {
+    next.budgetPeriods.find((item) => item.id === activePeriod.id).baseBudgetCents = changed.currentBudgetCents;
+  }
+  next.defaultBudgetCents = changed.defaultBudgetCents;
+  next.appSettings = {
+    ...next.appSettings,
+    monthlyBudgetCents: changed.defaultBudgetCents,
+  };
+  return next;
+}
+
+export function previewStartDayChange(state, { newStartDay, date }) {
+  assertDate(date);
+  assertStartDay(newStartDay);
+  const waitingPeriod = waitingPeriodForDate(state, date);
+  if (waitingPeriod) throw new Error('本期待结算，暂不能修改周期起始日');
+  const activePeriod = activePeriodForDate(state, date);
+  if (!activePeriod) throw new Error('当前日期没有可修改的预算周期');
+  if (newStartDay === state.appSettings.startDay && !state.appSettings.pendingStartDayChange) {
+    throw new Error('新的周期起始日与当前设置相同');
+  }
+  const immediateCycle = cycleForDate(date, newStartDay, state.defaultBudgetCents);
+  const previousPeriods = state.budgetPeriods.filter((item) => item.id !== activePeriod.id && item.endDate < activePeriod.startDate);
+  const latestPreviousEndDate = previousPeriods.sort((left, right) => right.endDate.localeCompare(left.endDate))[0]?.endDate || null;
+  if (state.transactions.length === 0 && (!latestPreviousEndDate || immediateCycle.startDate > latestPreviousEndDate)) {
+    const cycle = immediateCycle;
+    return {
+      mode: 'immediate',
+      newStartDay,
+      currentPeriodId: activePeriod.id,
+      currentStartDate: activePeriod.startDate,
+      currentEndDate: activePeriod.endDate,
+      nextStartDate: cycle.startDate,
+      nextEndDate: cycle.endDate,
+      explanation: `当前没有流水，将立即把空周期调整为 ${cycle.startDate} 至 ${cycle.endDate}`,
+    };
+  }
+  const planned = planStartDayTransition({
+    currentPeriodEndDate: activePeriod.endDate,
+    newStartDay,
+    defaultMonthlyBudgetCents: state.defaultBudgetCents,
+  });
+  return {
+    mode: 'pending',
+    newStartDay,
+    currentPeriodId: activePeriod.id,
+    currentStartDate: activePeriod.startDate,
+    currentEndDate: activePeriod.endDate,
+    transition: planned.transition,
+    nextStartDate: planned.nextCycle.startDate,
+    nextEndDate: planned.nextCycle.endDate,
+    explanation: planned.transition
+      ? `旧周期保持到 ${activePeriod.endDate}；随后以过渡周期衔接，并从 ${planned.nextCycle.startDate} 起按每月 ${newStartDay} 日运行`
+      : `旧周期保持到 ${activePeriod.endDate}；从 ${planned.nextCycle.startDate} 起按每月 ${newStartDay} 日运行`,
+  };
+}
+
+export function changeStartDay(state, { newStartDay, date }) {
+  const preview = previewStartDayChange(state, { newStartDay, date });
+  const next = clone(state);
+  if (preview.mode === 'immediate') {
+    const period = next.budgetPeriods.find((item) => item.id === preview.currentPeriodId);
+    period.startDate = preview.nextStartDate;
+    period.endDate = preview.nextEndDate;
+    period.baseBudgetCents = next.defaultBudgetCents;
+    next.appSettings = { ...next.appSettings, startDay: newStartDay };
+    delete next.appSettings.pendingStartDayChange;
+    return next;
+  }
+  next.appSettings.pendingStartDayChange = {
+    stage: 'pending',
+    oldStartDay: next.appSettings.startDay,
+    newStartDay,
+    requestedAt: date,
+    appliesAfterPeriodId: preview.currentPeriodId,
+  };
+  return next;
+}
+
+export function cancelPendingStartDayChange(state, { date }) {
+  assertDate(date);
+  if (waitingPeriodForDate(state, date)) throw new Error('本期待结算，暂不能修改周期起始日');
+  if (!state.appSettings?.pendingStartDayChange) throw new Error('当前没有待生效的起始日修改');
+  if (state.appSettings.pendingStartDayChange.stage !== 'pending') throw new Error('起始日变更已进入过渡周期，不能取消');
+  const next = clone(state);
+  delete next.appSettings.pendingStartDayChange;
+  return next;
 }
 
 function setTransactionNote(state, transactionId, note) {
@@ -539,12 +735,36 @@ export function listRecentTransactions(state) {
     });
 }
 
-export function getSettingsModel(state) {
+export function getSettingsModel(state, date = todayIso()) {
   const assets = getAssetsModel(state);
+  const activePeriod = activePeriodForDate(state, date);
+  const waitingPeriod = waitingPeriodForDate(state, date);
+  const displayedPeriod = activePeriod || waitingPeriod || state.budgetPeriods[state.budgetPeriods.length - 1] || null;
+  const pending = state.appSettings?.pendingStartDayChange || null;
+  const currentBaseBudgetCents = displayedPeriod?.baseBudgetCents ?? state.defaultBudgetCents;
   return {
     monthlyBudgetCents: state.appSettings?.monthlyBudgetCents ?? state.defaultBudgetCents,
     monthlyBudget: formatCents(state.appSettings?.monthlyBudgetCents ?? state.defaultBudgetCents),
+    defaultBudgetCents: state.defaultBudgetCents,
+    defaultBudget: formatCents(state.defaultBudgetCents),
+    currentBaseBudgetCents,
+    currentBaseBudget: formatCents(currentBaseBudgetCents),
+    currentCarryCents: displayedPeriod?.carryCents ?? 0,
+    currentCarry: formatCents(displayedPeriod?.carryCents ?? 0),
+    currentPeriodId: displayedPeriod?.id ?? null,
+    currentPeriodStartDate: displayedPeriod?.startDate ?? null,
+    currentPeriodEndDate: displayedPeriod?.endDate ?? null,
+    needsSettlement: Boolean(waitingPeriod),
+    canChangeCurrentBudget: Boolean(activePeriod),
+    canChangeStartDay: Boolean(activePeriod),
     startDay: state.appSettings?.startDay ?? 1,
+    pendingStartDay: pending?.newStartDay ?? null,
+    pendingStage: pending?.stage ?? null,
+    pendingExplanation: pending
+      ? (pending.stage === 'transition'
+        ? `过渡周期结束后，从 ${pending.regularStartDate} 起按每月 ${pending.newStartDay} 日运行`
+        : `当前周期结束后生效，目标为每月 ${pending.newStartDay} 日；生效前可以取消或改期`)
+      : '当前没有待生效的起始日修改',
     accounts: assets.accounts,
     assets,
   };

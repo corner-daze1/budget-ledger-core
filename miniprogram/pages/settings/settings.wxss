@@ -13,3 +13,11 @@
 .account-type { margin-top: 8rpx; color: #9c8f83; font-size: 22rpx; }
 .account-balance { font-size: 32rpx; font-weight: 600; }
 .account-balance.debt { color: #9b4d3a; }
+.lifecycle-card { border: 2rpx solid #ded5ca; }
+.setting-line { display: flex; justify-content: space-between; gap: 20rpx; margin: 14rpx 0; color: #776b61; font-size: 24rpx; }
+.setting-line text:last-child { color: #2f302b; text-align: right; font-weight: 600; }
+.scope-hint { margin: 12rpx 0 24rpx; color: #8b7d72; font-size: 22rpx; line-height: 1.6; }
+.warning { margin: 18rpx 0; padding: 18rpx; border-radius: 14rpx; color: #8a4d35; background: #f7e6dc; font-size: 23rpx; }
+.preview-card { margin: 18rpx 0; padding: 22rpx; border-radius: 16rpx; background: #f2eee8; line-height: 1.6; }
+.compact-button { margin-top: 18rpx; }
+.fixed-hint { margin-top: 24rpx; padding-top: 20rpx; border-top: 1rpx solid #e6ded5; color: #7d6e62; font-size: 23rpx; line-height: 1.7; }

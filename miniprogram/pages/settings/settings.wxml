@@ -29,6 +29,31 @@
   </block>
 
   <block wx:if="{{initialized && assets}}">
+    <view class="card lifecycle-card">
+      <view class="card-title">预算设置</view>
+      <view class="setting-line"><text>当前周期</text><text>{{settings.currentPeriodStartDate}} 至 {{settings.currentPeriodEndDate}}</text></view>
+      <view class="setting-line"><text>当前周期基础预算</text><text>{{settings.currentBaseBudget}}</text></view>
+      <view class="setting-line"><text>以后周期默认预算</text><text>{{settings.defaultBudget}}</text></view>
+      <view class="setting-line"><text>当前周期起始日</text><text>每月 {{settings.startDay}} 日</text></view>
+      <view class="setting-line"><text>待生效起始日</text><text>{{settings.pendingStartDay ? '每月 ' + settings.pendingStartDay + ' 日' : '无'}}</text></view>
+      <view class="hint">{{settings.pendingExplanation}}</view>
+      <view wx:if="{{settings.needsSettlement}}" class="warning">本期待结算：只能修改“下周期及以后”的默认预算，暂不能修改起始日。</view>
+
+      <view class="field"><text class="field-label">新的月度预算</text><input class="field-input" type="digit" value="{{budgetEditYuan}}" bindinput="onBudgetEditInput" placeholder="例如 3200" /></view>
+      <button class="secondary-button" bindtap="chooseBudgetScope">选择范围并修改预算</button>
+      <view class="scope-hint">可选：仅本周期／本周期及以后／下周期及以后；提交前会再次确认。</view>
+
+      <view class="field"><text class="field-label">新的周期起始日</text><input class="field-input" type="number" value="{{startDayEdit}}" bindinput="onStartDayEditInput" placeholder="1—31" /></view>
+      <button class="secondary-button" bindtap="previewStartDayChange" disabled="{{!settings.canChangeStartDay}}">预览起始日变更</button>
+      <view wx:if="{{startDayPreview}}" class="preview-card">
+        <view>{{startDayPreview.explanation}}</view>
+        <view class="hint">历史周期与旧账保持原日期；尚未生效前可取消或重新改期。</view>
+        <button class="primary-button compact-button" bindtap="confirmStartDayChange">确认设置</button>
+      </view>
+      <button wx:if="{{settings.pendingStartDay && settings.pendingStage === 'pending'}}" class="link-button" bindtap="cancelPendingStartDayChange">取消待生效起始日</button>
+      <view class="fixed-hint">房租、房贷、车贷等固定开支不建议计入可控预算，请在记账时关闭“计入可控预算”。</view>
+    </view>
+
     <view class="summary-grid">
       <view class="summary-card"><text>总资产</text><strong>{{assets.totalAssets}}</strong></view>
       <view class="summary-card liability"><text>总负债</text><strong>{{assets.totalLiabilities}}</strong></view>

@@ -24,6 +24,8 @@
     <view class="card-title">今日可自由花</view>
     <view class="hero-number">{{model.todayFree}}</view>
     <view class="hero-caption">已按实际天数累计释放，并扣除本期可控支出</view>
+    <view class="hero-caption">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>
+    <view wx:if="{{model.pendingStartDay}}" class="hero-caption">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>
   </view>
 
   <view wx:if="{{!model.needsSettlement && model.prepaidCents > 0}}" class="status-card">

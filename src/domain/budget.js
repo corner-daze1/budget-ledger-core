@@ -72,20 +72,35 @@ function nextCycleStartOnOrAfter(date, startDay) {
   return cycleForMonth(next.year, next.month, startDay).startDate;
 }
 
+export function planStartDayTransition({ currentPeriodEndDate, newStartDay, defaultMonthlyBudgetCents }) {
+  parseDate(currentPeriodEndDate);
+  normalizedStartDay(parseDate(currentPeriodEndDate).year, parseDate(currentPeriodEndDate).month, newStartDay);
+  nonNegativeInteger(defaultMonthlyBudgetCents, 'defaultMonthlyBudgetCents');
+  const transitionStartDate = addDays(currentPeriodEndDate, 1);
+  const newCycleStartDate = nextCycleStartOnOrAfter(transitionStartDate, newStartDay);
+  const transitionDays = dateDistance(transitionStartDate, newCycleStartDate);
+  const transitionMonth = parseDate(transitionStartDate);
+  const transition = transitionDays === 0 ? null : {
+    startDate: transitionStartDate,
+    endDate: addDays(newCycleStartDate, -1),
+    totalDays: transitionDays,
+    baseBudgetCents: Math.floor(defaultMonthlyBudgetCents * transitionDays / daysInMonth(transitionMonth.year, transitionMonth.month)),
+    kind: 'transition',
+  };
+  return {
+    transition,
+    nextCycle: { ...cycleForDate(newCycleStartDate, newStartDay, defaultMonthlyBudgetCents), startDate: newCycleStartDate, kind: 'regular' },
+  };
+}
+
 export function planStartDayChange({ currentDate, oldStartDay, newStartDay, defaultMonthlyBudgetCents }) {
   nonNegativeInteger(defaultMonthlyBudgetCents, 'defaultMonthlyBudgetCents');
   const oldCycle = cycleForDate(currentDate, oldStartDay, defaultMonthlyBudgetCents);
-  const transitionStartDate = addDays(oldCycle.endDate, 1);
-  const newCycleStartDate = nextCycleStartOnOrAfter(transitionStartDate, newStartDay);
-  const transitionEndDate = addDays(newCycleStartDate, -1);
-  const transitionDays = dateDistance(transitionStartDate, newCycleStartDate);
-  const transitionMonth = parseDate(transitionStartDate);
-  const transitionBudgetCents = Math.floor(defaultMonthlyBudgetCents * transitionDays / daysInMonth(transitionMonth.year, transitionMonth.month));
-  const nextCycle = cycleForDate(newCycleStartDate, newStartDay, defaultMonthlyBudgetCents);
+  const planned = planStartDayTransition({ currentPeriodEndDate: oldCycle.endDate, newStartDay, defaultMonthlyBudgetCents });
   return {
     oldCycle,
-    transition: { startDate: transitionStartDate, endDate: transitionEndDate, totalDays: transitionDays, baseBudgetCents: transitionBudgetCents, kind: 'transition' },
-    nextCycle: { ...nextCycle, startDate: newCycleStartDate, kind: 'regular' },
+    transition: planned.transition,
+    nextCycle: planned.nextCycle,
   };
 }
 
