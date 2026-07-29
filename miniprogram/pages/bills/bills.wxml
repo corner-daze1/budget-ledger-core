@@ -24,7 +24,7 @@
       <scroll-view scroll-x class="text-fallback">
         <view class="point-row">
           <view wx:for="{{model.daily.points}}" wx:key="date" class="point-cell">
-            <text>{{item.label}}</text><text class="{{item.amountCents < 0 ? 'negative' : ''}}">{{item.amount}}</text>
+            <text class="point-date">{{item.label}}</text><text class="point-amount {{item.amountCents < 0 ? 'negative' : ''}}">{{item.amount}}</text>
           </view>
         </view>
       </scroll-view>
@@ -46,7 +46,7 @@
     <view class="analysis-card">
       <view class="card-title">最近预算周期趋势</view>
       <view class="chart-subtitle">实际可用预算 vs 可控净支出 · 最多6个真实周期</view>
-      <view class="series-legend"><text><text class="series-dot budget"></text>实际可用预算</text><text><text class="series-dot spend"></text>可控净支出</text></view>
+      <view class="series-legend"><text class="series-item"><text class="series-dot budget"></text>实际可用预算</text><text class="series-item"><text class="series-dot spend"></text>可控净支出</text></view>
       <view wx:if="{{model.trend.empty}}" class="chart-empty">{{model.trend.emptyText}}</view>
       <canvas wx:else id="trendChart" canvas-id="trendChart" class="line-canvas"></canvas>
       <view wx:for="{{model.trend.periods}}" wx:key="id" class="period-row">

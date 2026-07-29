@@ -14,14 +14,14 @@
 .text-fallback { width: 100%; margin-top: 10rpx; }
 .point-row { display: inline-flex; gap: 12rpx; padding-bottom: 8rpx; }
 .point-cell { display: flex; flex: none; flex-direction: column; gap: 4rpx; min-width: 102rpx; color: #9c8f83; font-size: 20rpx; text-align: center; }
-.point-cell text:last-child { color: #514a44; }
-.point-cell text.negative { color: #5d8175; }
+.point-amount { color: #514a44; }
+.point-amount.negative { color: #5d8175; }
 .legend-row, .period-row { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; padding: 14rpx 0; border-top: 1rpx solid #eee6dd; font-size: 23rpx; }
 .legend-name { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12rpx; }
 .legend-dot, .series-dot { display: inline-block; width: 16rpx; height: 16rpx; flex: none; border-radius: 50%; }
 .legend-label { min-width: 0; overflow-wrap: anywhere; line-height: 1.45; }
 .series-legend { display: flex; flex-wrap: wrap; gap: 18rpx; margin-top: 14rpx; color: #756b63; font-size: 21rpx; }
-.series-legend text { display: flex; align-items: center; gap: 8rpx; }
+.series-item { display: flex; align-items: center; gap: 8rpx; }
 .series-dot.budget { background: #b85c45; }
 .series-dot.spend { background: #738c92; }
 .period-copy, .period-values { display: flex; flex-direction: column; gap: 5rpx; }

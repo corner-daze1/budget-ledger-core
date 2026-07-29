@@ -222,3 +222,10 @@
 - 五张真实截图位于 `artifacts/phase6/01-controlled-scope.png` 至 `05-reopen.png`。
 - 最终验收按指定顺序执行：`npm run build:mini` 生成5个文件；`npm test` 为253 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini`、`git diff --check` 均退出0。
 - 差异仅在阶段六白名单；`src/domain/*`、既有测试、路由、依赖、schema、存储和模拟器业务数据均未修改。
+
+## Phase 6 selector compatibility repair
+
+- `bills.wxss` 原第17、18、24行的 `text` 标签组合选择器已全部替换为 `.point-amount`、`.point-amount.negative`、`.series-item` 纯类选择器；对应WXML元素已补语义class。
+- 全文件复查未再发现 `text` 标签选择器；统计逻辑、领域层、存储、路由、依赖和模拟器业务数据均未修改。
+- 指定顺序验收通过：构建生成5个文件，253 passed、0 failed/skipped/todo，两个项目检查与 `git diff --check` 均退出0。
+- Stable `2.01.2510290` 点击编译按钮后重新产生本次日志；禁用选择器告警已消失，Console为0 Errors且无 `timeout`。其余当前可见内容仅为自动热重载、SharedArrayBuffer、HarmonyOS兼容与灰度基础库环境提示，不将Warning数量写成固定验收值。
