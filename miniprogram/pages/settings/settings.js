@@ -33,6 +33,27 @@ Page({
     targetIndex: 0,
     operationNeedsSource: true,
     operationValueLabel: '金额',
+    planTypeLabels: ['固定支出', '信用卡还款', '贷款还款'],
+    planTypeValues: ['fixed_expense', 'credit_card_repayment', 'loan_repayment'],
+    planTypeIndex: 0,
+    planRecurrenceLabels: ['单次', '每月', '每年'],
+    planRecurrenceValues: ['one_time', 'monthly', 'yearly'],
+    planRecurrenceIndex: 1,
+    planEditId: '',
+    planName: '',
+    planAmountYuan: '',
+    planPrincipalYuan: '',
+    planInterestYuan: '',
+    planNextDueDate: '',
+    planReminderEnabled: false,
+    planReminderDays: ['1', '0'],
+    planReminder3Checked: false,
+    planReminder1Checked: true,
+    planReminder0Checked: true,
+    planSourceAccounts: [],
+    planTargetAccounts: [],
+    planSourceIndex: 0,
+    planTargetIndex: 0,
     error: '',
     notice: '',
   },
@@ -57,6 +78,19 @@ Page({
       error: '',
     });
     this.refreshOperationAccounts(this.data.operationIndex);
+    this.refreshPlanAccounts(this.data.planTypeIndex);
+  },
+
+  refreshPlanAccounts(planTypeIndex) {
+    const accounts = getApp().globalData.state.accounts;
+    const liquid = accounts.filter((item) => ['cash', 'bank', 'wallet'].includes(item.type));
+    const targetType = planTypeIndex === 1 ? 'credit_card' : (planTypeIndex === 2 ? 'loan' : null);
+    this.setData({
+      planSourceAccounts: liquid,
+      planTargetAccounts: targetType ? accounts.filter((item) => item.type === targetType) : [],
+      planSourceIndex: 0,
+      planTargetIndex: 0,
+    });
   },
 
   refreshOperationAccounts(operationIndex) {
@@ -265,6 +299,126 @@ Page({
     } catch (error) {
       this.setData({ error: error.message, notice: '' });
     }
+  },
+  onPlanTypeChange(event) {
+    const planTypeIndex = Number(event.detail.value);
+    this.setData({ planTypeIndex });
+    this.refreshPlanAccounts(planTypeIndex);
+  },
+  onPlanRecurrenceChange(event) { this.setData({ planRecurrenceIndex: Number(event.detail.value) }); },
+  onPlanSourceChange(event) { this.setData({ planSourceIndex: Number(event.detail.value) }); },
+  onPlanTargetChange(event) { this.setData({ planTargetIndex: Number(event.detail.value) }); },
+  onPlanNameInput(event) { this.setData({ planName: event.detail.value }); },
+  onPlanAmountInput(event) { this.setData({ planAmountYuan: event.detail.value }); },
+  onPlanPrincipalInput(event) { this.setData({ planPrincipalYuan: event.detail.value }); },
+  onPlanInterestInput(event) { this.setData({ planInterestYuan: event.detail.value }); },
+  onPlanDueDateInput(event) { this.setData({ planNextDueDate: event.detail.value }); },
+  onPlanReminderChange(event) { this.setData({ planReminderEnabled: event.detail.value }); },
+  onPlanReminderDaysChange(event) {
+    const planReminderDays = event.detail.value;
+    this.setData({
+      planReminderDays,
+      planReminder3Checked: planReminderDays.includes('3'),
+      planReminder1Checked: planReminderDays.includes('1'),
+      planReminder0Checked: planReminderDays.includes('0'),
+    });
+  },
+  resetPlanForm() {
+    this.setData({
+      planEditId: '',
+      planName: '',
+      planTypeIndex: 0,
+      planAmountYuan: '',
+      planPrincipalYuan: '',
+      planInterestYuan: '',
+      planNextDueDate: '',
+      planRecurrenceIndex: 1,
+      planReminderEnabled: false,
+      planReminderDays: ['1', '0'],
+      planReminder3Checked: false,
+      planReminder1Checked: true,
+      planReminder0Checked: true,
+    });
+    this.refreshPlanAccounts(0);
+  },
+  submitScheduledPlan() {
+    try {
+      const app = getApp();
+      const source = this.data.planSourceAccounts[this.data.planSourceIndex];
+      const target = this.data.planTargetAccounts[this.data.planTargetIndex];
+      const type = this.data.planTypeValues[this.data.planTypeIndex];
+      if (!source) throw new Error('请先创建可用的资金账户');
+      if (type !== 'fixed_expense' && !target) throw new Error('请先创建对应的负债账户');
+      const details = {
+        name: this.data.planName,
+        type,
+        accountId: source.id,
+        targetLiabilityAccountId: target?.id || null,
+        amountYuan: this.data.planAmountYuan,
+        principalYuan: this.data.planPrincipalYuan,
+        interestYuan: this.data.planInterestYuan,
+        categoryLevel1: type === 'fixed_expense' ? '固定支出' : (type === 'credit_card_repayment' ? '信用卡还款' : '贷款还款'),
+        recurrence: this.data.planRecurrenceValues[this.data.planRecurrenceIndex],
+        nextDueDate: this.data.planNextDueDate,
+        reminderEnabled: this.data.planReminderEnabled,
+        reminderDays: this.data.planReminderDays.map(Number),
+      };
+      app.globalData.state = this.data.planEditId
+        ? core.editScheduledPlan(app.globalData.state, { planId: this.data.planEditId, ...details })
+        : core.createScheduledPlan(app.globalData.state, details);
+      app.saveState();
+      this.setData({ notice: this.data.planEditId ? '未来计划已更新，历史流水未改变' : '计划已创建', error: '' });
+      this.resetPlanForm();
+      this.refreshAssetCenter();
+    } catch (error) {
+      this.setData({ error: error.message, notice: '' });
+    }
+  },
+  editScheduledPlan(event) {
+    const plan = getApp().globalData.state.plans.find((item) => item.id === event.currentTarget.dataset.id);
+    if (!plan) return;
+    const planTypeIndex = Math.max(0, this.data.planTypeValues.indexOf(plan.type || 'fixed_expense'));
+    this.setData({
+      planEditId: plan.id,
+      planName: plan.name || '',
+      planTypeIndex,
+      planAmountYuan: plan.amountCents === null || plan.amountCents === undefined ? '' : String(plan.amountCents / 100),
+      planPrincipalYuan: plan.principalCents === null || plan.principalCents === undefined ? '' : String(plan.principalCents / 100),
+      planInterestYuan: plan.interestCents === null || plan.interestCents === undefined ? '' : String(plan.interestCents / 100),
+      planNextDueDate: plan.nextDueDate || '',
+      planRecurrenceIndex: Math.max(0, this.data.planRecurrenceValues.indexOf(plan.recurrence || 'one_time')),
+      planReminderEnabled: Boolean(plan.reminderEnabled),
+      planReminderDays: (plan.reminderDays || [1, 0]).map(String),
+      planReminder3Checked: (plan.reminderDays || [1, 0]).includes(3),
+      planReminder1Checked: (plan.reminderDays || [1, 0]).includes(1),
+      planReminder0Checked: (plan.reminderDays || [1, 0]).includes(0),
+      notice: '正在编辑未来计划',
+      error: '',
+    });
+    this.refreshPlanAccounts(planTypeIndex);
+    const sourceIndex = this.data.planSourceAccounts.findIndex((item) => item.id === plan.accountId);
+    const targetIndex = this.data.planTargetAccounts.findIndex((item) => item.id === plan.targetLiabilityAccountId);
+    this.setData({ planSourceIndex: Math.max(0, sourceIndex), planTargetIndex: Math.max(0, targetIndex) });
+  },
+  disableScheduledPlan(event) {
+    const planId = event.currentTarget.dataset.id;
+    wx.showModal({
+      title: '停用计划',
+      content: '停用只影响未来发生期，已经执行的流水不会改变。',
+      confirmText: '确认停用',
+      success: ({ confirm }) => {
+        if (!confirm) return;
+        try {
+          const app = getApp();
+          app.globalData.state = core.disableScheduledPlan(app.globalData.state, planId);
+          app.saveState();
+          this.setData({ notice: '计划已停用', error: '' });
+          this.refreshAssetCenter();
+        } catch (error) {
+          this.setData({ error: error.message, notice: '' });
+        }
+      },
+    });
   },
   submit() {
     if (this.data.initialized) {

@@ -2,8 +2,8 @@
   "generatedBy": "scripts/build-miniprogram.js",
   "sources": {
     "src/domain/budget.js": "dfb75452b5189d29cafea9118246eee9162344df5145edca592d58b437465849",
-    "src/domain/ledger.js": "affbc7c237f4a7fb447f06af0860e655da115e419690f0607c669e4dfd1b1769",
+    "src/domain/ledger.js": "73ec87b5c48d6b443b106fa1685f6da71e6b9852c5bd5513010f8c670685f1da",
     "src/domain/storage.js": "19dc9ffe504ab300f9d57f57213a10761d11646b2b185a053d1917bc7f16110f",
-    "src/application/app-core.js": "79b4edb6c81af6f8ed84b7cef1e00f2c47ffda301c50a6a1df4d4a953969bfbc"
+    "src/application/app-core.js": "965b0aaee6ed8884b784e666f3040a468a7a395d4de57482d38357cd7927ce95"
   }
 }

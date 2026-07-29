@@ -36,6 +36,42 @@
     <view class="status-line"><text>完整单日额度</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
   </view>
 
+  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert">
+    <view>有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>
+    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>
+  </view>
+
+  <view class="plan-card">
+    <view class="card-title">计划与提醒</view>
+    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>
+    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">
+      <text>{{item.planName}} · {{item.dueDate}}</text><text>已自动记账</text>
+    </view>
+    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">
+      <text>{{item.planName}}</text><text>{{item.message}}</text>
+    </view>
+    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">
+      <text>{{item.planName}}</text><text>今天到期</text>
+    </view>
+    <view wx:if="{{!model.planExecutionResults.length && !model.planReminders.length && !model.planDueToday.length && !model.planPendingItems.length}}" class="hint">暂无计划提醒或待处理项</view>
+  </view>
+
+  <view wx:if="{{model.planPendingItems.length}}" class="plan-card">
+    <view class="card-title">待处理计划</view>
+    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">
+      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text>{{item.reasonText}}</text></view>
+      <block wx:if="{{item.reason !== 'plan_info_required'}}">
+        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />
+        <block wx:else>
+          <input class="field-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />
+          <input class="field-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />
+        </block>
+        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>
+      </block>
+      <view wx:else class="hint">请到设置页编辑计划并补充周期与到期日。</view>
+    </view>
+  </view>
+
   <button class="primary-button" bindtap="goEntry">＋ 记一笔</button>
   <button class="asset-button" bindtap="goAssets">资产中心</button>
   <view class="nav-row"><button class="secondary-button nav-button" bindtap="goBills">最近流水</button><button class="secondary-button nav-button" bindtap="goSettings">设置</button></view>

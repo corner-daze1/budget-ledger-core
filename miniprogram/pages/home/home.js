@@ -12,6 +12,9 @@ Page({
     overspendModeLabel: '请选择',
     positiveModeLabels: ['带入下期', '转入奖励余额'],
     overspendModeLabels: ['带入下期', '用奖励余额抵扣'],
+    pendingAmountYuan: '',
+    pendingPrincipalYuan: '',
+    pendingInterestYuan: '',
   },
 
   onShow() {
@@ -22,7 +25,7 @@ Page({
     }
     try {
       this.setData({
-        model: core.getHomeModel(app.globalData.state, core.todayIso()),
+        model: core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary),
         error: app.globalData.storageError || '',
         positiveModeSelected: false,
         positiveModeLabel: '请选择',
@@ -38,6 +41,41 @@ Page({
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },
   goSettings() { wx.navigateTo({ url: '/pages/settings/settings' }); },
   goAssets() { wx.navigateTo({ url: '/pages/settings/settings' }); },
+  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },
+  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },
+  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },
+  retryPendingPlan(event) {
+    try {
+      const app = getApp();
+      app.globalData.state = core.retryPendingPlan(app.globalData.state, {
+        pendingId: event.currentTarget.dataset.id,
+        amountYuan: this.data.pendingAmountYuan,
+        principalYuan: this.data.pendingPrincipalYuan,
+        interestYuan: this.data.pendingInterestYuan,
+      });
+      app.saveState();
+      app.globalData.planRunSummary = {
+        date: core.todayIso(),
+        executed: [],
+        pending: [],
+        legacy: [],
+        message: '待处理计划已补记',
+      };
+      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });
+      this.onShow();
+    } catch (error) {
+      this.setData({ error: error.message });
+    }
+  },
+  dismissPlanOverdueBanner() {
+    const app = getApp();
+    app.globalData.state = core.dismissOverduePlanBanner(
+      app.globalData.state,
+      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),
+    );
+    app.saveState();
+    this.onShow();
+  },
   onPositiveModeChange(event) {
     const index = Number(event.detail.value);
     this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });

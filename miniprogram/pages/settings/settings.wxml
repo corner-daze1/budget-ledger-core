@@ -70,6 +70,41 @@
       <view class="account-balance {{item.isLiability ? 'debt' : ''}}">{{item.balance}}</view>
     </view>
 
+    <view class="card plan-editor">
+      <view class="card-title">{{planEditId ? '编辑未来计划' : '新建自动计划'}}</view>
+      <view class="field"><text class="field-label">计划名称</text><input class="field-input" value="{{planName}}" bindinput="onPlanNameInput" placeholder="例如 房租或信用卡还款" /></view>
+      <view class="field"><text class="field-label">计划类型</text><picker class="field-input" range="{{planTypeLabels}}" value="{{planTypeIndex}}" bindchange="onPlanTypeChange"><view class="picker-value">{{planTypeLabels[planTypeIndex]}}</view></picker></view>
+      <view class="field"><text class="field-label">资金账户</text><picker class="field-input" range="{{planSourceAccounts}}" range-key="name" value="{{planSourceIndex}}" bindchange="onPlanSourceChange"><view class="picker-value">{{planSourceAccounts.length ? planSourceAccounts[planSourceIndex].name : '请先创建'}}</view></picker></view>
+      <view wx:if="{{planTypeIndex > 0}}" class="field"><text class="field-label">{{planTypeIndex === 1 ? '信用卡' : '贷款账户'}}</text><picker class="field-input" range="{{planTargetAccounts}}" range-key="name" value="{{planTargetIndex}}" bindchange="onPlanTargetChange"><view class="picker-value">{{planTargetAccounts.length ? planTargetAccounts[planTargetIndex].name : '请先创建'}}</view></picker></view>
+      <view wx:if="{{planTypeIndex < 2}}" class="field"><text class="field-label">固定金额（可留空）</text><input class="field-input" type="digit" value="{{planAmountYuan}}" bindinput="onPlanAmountInput" placeholder="留空则到期转待处理" /></view>
+      <block wx:else>
+        <view class="field"><text class="field-label">每期本金</text><input class="field-input" type="digit" value="{{planPrincipalYuan}}" bindinput="onPlanPrincipalInput" placeholder="必须填写" /></view>
+        <view class="field"><text class="field-label">每期利息</text><input class="field-input" type="digit" value="{{planInterestYuan}}" bindinput="onPlanInterestInput" placeholder="必须填写" /></view>
+      </block>
+      <view class="field"><text class="field-label">周期</text><picker class="field-input" range="{{planRecurrenceLabels}}" value="{{planRecurrenceIndex}}" bindchange="onPlanRecurrenceChange"><view class="picker-value">{{planRecurrenceLabels[planRecurrenceIndex]}}</view></picker></view>
+      <view class="field"><text class="field-label">下次到期日</text><picker class="field-input" mode="date" value="{{planNextDueDate}}" bindchange="onPlanDueDateInput"><view class="picker-value">{{planNextDueDate || '请选择日期'}}</view></picker></view>
+      <view class="field"><text class="field-label">小程序内提醒</text><switch checked="{{planReminderEnabled}}" bindchange="onPlanReminderChange" /></view>
+      <checkbox-group wx:if="{{planReminderEnabled}}" class="reminder-options" bindchange="onPlanReminderDaysChange">
+        <label><checkbox value="3" checked="{{planReminder3Checked}}" />提前3天</label>
+        <label><checkbox value="1" checked="{{planReminder1Checked}}" />提前1天</label>
+        <label><checkbox value="0" checked="{{planReminder0Checked}}" />当天</label>
+      </checkbox-group>
+      <view class="hint">仅在小程序启动或回到前台时检查；不会冒充后台定时任务，也不会发送微信订阅消息。</view>
+      <button class="primary-button" bindtap="submitScheduledPlan">{{planEditId ? '保存未来计划' : '创建计划'}}</button>
+      <button wx:if="{{planEditId}}" class="link-button" bindtap="resetPlanForm">取消编辑</button>
+    </view>
+
+    <view class="card">
+      <view class="card-title">已有计划</view>
+      <view wx:if="{{!settings.plans.length}}" class="hint">暂无计划；首页会显示空状态。</view>
+      <view wx:for="{{settings.plans}}" wx:key="id" class="plan-list-item">
+        <view class="setting-line"><text>{{item.name}}</text><text>{{item.statusLabel}}</text></view>
+        <view class="hint">{{item.typeLabel}} · {{item.scheduleLabel}} · {{item.reminderLabel}}</view>
+        <view class="plan-actions"><button class="link-button" data-id="{{item.id}}" bindtap="editScheduledPlan">编辑未来</button><button wx:if="{{item.active}}" class="link-button danger" data-id="{{item.id}}" bindtap="disableScheduledPlan">停用</button></view>
+      </view>
+      <view wx:if="{{settings.pendingPlanItems.length}}" class="warning">有 {{settings.pendingPlanItems.length}} 项待处理；即使关闭逾期横幅，这里仍会保留。</view>
+    </view>
+
     <view class="card">
       <view class="card-title">新增账户</view>
       <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{newAccountName}}" bindinput="onNewAccountNameInput" placeholder="例如 工资卡" /></view>

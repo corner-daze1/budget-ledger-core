@@ -5,6 +5,7 @@ App({
     state: null,
     storageError: null,
     ready: false,
+    planRunSummary: null,
   },
 
   onLaunch() {
@@ -16,6 +17,30 @@ App({
       this.globalData.storageError = `本地数据读取失败：${error.message}`;
     }
     this.globalData.ready = true;
+    if (this.globalData.state) this.runDuePlans();
+  },
+
+  onShow() {
+    if (this.globalData.ready && this.globalData.state) this.runDuePlans();
+  },
+
+  runDuePlans() {
+    try {
+      const result = core.processDuePlans(this.globalData.state, core.todayIso());
+      if (result.changed) {
+        this.globalData.state = result.state;
+        this.saveState();
+      }
+      if (result.summary.executed.length || result.summary.pending.length || result.summary.legacy.length) {
+        this.globalData.planRunSummary = result.summary;
+      } else if (this.globalData.planRunSummary?.date !== result.summary.date) {
+        this.globalData.planRunSummary = null;
+      }
+      return result.summary;
+    } catch (error) {
+      this.globalData.storageError = `计划自动处理失败：${error.message}`;
+      return null;
+    }
   },
 
   saveState() {

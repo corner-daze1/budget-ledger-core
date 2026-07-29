@@ -18,3 +18,9 @@
 .nav-row { display: flex; gap: 18rpx; }
 .nav-button { flex: 1; }
 .asset-button { margin: 18rpx 0 4rpx; border: 1rpx solid #b85c45; border-radius: 16rpx; color: #9b4d3a; background: transparent; }
+.plan-card { margin: 22rpx 0; padding: 28rpx; border-radius: 22rpx; background: #fffdfa; border: 1rpx solid #eadfd6; }
+.plan-alert { margin: 22rpx 0; padding: 22rpx 26rpx; border-radius: 18rpx; background: #f8e4dc; color: #8f3f2f; }
+.plan-line { display: flex; justify-content: space-between; gap: 20rpx; padding: 14rpx 0; border-bottom: 1rpx solid #eee5de; color: #5f5751; font-size: 25rpx; }
+.plan-line text:last-child { color: #9b4d3a; }
+.pending-plan { margin-top: 18rpx; padding-top: 8rpx; }
+.pending-plan .field-input { margin: 12rpx 0; }

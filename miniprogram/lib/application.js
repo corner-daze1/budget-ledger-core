@@ -1,6 +1,6 @@
 // GENERATED FILE. Run npm run build:mini.
 const { actualBudgetCents, addDays, applyBudgetChange, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance, parseDate, planStartDayTransition, prorateMonthlyBudgetCents, settleBudgetCycle } = require('./domain/budget.js');
-const { addAccount, addBudgetPeriod, closeBudgetPeriod, createLedger, recordBorrowing, recordCreditCardRepayment, recordExpense, recordFixedExpense, recordIncome, recordInvestmentTrade, recordLoanInterestPayment, recordLoanPrincipalRepayment, recordTransfer, setInvestmentValue, totals } = require('./domain/ledger.js');
+const { addAccount, addBudgetPeriod, advanceFixedPlan, closeBudgetPeriod, createFixedPlan, createLedger, editFixedPlan, executeFixedPlan, fixedPlanOccurrenceKey, markLegacyPlanPending, recordBorrowing, recordCreditCardRepayment, recordExpense, recordFixedExpense, recordIncome, recordInvestmentTrade, recordLoanInterestPayment, recordLoanPrincipalRepayment, recordTransfer, retryFixedPlanPending, revokeFixedPlan, setInvestmentValue, totals } = require('./domain/ledger.js');
 const { restoreBackup, serializeBackup } = require('./domain/storage.js');
 
 const STORAGE_KEY = 'yongdu-ledger-v1';
@@ -211,7 +211,8 @@ function savePersisted(storage, state) {
   return { ok: true, rawData };
 }
 
-function getHomeModel(state, date) {
+function getHomeModel(state, date, planSummary = null) {
+  const planFields = getPlanHomeFields(state, date, planSummary);
   const activePeriod = state.budgetPeriods.find((item) => date >= item.startDate && date <= item.endDate);
   if (!activePeriod) {
     const pendingPeriod = openPeriodWaitingForSettlement(state, date);
@@ -235,6 +236,7 @@ function getHomeModel(state, date) {
         netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
         pendingStartDay: state.appSettings?.pendingStartDayChange?.newStartDay ?? null,
         settlement,
+        ...planFields,
       };
     }
     throw new Error(`no budget period covers ${date}`);
@@ -258,6 +260,7 @@ function getHomeModel(state, date) {
     budgetDebtCents: budgetDebtCents(activePeriod.baseBudgetCents, activePeriod.carryCents),
     netBudgetSpendCents: activePeriod.netBudgetSpendCents,
     pendingStartDay: state.appSettings?.pendingStartDayChange?.newStartDay ?? null,
+    ...planFields,
   };
 }
 
@@ -696,6 +699,232 @@ function updateInvestmentValue(state, { currentValueYuan, date, investmentAccoun
   }));
 }
 
+const PLAN_TYPE_LABELS = {
+  fixed_expense: '固定支出',
+  credit_card_repayment: '信用卡还款',
+  loan_repayment: '贷款还款',
+};
+
+const PLAN_RECURRENCE_LABELS = {
+  one_time: '单次',
+  monthly: '每月',
+  yearly: '每年',
+};
+
+function optionalYuanToCents(input) {
+  if (input === null || input === undefined || String(input).trim() === '') return null;
+  return positiveAmount(input);
+}
+
+function nextPlanId(state) {
+  let suffix = state.plans.length + 1;
+  let id = `scheduled-plan-${suffix}`;
+  while (state.plans.some((item) => item.id === id)) {
+    suffix += 1;
+    id = `scheduled-plan-${suffix}`;
+  }
+  return id;
+}
+
+function planDetailsFromInput(input) {
+  return {
+    name: String(input.name || '').trim() || '未命名计划',
+    type: input.type,
+    accountId: input.accountId,
+    targetLiabilityAccountId: input.targetLiabilityAccountId || null,
+    amountCents: optionalYuanToCents(input.amountYuan),
+    principalCents: optionalYuanToCents(input.principalYuan),
+    interestCents: optionalYuanToCents(input.interestYuan),
+    categoryLevel1: String(input.categoryLevel1 || '').trim() || '固定支出',
+    recurrence: input.recurrence,
+    nextDueDate: input.nextDueDate,
+    reminderEnabled: Boolean(input.reminderEnabled),
+    reminderDays: input.reminderDays ?? [1, 0],
+    source: input.source || null,
+  };
+}
+
+function createScheduledPlan(state, input) {
+  assertDate(input.nextDueDate);
+  const details = planDetailsFromInput(input);
+  return runOperation(() => createFixedPlan(state, {
+    id: input.id || nextPlanId(state),
+    ...details,
+  }));
+}
+
+function editScheduledPlan(state, { planId, ...input }) {
+  if (input.nextDueDate !== undefined) assertDate(input.nextDueDate);
+  const supplied = {};
+  const mappings = [
+    ['name', () => String(input.name || '').trim() || '未命名计划'],
+    ['type', () => input.type],
+    ['accountId', () => input.accountId],
+    ['targetLiabilityAccountId', () => input.targetLiabilityAccountId || null],
+    ['amountYuan', () => optionalYuanToCents(input.amountYuan), 'amountCents'],
+    ['principalYuan', () => optionalYuanToCents(input.principalYuan), 'principalCents'],
+    ['interestYuan', () => optionalYuanToCents(input.interestYuan), 'interestCents'],
+    ['categoryLevel1', () => String(input.categoryLevel1 || '').trim() || '固定支出'],
+    ['recurrence', () => input.recurrence],
+    ['nextDueDate', () => input.nextDueDate],
+    ['reminderEnabled', () => Boolean(input.reminderEnabled)],
+    ['reminderDays', () => input.reminderDays],
+  ];
+  for (const [inputKey, getValue, outputKey = inputKey] of mappings) {
+    if (Object.prototype.hasOwnProperty.call(input, inputKey)) supplied[outputKey] = getValue();
+  }
+  let next = runOperation(() => editFixedPlan(state, planId, supplied));
+  if (supplied.nextDueDate) {
+    next = clone(next);
+    for (const item of next.pendingItems) {
+      if (item.planId === planId && item.reason === 'plan_info_required' && item.status === 'pending') {
+        item.status = 'resolved';
+        item.resolvedAt = supplied.nextDueDate;
+      }
+    }
+  }
+  return next;
+}
+
+function disableScheduledPlan(state, planId) {
+  return runOperation(() => revokeFixedPlan(state, planId));
+}
+
+function executionSummaryItem(state, plan, dueDate, transactionIds) {
+  return {
+    occurrenceKey: fixedPlanOccurrenceKey(plan.id, dueDate),
+    planId: plan.id,
+    planName: plan.name,
+    type: plan.type,
+    typeLabel: PLAN_TYPE_LABELS[plan.type] || '固定支出',
+    dueDate,
+    transactionIds,
+    message: '已自动记账',
+    amountCents: transactionIds.map((id) => state.transactions.find((item) => item.id === id)?.amountCents || 0)
+      .reduce((sum, value) => sum + value, 0),
+  };
+}
+
+function processDuePlans(state, today) {
+  assertDate(today);
+  let next = state;
+  const summary = { date: today, executed: [], pending: [], legacy: [], message: '' };
+  for (const plan of next.plans) {
+    if (plan.active && !plan.nextDueDate) {
+      const beforeCount = next.pendingItems.length;
+      next = markLegacyPlanPending(next, plan.id);
+      if (next.pendingItems.length > beforeCount) summary.legacy.push({ planId: plan.id, planName: plan.name, message: '待补充计划信息' });
+    }
+  }
+  let handledCount = 0;
+  while (true) {
+    const duePlan = next.plans
+      .filter((item) => item.active && item.nextDueDate && item.nextDueDate <= today)
+      .sort((left, right) => left.nextDueDate.localeCompare(right.nextDueDate) || left.id.localeCompare(right.id))[0];
+    if (!duePlan) break;
+    handledCount += 1;
+    if (handledCount > 10000) throw new Error('待补记发生期过多，请分次处理');
+    const dueDate = duePlan.nextDueDate;
+    const occurrenceKey = fixedPlanOccurrenceKey(duePlan.id, dueDate);
+    const transactionCount = next.transactions.length;
+    const pendingCount = next.pendingItems.length;
+    next = executeFixedPlan(next, { planId: duePlan.id, date: dueDate });
+    const transactionIds = next.transactions.slice(transactionCount).map((item) => item.id);
+    if (transactionIds.length) summary.executed.push(executionSummaryItem(next, duePlan, dueDate, transactionIds));
+    if (next.pendingItems.length > pendingCount) {
+      const pending = next.pendingItems.find((item) => item.occurrenceKey === occurrenceKey);
+      summary.pending.push({
+        id: pending.id,
+        planId: duePlan.id,
+        planName: duePlan.name,
+        dueDate,
+        reason: pending.reason,
+        reasonText: pending.reasonText,
+      });
+    }
+    next = advanceFixedPlan(next, duePlan.id, dueDate);
+  }
+  if (summary.executed.length) summary.message = '已自动记账';
+  return { state: next, summary, changed: next !== state };
+}
+
+function retryPendingPlan(state, { pendingId, amountYuan, principalYuan, interestYuan }) {
+  const details = { pendingId };
+  if (amountYuan !== undefined && String(amountYuan).trim() !== '') details.amountCents = positiveAmount(amountYuan);
+  if (principalYuan !== undefined && String(principalYuan).trim() !== '') details.principalCents = positiveAmount(principalYuan);
+  if (interestYuan !== undefined && String(interestYuan).trim() !== '') details.interestCents = positiveAmount(interestYuan);
+  return runOperation(() => retryFixedPlanPending(state, details));
+}
+
+function pendingPlanModel(state, item) {
+  const plan = state.plans.find((candidate) => candidate.id === item.planId) || item.planSnapshot || {};
+  return {
+    id: item.id,
+    occurrenceKey: item.occurrenceKey,
+    planId: item.planId,
+    planName: plan.name || item.planId,
+    type: plan.type || 'fixed_expense',
+    typeLabel: PLAN_TYPE_LABELS[plan.type] || '固定支出',
+    dueDate: item.dueDate,
+    reason: item.reason,
+    reasonText: item.reasonText || '待处理',
+    status: item.status,
+    needsAmount: item.reason === 'amount_required',
+  };
+}
+
+function getPlanHomeFields(state, date, planSummary = null) {
+  assertDate(date);
+  const reminders = [];
+  const dueToday = [];
+  for (const plan of state.plans) {
+    if (!plan.active || !plan.nextDueDate || !plan.reminderEnabled) continue;
+    const daysUntil = dateDistance(date, plan.nextDueDate);
+    if (daysUntil < 0 || daysUntil > 3 || !(plan.reminderDays || [1, 0]).includes(daysUntil)) continue;
+    const model = {
+      planId: plan.id,
+      planName: plan.name,
+      typeLabel: PLAN_TYPE_LABELS[plan.type] || '固定支出',
+      dueDate: plan.nextDueDate,
+      daysUntil,
+      message: daysUntil === 0 ? '今天到期' : `${daysUntil}天后到期`,
+    };
+    if (daysUntil === 0) dueToday.push(model);
+    else reminders.push(model);
+  }
+  const pendingItems = state.pendingItems
+    .filter((item) => item.type === 'fixed_plan' && item.status === 'pending')
+    .map((item) => pendingPlanModel(state, item))
+    .sort((left, right) => String(left.dueDate || '').localeCompare(String(right.dueDate || '')));
+  const dismissed = new Set(state.appSettings?.dismissedOverdueOccurrenceKeys || []);
+  const overdueItems = pendingItems.filter((item) => item.dueDate && item.dueDate < date && !dismissed.has(item.occurrenceKey));
+  return {
+    planReminders: reminders,
+    planDueToday: dueToday,
+    planExecutionResults: planSummary?.executed || [],
+    planExecutionMessage: planSummary?.message || '',
+    planPendingItems: pendingItems,
+    planOverdueItems: overdueItems,
+    showPlanOverdueBanner: overdueItems.length > 0,
+  };
+}
+
+function dismissOverduePlanBanner(state, occurrenceKeys = null) {
+  const pendingKeys = state.pendingItems
+    .filter((item) => item.type === 'fixed_plan' && item.status === 'pending')
+    .map((item) => item.occurrenceKey);
+  const keys = occurrenceKeys || pendingKeys;
+  const next = clone(state);
+  next.appSettings = {
+    ...(next.appSettings || {}),
+    dismissedOverdueOccurrenceKeys: [...new Set([
+      ...(next.appSettings?.dismissedOverdueOccurrenceKeys || []),
+      ...keys,
+    ])],
+  };
+  return next;
+}
+
 function listRecentTransactions(state) {
   return state.transactions
     .map((item, index) => ({ item, index }))
@@ -722,6 +951,23 @@ function listRecentTransactions(state) {
         note: item.note || '',
       };
     });
+}
+
+function scheduledPlanModel(plan) {
+  const reminderDays = plan.reminderDays || [1, 0];
+  return {
+    ...clone(plan),
+    typeLabel: PLAN_TYPE_LABELS[plan.type] || '固定支出',
+    recurrenceLabel: PLAN_RECURRENCE_LABELS[plan.recurrence] || '待补充',
+    amount: plan.amountCents === null || plan.amountCents === undefined ? '待确认' : formatCents(plan.amountCents),
+    principal: plan.principalCents === null || plan.principalCents === undefined ? '待确认' : formatCents(plan.principalCents),
+    interest: plan.interestCents === null || plan.interestCents === undefined ? '待确认' : formatCents(plan.interestCents),
+    statusLabel: plan.active ? '启用' : '已停用',
+    scheduleLabel: plan.nextDueDate ? `${PLAN_RECURRENCE_LABELS[plan.recurrence] || ''} · 下次 ${plan.nextDueDate}` : '待补充计划信息',
+    reminderLabel: plan.reminderEnabled
+      ? `提前${reminderDays.filter((day) => day > 0).join('、') || '0'}天及当天`
+      : '提醒已关闭',
+  };
 }
 
 function getSettingsModel(state, date = todayIso()) {
@@ -756,7 +1002,11 @@ function getSettingsModel(state, date = todayIso()) {
       : '当前没有待生效的起始日修改',
     accounts: assets.accounts,
     assets,
+    plans: state.plans.map(scheduledPlanModel),
+    pendingPlanItems: state.pendingItems
+      .filter((item) => item.type === 'fixed_plan' && item.status === 'pending')
+      .map((item) => pendingPlanModel(state, item)),
   };
 }
 
-module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, listRecentTransactions, getSettingsModel, STORAGE_KEY, CATEGORY_TREE };
+module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, createScheduledPlan, editScheduledPlan, disableScheduledPlan, processDuePlans, retryPendingPlan, dismissOverduePlanBanner, listRecentTransactions, getSettingsModel, STORAGE_KEY, CATEGORY_TREE };

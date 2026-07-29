@@ -165,3 +165,32 @@
 - Stable `2.01.2510290` 仅用 `Ctrl+B` 重新编译并只读查看：当前/默认预算均为 ¥3000、起始日1、无待生效规则；资产 ¥5700、负债 ¥4020、净资产 ¥1680。
 - Stable Console 显示 Errors: 0、Warnings: 3（环境提示），当前日志无 `timeout`；未点击设置修改、未清除或注入模拟器数据。
 - 最终验收：`npm run build:mini` 生成5个文件；`npm test` 189 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini` 与 `git diff --check` 均退出0，差异严格限于8个白名单文件。
+
+## Phase 5 kickoff
+
+- 基线 HEAD `cac1129fd72e0ae5862d33697727a45d13ccb599`，工作区干净，189 passed、0 failed/skipped/todo。
+- `npm run check`、`npm run build:mini`、`npm run check:mini` 均退出0。
+- 目标：三类计划按发生期幂等自动入账，失败原子化转待处理，并提供重试、提醒、编辑和停用闭环。
+- 顺序：领域计划/发生期 → 应用自动处理与提醒 → app启动/前台及两页交互 → ≥24项测试 → Stable只读复验 → 提交。
+- 最大风险：跨多期补记重复、贷款两笔非原子、短月日期漂移、失败重试产生重复结果。
+- 边界：仅改第五阶段白名单，不改schemaVersion、路由、校验器、依赖、网络或模拟器数据。
+- 未采用 Coze 远程项目工作流：本任务以现有本地仓库为唯一来源，且硬约束禁止网络/云服务及白名单外状态；继续使用本地原生构建和测试。
+
+## Phase 5 implementation
+
+- 计划继续使用既有 `plans/pendingItems/transactions`：发生期键为 `planId@dueDate`，成功流水和待处理均携带该键，重复启动、重开或点击不会重复。
+- 单次、月度、年度推进支持月末31日和年度2月29日锚点恢复；多期遗漏按到期日和计划ID稳定排序逐笔补记。
+- 固定支出、信用卡还款和贷款本金+利息已接入；贷款先完整预检，再原子生成两笔流水，失败只生成一条中文待处理且不改账户、流水或预算。
+- 应用层已提供创建、编辑未来、停用、自动处理、补金额重试、提醒模型和逾期横幅关闭；旧计划无到期日仅标记“待补充计划信息”。
+- `app.js` 在启动和回前台复用同一处理入口，仅状态变化后保存；同日重复检查保留本次执行摘要，跨日无结果时清除旧摘要。
+- 设置页和首页已接入计划表单、三周期、提醒多选、计划列表、空状态、自动执行、待处理重试和逾期关闭，不新增路由或网络。
+- 新增34项真实集成测试，单文件34 passed、0 failed/skipped/todo。
+- 反向验证：临时把同一 `rent@2028-01-20` 发生期的期望流水数从1改为2，单文件以33 passed / 1 failed变红，错误为 `1 !== 2`；随后已还原唯一键断言。
+
+## Phase 5 Stable acceptance
+
+- Stable `2.01.2510290` 使用当前测试 AppID 重新编译；只读核对当前/默认预算均为 ¥3000、起始日1、无待结算周期，资产 ¥5700、负债 ¥4020、净资产 ¥1680，六类账户余额未变。
+- 设置页真实显示三类计划、三种周期、到期日、小程序内提醒和“暂无计划”空状态；首页真实显示“计划与提醒”“暂无计划提醒或待处理项”，今日可自由花仍为 ¥2686.45。
+- 当前 Console 为 Errors: 0、Warnings: 5；警告均为开发者工具/基础库环境提示，当前日志未出现 `timeout`。未清除、注入或修改模拟器业务数据。
+- 两张证据位于 `artifacts/phase5/01-settings-plans.png` 与 `02-home-empty.png`。
+- 最终自动化：`npm run build:mini` 生成5个文件；`npm test` 为223 passed、0 failed/skipped/todo；`npm run check`、`npm run check:mini`、9个小程序 JavaScript 语法检查和 `git diff --check` 均退出0。

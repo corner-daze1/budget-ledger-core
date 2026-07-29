@@ -21,3 +21,9 @@
 .preview-card { margin: 18rpx 0; padding: 22rpx; border-radius: 16rpx; background: #f2eee8; line-height: 1.6; }
 .compact-button { margin-top: 18rpx; }
 .fixed-hint { margin-top: 24rpx; padding-top: 20rpx; border-top: 1rpx solid #e6ded5; color: #7d6e62; font-size: 23rpx; line-height: 1.7; }
+.plan-editor { border: 2rpx solid #d8c8bc; }
+.reminder-options { display: flex; justify-content: space-between; margin: 16rpx 0 24rpx; color: #6f6258; font-size: 24rpx; }
+.plan-list-item { padding: 18rpx 0; border-bottom: 1rpx solid #e8dfd7; }
+.plan-actions { display: flex; justify-content: flex-end; gap: 12rpx; }
+.plan-actions button { margin: 0; }
+.danger { color: #9b4d3a; }

@@ -1,8 +1,11 @@
 // GENERATED FILE. Run npm run build:mini.
-const { actualBudgetCents: calculateActualBudget, budgetDebtCents: calculateBudgetDebt } = require('./budget.js');
+const { actualBudgetCents: calculateActualBudget, budgetDebtCents: calculateBudgetDebt, daysInMonth, formatDate, parseDate } = require('./budget.js');
 
 const ACCOUNT_TYPES = new Set(['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment']);
 const LIABILITY_TYPES = new Set(['credit_card', 'loan']);
+const PLAN_TYPES = new Set(['fixed_expense', 'credit_card_repayment', 'loan_repayment']);
+const PLAN_RECURRENCES = new Set(['one_time', 'monthly', 'yearly']);
+const REMINDER_DAYS = new Set([0, 1, 3]);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -26,7 +29,7 @@ function nonNegativeCents(value, label) {
 }
 
 function assertDate(date) {
-  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new TypeError('date must be YYYY-MM-DD');
+  parseDate(date);
 }
 
 function nextTransactionId(state) {
@@ -327,12 +330,107 @@ function recordRefund(state, { id, date, originalTransactionId, amountCents, sou
   return withTransaction(next, transactionBase(next, { id, date, kind: 'refund', amountCents, accountId: original.accountId, budgetPeriodId: original.budgetPeriodId, budgetImpactCents, rewardImpactCents, source, relatedTransactionId: originalTransactionId }));
 }
 
-function createFixedPlan(state, { id, name, amountCents = null, accountId, categoryLevel1, source = null, active = true }) {
+function normalizeReminderDays(reminderDays = [1, 0]) {
+  if (!Array.isArray(reminderDays)) throw new TypeError('reminderDays must be an array');
+  const normalized = [...new Set(reminderDays)];
+  for (const day of normalized) {
+    integer(day, 'reminderDay');
+    if (!REMINDER_DAYS.has(day)) throw new RangeError('reminder day must be 3, 1, or 0');
+  }
+  return normalized.sort((left, right) => right - left);
+}
+
+function validatePlanAccounts(state, plan) {
+  requireAsset(state, plan.accountId);
+  if (plan.type === 'credit_card_repayment') requireLiability(state, plan.targetLiabilityAccountId, 'credit_card');
+  if (plan.type === 'loan_repayment') requireLiability(state, plan.targetLiabilityAccountId, 'loan');
+}
+
+function normalizedPlan(state, details, existing = null) {
+  const plan = {
+    ...(existing || {}),
+    ...details,
+    type: details.type ?? existing?.type ?? 'fixed_expense',
+    amountCents: details.amountCents !== undefined ? details.amountCents : (existing?.amountCents ?? null),
+    principalCents: details.principalCents !== undefined ? details.principalCents : (existing?.principalCents ?? null),
+    interestCents: details.interestCents !== undefined ? details.interestCents : (existing?.interestCents ?? null),
+    targetLiabilityAccountId: details.targetLiabilityAccountId !== undefined
+      ? details.targetLiabilityAccountId
+      : (existing?.targetLiabilityAccountId ?? null),
+    recurrence: details.recurrence !== undefined
+      ? details.recurrence
+      : (existing?.recurrence ?? (details.nextDueDate ? 'one_time' : null)),
+    nextDueDate: details.nextDueDate !== undefined ? details.nextDueDate : (existing?.nextDueDate ?? null),
+    active: details.active !== undefined ? Boolean(details.active) : (existing?.active ?? true),
+    reminderEnabled: details.reminderEnabled !== undefined
+      ? Boolean(details.reminderEnabled)
+      : (existing?.reminderEnabled ?? false),
+    reminderDays: normalizeReminderDays(details.reminderDays ?? existing?.reminderDays ?? [1, 0]),
+  };
+  if (!PLAN_TYPES.has(plan.type)) throw new RangeError('unknown fixed plan type');
+  if (plan.amountCents !== null) positiveCents(plan.amountCents);
+  if (plan.principalCents !== null) positiveCents(plan.principalCents, 'principalCents');
+  if (plan.interestCents !== null) positiveCents(plan.interestCents, 'interestCents');
+  if (plan.recurrence !== null && !PLAN_RECURRENCES.has(plan.recurrence)) throw new RangeError('unknown fixed plan recurrence');
+  if (plan.nextDueDate !== null) {
+    const point = parseDate(plan.nextDueDate);
+    if (details.nextDueDate !== undefined || !existing?.anchorDay) {
+      plan.anchorDay = point.day;
+      plan.anchorMonth = point.month;
+    }
+  }
+  validatePlanAccounts(state, plan);
+  return plan;
+}
+
+function createFixedPlan(state, details) {
+  const {
+    id,
+    name,
+    amountCents = null,
+    accountId,
+    categoryLevel1,
+    source = null,
+    active = true,
+  } = details;
   if (!id || state.plans.some((item) => item.id === id)) throw new Error(`duplicate plan id: ${id}`);
-  if (amountCents !== null) positiveCents(amountCents);
-  requireAsset(state, accountId);
+  const usesLifecycle = ['type', 'principalCents', 'interestCents', 'targetLiabilityAccountId', 'recurrence', 'nextDueDate', 'reminderEnabled', 'reminderDays']
+    .some((field) => Object.prototype.hasOwnProperty.call(details, field));
+  if (!usesLifecycle) {
+    if (amountCents !== null) positiveCents(amountCents);
+    requireAsset(state, accountId);
+    const next = clone(state);
+    next.plans.push({ id, name: name || id, amountCents, accountId, categoryLevel1, source, active });
+    return next;
+  }
+  const plan = normalizedPlan(state, {
+    id,
+    name: name || id,
+    type: details.type ?? 'fixed_expense',
+    amountCents,
+    principalCents: details.principalCents ?? null,
+    interestCents: details.interestCents ?? null,
+    accountId,
+    targetLiabilityAccountId: details.targetLiabilityAccountId ?? null,
+    categoryLevel1,
+    recurrence: details.recurrence ?? (details.nextDueDate ? 'one_time' : null),
+    nextDueDate: details.nextDueDate ?? null,
+    reminderEnabled: details.reminderEnabled ?? false,
+    reminderDays: details.reminderDays ?? [1, 0],
+    source,
+    active,
+  });
   const next = clone(state);
-  next.plans.push({ id, name: name || id, amountCents, accountId, categoryLevel1, source, active });
+  next.plans.push(plan);
+  return next;
+}
+
+function editFixedPlan(state, planId, changes) {
+  const existing = state.plans.find((item) => item.id === planId);
+  if (!existing) throw new Error(`unknown plan: ${planId}`);
+  const plan = normalizedPlan(state, { ...changes, id: existing.id }, existing);
+  const next = clone(state);
+  Object.assign(next.plans.find((item) => item.id === planId), plan);
   return next;
 }
 
@@ -344,17 +442,222 @@ function revokeFixedPlan(state, planId) {
   return next;
 }
 
+function fixedPlanOccurrenceKey(planId, dueDate) {
+  if (!planId) throw new Error('planId is required');
+  assertDate(dueDate);
+  return `${planId}@${dueDate}`;
+}
+
+function occurrenceWasHandled(state, occurrenceKey, ignoredPendingId = null) {
+  return state.transactions.some((item) => item.occurrenceKey === occurrenceKey)
+    || state.pendingItems.some((item) => item.id !== ignoredPendingId && item.occurrenceKey === occurrenceKey);
+}
+
+const PENDING_REASON_TEXT = {
+  amount_required: '金额未填写',
+  insufficient_balance: '账户余额不足',
+  liability_insufficient: '当前欠款不足',
+  account_invalid: '账户已失效',
+  plan_info_required: '待补充计划信息',
+};
+
+function executionFailureReason(state, plan) {
+  if (plan.type === 'loan_repayment') {
+    if (plan.principalCents === null || plan.interestCents === null) return 'amount_required';
+  } else if (plan.amountCents === null) return 'amount_required';
+  let asset;
+  let liability;
+  try {
+    asset = requireAsset(state, plan.accountId);
+    if (plan.type === 'credit_card_repayment') liability = requireLiability(state, plan.targetLiabilityAccountId, 'credit_card');
+    if (plan.type === 'loan_repayment') liability = requireLiability(state, plan.targetLiabilityAccountId, 'loan');
+  } catch {
+    return 'account_invalid';
+  }
+  const requiredCents = plan.type === 'loan_repayment'
+    ? plan.principalCents + plan.interestCents
+    : plan.amountCents;
+  if (asset.balanceCents < requiredCents) return 'insufficient_balance';
+  if (plan.type === 'credit_card_repayment' && liability.balanceCents < plan.amountCents) return 'liability_insufficient';
+  if (plan.type === 'loan_repayment' && liability.balanceCents < plan.principalCents) return 'liability_insufficient';
+  return null;
+}
+
+function withPendingOccurrence(state, plan, dueDate, occurrenceKey, reason) {
+  if (occurrenceWasHandled(state, occurrenceKey)) return state;
+  const next = clone(state);
+  next.pendingItems.push({
+    id: `pending-${occurrenceKey}`,
+    type: 'fixed_plan',
+    planId: plan.id,
+    date: dueDate,
+    dueDate,
+    occurrenceKey,
+    reason,
+    reasonText: PENDING_REASON_TEXT[reason],
+    status: 'pending',
+    planSnapshot: clone(plan),
+    relatedTransactionIds: [],
+  });
+  return next;
+}
+
+function tagTransactions(state, transactionIds, plan, dueDate, occurrenceKey) {
+  const next = clone(state);
+  for (const transactionId of transactionIds) {
+    const transaction = next.transactions.find((item) => item.id === transactionId);
+    transaction.planId = plan.id;
+    transaction.dueDate = dueDate;
+    transaction.occurrenceKey = occurrenceKey;
+  }
+  return next;
+}
+
+function executePlanOccurrence(state, plan, dueDate, {
+  transactionId = null,
+  ignoredPendingId = null,
+  createPendingOnFailure = true,
+} = {}) {
+  const occurrenceKey = fixedPlanOccurrenceKey(plan.id, dueDate);
+  if (occurrenceWasHandled(state, occurrenceKey, ignoredPendingId)) return state;
+  const failureReason = executionFailureReason(state, plan);
+  if (failureReason) {
+    if (!createPendingOnFailure) throw new Error(PENDING_REASON_TEXT[failureReason]);
+    return withPendingOccurrence(state, plan, dueDate, occurrenceKey, failureReason);
+  }
+  const source = plan.source || `plan:${plan.id}`;
+  if (plan.type === 'credit_card_repayment') {
+    const id = transactionId || `plan-${occurrenceKey}`;
+    const next = recordCreditCardRepayment(state, {
+      id,
+      date: dueDate,
+      fromAccountId: plan.accountId,
+      creditCardAccountId: plan.targetLiabilityAccountId,
+      amountCents: plan.amountCents,
+      source,
+    });
+    return tagTransactions(next, [id], plan, dueDate, occurrenceKey);
+  }
+  if (plan.type === 'loan_repayment') {
+    const principalId = `${transactionId || `plan-${occurrenceKey}`}-principal`;
+    const interestId = `${transactionId || `plan-${occurrenceKey}`}-interest`;
+    let next = recordLoanPrincipalRepayment(state, {
+      id: principalId,
+      date: dueDate,
+      cashAccountId: plan.accountId,
+      loanAccountId: plan.targetLiabilityAccountId,
+      amountCents: plan.principalCents,
+      source,
+    });
+    next = recordLoanInterestPayment(next, {
+      id: interestId,
+      date: dueDate,
+      cashAccountId: plan.accountId,
+      loanAccountId: plan.targetLiabilityAccountId,
+      amountCents: plan.interestCents,
+      source,
+    });
+    return tagTransactions(next, [principalId, interestId], plan, dueDate, occurrenceKey);
+  }
+  const id = transactionId || `plan-${occurrenceKey}`;
+  const next = recordFixedExpense(state, {
+    id,
+    date: dueDate,
+    accountId: plan.accountId,
+    amountCents: plan.amountCents,
+    categoryLevel1: plan.categoryLevel1,
+    source,
+  });
+  return tagTransactions(next, [id], plan, dueDate, occurrenceKey);
+}
+
 function executeFixedPlan(state, { planId, date, transactionId = null }) {
   const plan = state.plans.find((item) => item.id === planId);
   if (!plan) throw new Error(`unknown plan: ${planId}`);
   if (!plan.active) throw new Error('fixed plan is revoked');
-  const pendingReason = plan.amountCents === null ? 'amount_required' : (account(state, plan.accountId).balanceCents < plan.amountCents ? 'insufficient_balance' : null);
-  if (pendingReason) {
-    const next = clone(state);
-    next.pendingItems.push({ id: `pending-${planId}-${date}`, type: 'fixed_plan', planId, date, reason: pendingReason, status: 'pending' });
-    return next;
+  return executePlanOccurrence(state, plan, date, { transactionId });
+}
+
+function scheduledDate(year, month, anchorDay) {
+  return formatDate({ year, month, day: Math.min(anchorDay, daysInMonth(year, month)) });
+}
+
+function nextFixedPlanDueDate(plan, dueDate) {
+  const point = parseDate(dueDate);
+  if (plan.recurrence === 'one_time') return null;
+  if (plan.recurrence === 'monthly') {
+    const next = point.month === 12 ? { year: point.year + 1, month: 1 } : { year: point.year, month: point.month + 1 };
+    return scheduledDate(next.year, next.month, plan.anchorDay || point.day);
   }
-  return recordFixedExpense(state, { id: transactionId || `plan-${planId}-${date}`, date, accountId: plan.accountId, amountCents: plan.amountCents, categoryLevel1: plan.categoryLevel1, source: plan.source || `plan:${planId}` });
+  if (plan.recurrence === 'yearly') {
+    return scheduledDate(point.year + 1, plan.anchorMonth || point.month, plan.anchorDay || point.day);
+  }
+  return null;
+}
+
+function advanceFixedPlan(state, planId, handledDueDate) {
+  const target = state.plans.find((item) => item.id === planId);
+  if (!target) throw new Error(`unknown plan: ${planId}`);
+  if (target.nextDueDate !== handledDueDate) return state;
+  const next = clone(state);
+  const mutable = next.plans.find((item) => item.id === planId);
+  mutable.nextDueDate = nextFixedPlanDueDate(mutable, handledDueDate);
+  if (mutable.nextDueDate === null) mutable.active = false;
+  return next;
+}
+
+function markLegacyPlanPending(state, planId) {
+  const plan = state.plans.find((item) => item.id === planId);
+  if (!plan) throw new Error(`unknown plan: ${planId}`);
+  const occurrenceKey = `${planId}@missing-plan-info`;
+  if (state.pendingItems.some((item) => item.occurrenceKey === occurrenceKey)) return state;
+  const next = clone(state);
+  next.pendingItems.push({
+    id: `pending-${occurrenceKey}`,
+    type: 'fixed_plan',
+    planId,
+    date: null,
+    dueDate: null,
+    occurrenceKey,
+    reason: 'plan_info_required',
+    reasonText: PENDING_REASON_TEXT.plan_info_required,
+    status: 'pending',
+    planSnapshot: clone(plan),
+    relatedTransactionIds: [],
+  });
+  return next;
+}
+
+function retryFixedPlanPending(state, {
+  pendingId,
+  amountCents,
+  principalCents,
+  interestCents,
+}) {
+  const pending = state.pendingItems.find((item) => item.id === pendingId);
+  if (!pending) throw new Error(`unknown pending item: ${pendingId}`);
+  if (pending.status !== 'pending') return state;
+  if (!pending.dueDate) throw new Error('请先补充计划到期日');
+  const currentPlan = state.plans.find((item) => item.id === pending.planId);
+  const snapshot = clone(pending.planSnapshot || currentPlan);
+  if (!snapshot) throw new Error('计划不存在');
+  if (amountCents !== undefined) snapshot.amountCents = amountCents;
+  if (principalCents !== undefined) snapshot.principalCents = principalCents;
+  if (interestCents !== undefined) snapshot.interestCents = interestCents;
+  if (snapshot.amountCents !== null) positiveCents(snapshot.amountCents);
+  if (snapshot.principalCents !== null) positiveCents(snapshot.principalCents, 'principalCents');
+  if (snapshot.interestCents !== null) positiveCents(snapshot.interestCents, 'interestCents');
+  const transactionCount = state.transactions.length;
+  let next = executePlanOccurrence(state, snapshot, pending.dueDate, {
+    ignoredPendingId: pendingId,
+    createPendingOnFailure: false,
+  });
+  next = clone(next);
+  const mutablePending = next.pendingItems.find((item) => item.id === pendingId);
+  mutablePending.status = 'resolved';
+  mutablePending.resolvedAt = pending.dueDate;
+  mutablePending.relatedTransactionIds = next.transactions.slice(transactionCount).map((item) => item.id);
+  return next;
 }
 
 function closeBudgetPeriod(state, periodId) {
@@ -377,4 +680,4 @@ function totals(state) {
   return { totalAssetsCents, totalLiabilitiesCents, netAssetsCents: totalAssetsCents - totalLiabilitiesCents, rewardBalanceCents: state.rewardBalanceCents };
 }
 
-module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, recordRewardPayment, recordRefund, createFixedPlan, revokeFixedPlan, executeFixedPlan, closeBudgetPeriod, budgetForPeriod, totals };
+module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, recordRewardPayment, recordRefund, createFixedPlan, editFixedPlan, revokeFixedPlan, fixedPlanOccurrenceKey, executeFixedPlan, nextFixedPlanDueDate, advanceFixedPlan, markLegacyPlanPending, retryFixedPlanPending, closeBudgetPeriod, budgetForPeriod, totals };
