@@ -67,25 +67,64 @@ Page({
     generatedFileType: '',
     canShareGeneratedFile: false,
     canCopyGeneratedText: false,
+    expandedSection: 'budget',
+    feedbackSection: 'budget',
+    budgetSummary: '',
+    planSummary: '',
+    assetSummary: '',
+    dataSummary: '数据仅存本机',
+    busyAction: '',
   },
 
   onShow() {
     const app = getApp();
-    if (app.globalData.storageError) this.setData({ error: app.globalData.storageError });
+    if (app.globalData.storageError) this.showSectionFeedback('data', { error: app.globalData.storageError });
     if (app.globalData.state) {
       this.setData({ initialized: true });
       this.refreshAssetCenter();
     }
   },
 
+  toggleSection(event) {
+    const section = event.currentTarget.dataset.section;
+    this.setData({
+      expandedSection: this.data.expandedSection === section ? '' : section,
+    });
+  },
+
+  showSectionFeedback(section, { error = '', notice = '' }) {
+    this.setData({
+      expandedSection: section,
+      feedbackSection: section,
+      error,
+      notice,
+    });
+  },
+
+  startBusy(action, section) {
+    if (this.data.busyAction) return false;
+    this.setData({ busyAction: action, expandedSection: section });
+    return true;
+  },
+
+  finishBusy(action) {
+    if (this.data.busyAction === action) this.setData({ busyAction: '' });
+  },
+
   refreshAssetCenter() {
     const state = getApp().globalData.state;
     const settings = core.getSettingsModel(state, core.todayIso());
+    const activePlanCount = settings.plans.filter((item) => item.active).length;
+    const pendingPlanCount = settings.pendingPlanItems.length;
     this.setData({
       settings,
       assets: settings.assets,
       budgetEditYuan: this.data.budgetEditYuan || String(settings.defaultBudgetCents / 100),
       startDayEdit: this.data.startDayEdit || String(settings.pendingStartDay || settings.startDay),
+      budgetSummary: `${settings.currentBaseBudget} · 每月 ${settings.startDay} 日`,
+      planSummary: `${activePlanCount} 个启用计划 · ${pendingPlanCount} 项待处理`,
+      assetSummary: `资产 ${settings.assets.totalAssets} · 负债 ${settings.assets.totalLiabilities} · 净资产 ${settings.assets.netAssets}`,
+      dataSummary: '数据仅存本机',
       error: '',
     });
     this.refreshOperationAccounts(this.data.operationIndex);
@@ -140,7 +179,7 @@ Page({
         const scope = BUDGET_SCOPE_VALUES[tapIndex];
         const label = BUDGET_SCOPE_LABELS[tapIndex];
         if (this.data.settings.needsSettlement && scope !== 'next_and_future') {
-          this.setData({ error: '本期待结算，只能修改下周期及以后的默认预算', notice: '' });
+          this.showSectionFeedback('budget', { error: '本期待结算，只能修改下周期及以后的默认预算' });
           return;
         }
         wx.showModal({
@@ -157,10 +196,10 @@ Page({
                 date: core.todayIso(),
               });
               app.saveState();
-              this.setData({ notice: `预算已按“${label}”更新`, error: '' });
+              this.showSectionFeedback('budget', { notice: `预算已按“${label}”更新` });
               this.refreshAssetCenter();
             } catch (error) {
-              this.setData({ error: error.message, notice: '' });
+              this.showSectionFeedback('budget', { error: error.message });
             }
           },
         });
@@ -176,15 +215,17 @@ Page({
         newStartDay: Number(this.data.startDayEdit),
         date: core.todayIso(),
       });
-      this.setData({ startDayPreview: preview, error: '', notice: '' });
+      this.setData({ startDayPreview: preview });
+      this.showSectionFeedback('budget', {});
     } catch (error) {
-      this.setData({ startDayPreview: null, error: error.message, notice: '' });
+      this.setData({ startDayPreview: null });
+      this.showSectionFeedback('budget', { error: error.message });
     }
   },
   confirmStartDayChange() {
     const preview = this.data.startDayPreview;
     if (!preview) {
-      this.setData({ error: '请先预览起始日变更' });
+      this.showSectionFeedback('budget', { error: '请先预览起始日变更' });
       return;
     }
     wx.showModal({
@@ -200,10 +241,11 @@ Page({
             date: core.todayIso(),
           });
           app.saveState();
-          this.setData({ startDayPreview: null, notice: preview.mode === 'immediate' ? '空周期已立即调整' : '待生效起始日已保存', error: '' });
+          this.setData({ startDayPreview: null });
+          this.showSectionFeedback('budget', { notice: preview.mode === 'immediate' ? '空周期已立即调整' : '待生效起始日已保存' });
           this.refreshAssetCenter();
         } catch (error) {
-          this.setData({ error: error.message, notice: '' });
+          this.showSectionFeedback('budget', { error: error.message });
         }
       },
     });
@@ -219,10 +261,11 @@ Page({
           const app = getApp();
           app.globalData.state = core.cancelPendingStartDayChange(app.globalData.state, { date: core.todayIso() });
           app.saveState();
-          this.setData({ startDayPreview: null, startDayEdit: String(app.globalData.state.appSettings.startDay), notice: '待生效起始日已取消', error: '' });
+          this.setData({ startDayPreview: null, startDayEdit: String(app.globalData.state.appSettings.startDay) });
+          this.showSectionFeedback('budget', { notice: '待生效起始日已取消' });
           this.refreshAssetCenter();
         } catch (error) {
-          this.setData({ error: error.message, notice: '' });
+          this.showSectionFeedback('budget', { error: error.message });
         }
       },
     });
@@ -270,12 +313,11 @@ Page({
         newAccountName: '',
         newAccountBalanceYuan: '0',
         newAccountCostBasisYuan: '0',
-        notice: '账户已添加',
-        error: '',
       });
+      this.showSectionFeedback('assets', { notice: '账户已添加' });
       this.refreshAssetCenter();
     } catch (error) {
-      this.setData({ error: error.message, notice: '' });
+      this.showSectionFeedback('assets', { error: error.message });
     }
   },
   onOperationChange(event) {
@@ -305,10 +347,11 @@ Page({
       ];
       app.globalData.state = operations[this.data.operationIndex]();
       app.saveState();
-      this.setData({ operationAmountYuan: '', notice: `${OPERATION_LABELS[this.data.operationIndex]}已记录`, error: '' });
+      this.setData({ operationAmountYuan: '' });
+      this.showSectionFeedback('assets', { notice: `${OPERATION_LABELS[this.data.operationIndex]}已记录` });
       this.refreshAssetCenter();
     } catch (error) {
-      this.setData({ error: error.message, notice: '' });
+      this.showSectionFeedback('assets', { error: error.message });
     }
   },
   onPlanTypeChange(event) {
@@ -378,11 +421,11 @@ Page({
         ? core.editScheduledPlan(app.globalData.state, { planId: this.data.planEditId, ...details })
         : core.createScheduledPlan(app.globalData.state, details);
       app.saveState();
-      this.setData({ notice: this.data.planEditId ? '未来计划已更新，历史流水未改变' : '计划已创建', error: '' });
+      this.showSectionFeedback('plan', { notice: this.data.planEditId ? '未来计划已更新，历史流水未改变' : '计划已创建' });
       this.resetPlanForm();
       this.refreshAssetCenter();
     } catch (error) {
-      this.setData({ error: error.message, notice: '' });
+      this.showSectionFeedback('plan', { error: error.message });
     }
   },
   editScheduledPlan(event) {
@@ -403,6 +446,8 @@ Page({
       planReminder3Checked: (plan.reminderDays || [1, 0]).includes(3),
       planReminder1Checked: (plan.reminderDays || [1, 0]).includes(1),
       planReminder0Checked: (plan.reminderDays || [1, 0]).includes(0),
+      expandedSection: 'plan',
+      feedbackSection: 'plan',
       notice: '正在编辑未来计划',
       error: '',
     });
@@ -423,10 +468,10 @@ Page({
           const app = getApp();
           app.globalData.state = core.disableScheduledPlan(app.globalData.state, planId);
           app.saveState();
-          this.setData({ notice: '计划已停用', error: '' });
+          this.showSectionFeedback('plan', { notice: '计划已停用' });
           this.refreshAssetCenter();
         } catch (error) {
-          this.setData({ error: error.message, notice: '' });
+          this.showSectionFeedback('plan', { error: error.message });
         }
       },
     });
@@ -439,6 +484,8 @@ Page({
     return sizeBytes < 1024 ? `${sizeBytes} B` : `${(sizeBytes / 1024).toFixed(1)} KiB`;
   },
   async exportData(kind) {
+    const action = kind === 'backup' ? 'export-backup' : 'export-csv';
+    if (!this.startBusy(action, 'data')) return false;
     let generated = null;
     try {
       const state = getApp().globalData.state;
@@ -456,13 +503,10 @@ Page({
         generatedFileType: kind,
         canShareGeneratedFile: true,
         canCopyGeneratedText: true,
-        notice: `已生成 ${file.filename}，仅在你主动操作时分享或复制`,
-        error: '',
       });
+      this.showSectionFeedback('data', { notice: `已生成 ${file.filename}，仅在你主动操作时分享或复制` });
     } catch (error) {
       this.setData({
-        error: `${error.message}；如平台不支持文件，可使用下方手动复制`,
-        notice: '',
         canShareGeneratedFile: false,
         canCopyGeneratedText: Boolean(generated?.content),
         generatedFileName: generated ? `${generated.filename}（未写入文件）` : '',
@@ -470,33 +514,47 @@ Page({
         generatedFileKind: generated ? (kind === 'backup' ? 'JSON 完整备份，可复制后保存并用于恢复' : 'CSV 账单，可复制后保存，仅供查看') : '',
         generatedFileType: generated ? kind : '',
       });
+      this.showSectionFeedback('data', { error: `${error.message}；如平台不支持文件，可使用下方手动复制` });
+    } finally {
+      this.finishBusy(action);
     }
+    return true;
   },
   exportBackup() { return this.exportData('backup'); },
   exportCsv() { return this.exportData('csv'); },
   async shareGeneratedFile() {
+    if (!this.startBusy('share-file', 'data')) return false;
     if (!this._generatedFile?.filePath) {
-      this.setData({ error: '请先生成文件' });
-      return;
+      this.showSectionFeedback('data', { error: '请先生成文件' });
+      this.finishBusy('share-file');
+      return false;
     }
     try {
       await this.dataFiles().shareFile(this._generatedFile.filePath);
-      this.setData({ notice: '已交给微信分享面板；是否发送由你决定', error: '' });
+      this.showSectionFeedback('data', { notice: '已交给微信分享面板；是否发送由你决定' });
     } catch (error) {
-      this.setData({ error: `${error.message}；可改用手动复制`, notice: '' });
+      this.showSectionFeedback('data', { error: `${error.message}；可改用手动复制` });
+    } finally {
+      this.finishBusy('share-file');
     }
+    return true;
   },
   async copyGeneratedText() {
+    if (!this.startBusy('copy-file', 'data')) return false;
     if (!this._generatedFile?.content) {
-      this.setData({ error: '请先生成 JSON 或 CSV' });
-      return;
+      this.showSectionFeedback('data', { error: '请先生成 JSON 或 CSV' });
+      this.finishBusy('copy-file');
+      return false;
     }
     try {
       await this.dataFiles().copyText(this._generatedFile.content);
-      this.setData({ notice: '已按你的操作复制内容，请自行选择存放位置', error: '' });
+      this.showSectionFeedback('data', { notice: '已按你的操作复制内容，请自行选择存放位置' });
     } catch (error) {
-      this.setData({ error: error.message, notice: '' });
+      this.showSectionFeedback('data', { error: error.message });
+    } finally {
+      this.finishBusy('copy-file');
     }
+    return true;
   },
   onPastedBackupInput(event) {
     this.setData({ pastedBackupText: event.detail.value, backupPreview: null, restorePhrase: '' });
@@ -506,7 +564,8 @@ Page({
     const result = core.previewBackupRestore(text, metadata);
     if (!result.ok) {
       this._restoreCandidate = null;
-      this.setData({ backupPreview: null, error: result.error, notice: '' });
+      this.setData({ backupPreview: null });
+      this.showSectionFeedback('data', { error: result.error });
       return;
     }
     this._restoreCandidate = result.candidate;
@@ -517,33 +576,36 @@ Page({
       },
       pastedBackupText: '',
       restorePhrase: '',
-      error: '',
-      notice: '预检通过；尚未写入，恢复前还需输入确认词并确认弹窗',
     });
+    this.showSectionFeedback('data', { notice: '预检通过；尚未写入，恢复前还需输入确认词并确认弹窗' });
   },
   previewPastedBackup() {
     this.previewBackupText(this.data.pastedBackupText, { fileName: '粘贴的 JSON' });
   },
   async chooseBackupFile() {
+    if (!this.startBusy('choose-backup', 'data')) return false;
     try {
       const chosen = await this.dataFiles().chooseBackupText(core.MAX_BACKUP_BYTES);
       if (chosen.cancelled) {
-        this.setData({ notice: '已取消选择，现有数据未改变', error: '' });
-        return;
+        this.showSectionFeedback('data', { notice: '已取消选择，现有数据未改变' });
+        return true;
       }
       this.previewBackupText(chosen.text, { fileName: chosen.fileName, sizeBytes: chosen.sizeBytes });
     } catch (error) {
-      this.setData({ error: error.message, notice: '' });
+      this.showSectionFeedback('data', { error: error.message });
+    } finally {
+      this.finishBusy('choose-backup');
     }
+    return true;
   },
   onRestorePhraseInput(event) { this.setData({ restorePhrase: event.detail.value }); },
   requestRestore() {
     if (!this._restoreCandidate) {
-      this.setData({ error: '请先选择或粘贴 JSON 并通过预检' });
+      this.showSectionFeedback('data', { error: '请先选择或粘贴 JSON 并通过预检' });
       return;
     }
     if (this.data.restorePhrase !== '恢复') {
-      this.setData({ error: '请输入“恢复”后再继续' });
+      this.showSectionFeedback('data', { error: '请输入“恢复”后再继续' });
       return;
     }
     wx.showModal({
@@ -552,7 +614,7 @@ Page({
       confirmText: '确认恢复',
       success: ({ confirm }) => {
         if (!confirm) {
-          this.setData({ notice: '已取消恢复，现有数据未改变', error: '' });
+          this.showSectionFeedback('data', { notice: '已取消恢复，现有数据未改变' });
           return;
         }
         const result = core.commitBackupRestore(getApp().storageAdapter(), this._restoreCandidate, {
@@ -560,7 +622,7 @@ Page({
           confirmed: true,
         });
         if (!result.ok) {
-          this.setData({ error: result.error, notice: '' });
+          this.showSectionFeedback('data', { error: result.error });
           return;
         }
         getApp().applyRestoredState(result.state);
@@ -573,7 +635,7 @@ Page({
   onClearPhraseInput(event) { this.setData({ clearPhrase: event.detail.value }); },
   requestClearData() {
     if (this.data.clearPhrase !== '清除') {
-      this.setData({ error: '请输入“清除”后再继续' });
+      this.showSectionFeedback('data', { error: '请输入“清除”后再继续' });
       return;
     }
     wx.showModal({
@@ -583,9 +645,10 @@ Page({
       confirmColor: '#9b4d3a',
       success: async ({ confirm }) => {
         if (!confirm) {
-          this.setData({ notice: '已取消清除，现有数据未改变', error: '' });
+          this.showSectionFeedback('data', { notice: '已取消清除，现有数据未改变' });
           return;
         }
+        if (!this.startBusy('clear-data', 'data')) return;
         try {
           await this.dataFiles().removeGeneratedFiles();
           const result = core.clearLocalLedger(getApp().storageAdapter(), { phrase: '清除', confirmed: true });
@@ -595,7 +658,9 @@ Page({
           getApp().globalData.planRunSummary = null;
           wx.reLaunch({ url: '/pages/settings/settings' });
         } catch (error) {
-          this.setData({ error: error.message, notice: '' });
+          this.showSectionFeedback('data', { error: error.message });
+        } finally {
+          this.finishBusy('clear-data');
         }
       },
     });

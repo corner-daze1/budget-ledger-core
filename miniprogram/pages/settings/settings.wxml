@@ -1,10 +1,10 @@
 <view class="page">
   <view class="eyebrow">YONGDU / ASSETS</view>
-  <view class="title">{{initialized ? '资产中心' : '先把规则设好'}}</view>
-  <view class="subtitle">{{initialized ? '资产、负债和预算各守各的账。' : '预算只管每月可自由安排的部分，固定开支会单独记录。'}}</view>
+  <view class="title">{{initialized ? '设置与资产' : '先把规则设好'}}</view>
+  <view class="subtitle">{{initialized ? '预算、计划、资产和数据分区管理，展开当前要做的事。' : '预算只管每月可自由安排的部分，固定开支会单独记录。'}}</view>
 
-  <view wx:if="{{error}}" class="error">{{error}}</view>
-  <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+  <view wx:if="{{!initialized && error}}" class="error">{{error}}</view>
+  <view wx:if="{{!initialized && notice}}" class="notice">{{notice}}</view>
 
   <block wx:if="{{!initialized}}">
     <view class="card">
@@ -23,170 +23,194 @@
         <button wx:if="{{accounts.length > 1}}" class="link-button" data-index="{{index}}" bindtap="removeAccount">移除账户</button>
       </block>
       <button class="secondary-button" bindtap="addInitialAccount">＋再加一个账户</button>
-      <view class="hint">首次设置先建立现金、储蓄卡或电子钱包；进入资产中心后可补齐信用卡、借贷和投资。</view>
+      <view class="hint">首次设置先建立现金、储蓄卡或电子钱包；进入设置后可补齐信用卡、借贷和投资。</view>
     </view>
     <button class="primary-button" bindtap="submit">开始使用</button>
   </block>
 
   <block wx:if="{{initialized && assets}}">
-    <view class="card lifecycle-card">
-      <view class="card-title">预算设置</view>
-      <view class="setting-line"><text>当前周期</text><text>{{settings.currentPeriodStartDate}} 至 {{settings.currentPeriodEndDate}}</text></view>
-      <view class="setting-line"><text>当前周期基础预算</text><text>{{settings.currentBaseBudget}}</text></view>
-      <view class="setting-line"><text>以后周期默认预算</text><text>{{settings.defaultBudget}}</text></view>
-      <view class="setting-line"><text>当前周期起始日</text><text>每月 {{settings.startDay}} 日</text></view>
-      <view class="setting-line"><text>待生效起始日</text><text>{{settings.pendingStartDay ? '每月 ' + settings.pendingStartDay + ' 日' : '无'}}</text></view>
-      <view class="hint">{{settings.pendingExplanation}}</view>
-      <view wx:if="{{settings.needsSettlement}}" class="warning">本期待结算：只能修改“下周期及以后”的默认预算，暂不能修改起始日。</view>
-
-      <view class="field"><text class="field-label">新的月度预算</text><input class="field-input" type="digit" value="{{budgetEditYuan}}" bindinput="onBudgetEditInput" placeholder="例如 3200" /></view>
-      <button class="secondary-button" bindtap="chooseBudgetScope">选择范围并修改预算</button>
-      <view class="scope-hint">可选：仅本周期／本周期及以后／下周期及以后；提交前会再次确认。</view>
-
-      <view class="field"><text class="field-label">新的周期起始日</text><input class="field-input" type="number" value="{{startDayEdit}}" bindinput="onStartDayEditInput" placeholder="1—31" /></view>
-      <button class="secondary-button" bindtap="previewStartDayChange" disabled="{{!settings.canChangeStartDay}}">预览起始日变更</button>
-      <view wx:if="{{startDayPreview}}" class="preview-card">
-        <view>{{startDayPreview.explanation}}</view>
-        <view class="hint">历史周期与旧账保持原日期；尚未生效前可取消或重新改期。</view>
-        <button class="primary-button compact-button" bindtap="confirmStartDayChange">确认设置</button>
+    <view class="accordion">
+      <view class="accordion-header" data-section="budget" bindtap="toggleSection" aria-expanded="{{expandedSection === 'budget'}}">
+        <view class="accordion-copy"><view class="accordion-title">预算与周期</view><view class="accordion-summary">{{budgetSummary}}</view></view>
+        <text class="accordion-mark">{{expandedSection === 'budget' ? '−' : '＋'}}</text>
       </view>
-      <button wx:if="{{settings.pendingStartDay && settings.pendingStage === 'pending'}}" class="link-button" bindtap="cancelPendingStartDayChange">取消待生效起始日</button>
-      <view class="fixed-hint">房租、房贷、车贷等固定开支不建议计入可控预算，请在记账时关闭“计入可控预算”。</view>
-    </view>
-
-    <view class="summary-grid">
-      <view class="summary-card"><text>总资产</text><strong>{{assets.totalAssets}}</strong></view>
-      <view class="summary-card liability"><text>总负债</text><strong>{{assets.totalLiabilities}}</strong></view>
-      <view class="summary-card net"><text>净资产</text><strong>{{assets.netAssets}}</strong></view>
-      <view class="summary-card"><text>奖励余额</text><strong>{{assets.rewardBalance}}</strong></view>
-    </view>
-
-    <view class="section-title">账户</view>
-    <view wx:for="{{assets.accounts}}" wx:key="id" class="account-card">
-      <view>
-        <view class="account-name">{{item.name}}</view>
-        <view class="account-type">{{item.typeLabel}}{{item.isInvestment ? ' · 投入成本 ' + item.costBasis : ''}}</view>
+      <view wx:if="{{expandedSection === 'budget'}}" class="accordion-body">
+        <view wx:if="{{feedbackSection === 'budget' && error}}" class="error section-feedback">{{error}}</view>
+        <view wx:if="{{feedbackSection === 'budget' && notice}}" class="notice section-feedback">{{notice}}</view>
+        <view class="card lifecycle-card">
+          <view class="setting-line"><text>当前周期</text><text>{{settings.currentPeriodStartDate}} 至 {{settings.currentPeriodEndDate}}</text></view>
+          <view class="setting-line"><text>当前周期基础预算</text><text>{{settings.currentBaseBudget}}</text></view>
+          <view class="setting-line"><text>以后周期默认预算</text><text>{{settings.defaultBudget}}</text></view>
+          <view class="setting-line"><text>当前周期起始日</text><text>每月 {{settings.startDay}} 日</text></view>
+          <view class="setting-line"><text>待生效起始日</text><text>{{settings.pendingStartDay ? '每月 ' + settings.pendingStartDay + ' 日' : '无'}}</text></view>
+          <view class="hint">{{settings.pendingExplanation}}</view>
+          <view wx:if="{{settings.needsSettlement}}" class="warning">本期待结算：只能修改“下周期及以后”的默认预算，暂不能修改起始日。</view>
+          <view class="field"><text class="field-label">新的月度预算</text><input class="field-input" type="digit" value="{{budgetEditYuan}}" bindinput="onBudgetEditInput" placeholder="例如 3200" /></view>
+          <button class="secondary-button" bindtap="chooseBudgetScope">选择范围并修改预算</button>
+          <view class="scope-hint">可选：仅本周期／本周期及以后／下周期及以后；提交前会再次确认。</view>
+          <view class="field"><text class="field-label">新的周期起始日</text><input class="field-input" type="number" value="{{startDayEdit}}" bindinput="onStartDayEditInput" placeholder="1—31" /></view>
+          <button class="secondary-button" bindtap="previewStartDayChange" disabled="{{!settings.canChangeStartDay}}">预览起始日变更</button>
+          <view wx:if="{{startDayPreview}}" class="preview-card">
+            <view>{{startDayPreview.explanation}}</view>
+            <view class="hint">历史周期与旧账保持原日期；尚未生效前可取消或重新改期。</view>
+            <button class="primary-button compact-button" bindtap="confirmStartDayChange">确认设置</button>
+          </view>
+          <button wx:if="{{settings.pendingStartDay && settings.pendingStage === 'pending'}}" class="link-button" bindtap="cancelPendingStartDayChange">取消待生效起始日</button>
+          <view class="fixed-hint">房租、房贷、车贷等固定开支不建议计入可控预算，请在记账时关闭“计入可控预算”。</view>
+        </view>
       </view>
-      <view class="account-balance {{item.isLiability ? 'debt' : ''}}">{{item.balance}}</view>
     </view>
 
-    <view class="card plan-editor">
-      <view class="card-title">{{planEditId ? '编辑未来计划' : '新建自动计划'}}</view>
-      <view class="field"><text class="field-label">计划名称</text><input class="field-input" value="{{planName}}" bindinput="onPlanNameInput" placeholder="例如 房租或信用卡还款" /></view>
-      <view class="field"><text class="field-label">计划类型</text><picker class="field-input" range="{{planTypeLabels}}" value="{{planTypeIndex}}" bindchange="onPlanTypeChange"><view class="picker-value">{{planTypeLabels[planTypeIndex]}}</view></picker></view>
-      <view class="field"><text class="field-label">资金账户</text><picker class="field-input" range="{{planSourceAccounts}}" range-key="name" value="{{planSourceIndex}}" bindchange="onPlanSourceChange"><view class="picker-value">{{planSourceAccounts.length ? planSourceAccounts[planSourceIndex].name : '请先创建'}}</view></picker></view>
-      <view wx:if="{{planTypeIndex > 0}}" class="field"><text class="field-label">{{planTypeIndex === 1 ? '信用卡' : '贷款账户'}}</text><picker class="field-input" range="{{planTargetAccounts}}" range-key="name" value="{{planTargetIndex}}" bindchange="onPlanTargetChange"><view class="picker-value">{{planTargetAccounts.length ? planTargetAccounts[planTargetIndex].name : '请先创建'}}</view></picker></view>
-      <view wx:if="{{planTypeIndex < 2}}" class="field"><text class="field-label">固定金额（可留空）</text><input class="field-input" type="digit" value="{{planAmountYuan}}" bindinput="onPlanAmountInput" placeholder="留空则到期转待处理" /></view>
-      <block wx:else>
-        <view class="field"><text class="field-label">每期本金</text><input class="field-input" type="digit" value="{{planPrincipalYuan}}" bindinput="onPlanPrincipalInput" placeholder="必须填写" /></view>
-        <view class="field"><text class="field-label">每期利息</text><input class="field-input" type="digit" value="{{planInterestYuan}}" bindinput="onPlanInterestInput" placeholder="必须填写" /></view>
-      </block>
-      <view class="field"><text class="field-label">周期</text><picker class="field-input" range="{{planRecurrenceLabels}}" value="{{planRecurrenceIndex}}" bindchange="onPlanRecurrenceChange"><view class="picker-value">{{planRecurrenceLabels[planRecurrenceIndex]}}</view></picker></view>
-      <view class="field"><text class="field-label">下次到期日</text><picker class="field-input" mode="date" value="{{planNextDueDate}}" bindchange="onPlanDueDateInput"><view class="picker-value">{{planNextDueDate || '请选择日期'}}</view></picker></view>
-      <view class="field"><text class="field-label">小程序内提醒</text><switch checked="{{planReminderEnabled}}" bindchange="onPlanReminderChange" /></view>
-      <checkbox-group wx:if="{{planReminderEnabled}}" class="reminder-options" bindchange="onPlanReminderDaysChange">
-        <label><checkbox value="3" checked="{{planReminder3Checked}}" />提前3天</label>
-        <label><checkbox value="1" checked="{{planReminder1Checked}}" />提前1天</label>
-        <label><checkbox value="0" checked="{{planReminder0Checked}}" />当天</label>
-      </checkbox-group>
-      <view class="hint">仅在小程序启动或回到前台时检查；不会冒充后台定时任务，也不会发送微信订阅消息。</view>
-      <button class="primary-button" bindtap="submitScheduledPlan">{{planEditId ? '保存未来计划' : '创建计划'}}</button>
-      <button wx:if="{{planEditId}}" class="link-button" bindtap="resetPlanForm">取消编辑</button>
-    </view>
-
-    <view class="card">
-      <view class="card-title">已有计划</view>
-      <view wx:if="{{!settings.plans.length}}" class="hint">暂无计划；首页会显示空状态。</view>
-      <view wx:for="{{settings.plans}}" wx:key="id" class="plan-list-item">
-        <view class="setting-line"><text>{{item.name}}</text><text>{{item.statusLabel}}</text></view>
-        <view class="hint">{{item.typeLabel}} · {{item.scheduleLabel}} · {{item.reminderLabel}}</view>
-        <view class="plan-actions"><button class="link-button" data-id="{{item.id}}" bindtap="editScheduledPlan">编辑未来</button><button wx:if="{{item.active}}" class="link-button danger" data-id="{{item.id}}" bindtap="disableScheduledPlan">停用</button></view>
+    <view class="accordion">
+      <view class="accordion-header" data-section="plan" bindtap="toggleSection" aria-expanded="{{expandedSection === 'plan'}}">
+        <view class="accordion-copy"><view class="accordion-title">计划提醒</view><view class="accordion-summary">{{planSummary}}</view></view>
+        <text class="accordion-mark">{{expandedSection === 'plan' ? '−' : '＋'}}</text>
       </view>
-      <view wx:if="{{settings.pendingPlanItems.length}}" class="warning">有 {{settings.pendingPlanItems.length}} 项待处理；即使关闭逾期横幅，这里仍会保留。</view>
+      <view wx:if="{{expandedSection === 'plan'}}" class="accordion-body">
+        <view wx:if="{{feedbackSection === 'plan' && error}}" class="error section-feedback">{{error}}</view>
+        <view wx:if="{{feedbackSection === 'plan' && notice}}" class="notice section-feedback">{{notice}}</view>
+        <view class="card plan-editor">
+          <view class="card-title">{{planEditId ? '编辑未来计划' : '新建自动计划'}}</view>
+          <view class="field"><text class="field-label">计划名称</text><input class="field-input" value="{{planName}}" bindinput="onPlanNameInput" placeholder="例如 房租或信用卡还款" /></view>
+          <view class="field"><text class="field-label">计划类型</text><picker class="field-input" range="{{planTypeLabels}}" value="{{planTypeIndex}}" bindchange="onPlanTypeChange"><view class="picker-value">{{planTypeLabels[planTypeIndex]}}</view></picker></view>
+          <view class="field"><text class="field-label">资金账户</text><picker class="field-input" range="{{planSourceAccounts}}" range-key="name" value="{{planSourceIndex}}" bindchange="onPlanSourceChange"><view class="picker-value">{{planSourceAccounts.length ? planSourceAccounts[planSourceIndex].name : '请先创建'}}</view></picker></view>
+          <view wx:if="{{planTypeIndex > 0}}" class="field"><text class="field-label">{{planTypeIndex === 1 ? '信用卡' : '贷款账户'}}</text><picker class="field-input" range="{{planTargetAccounts}}" range-key="name" value="{{planTargetIndex}}" bindchange="onPlanTargetChange"><view class="picker-value">{{planTargetAccounts.length ? planTargetAccounts[planTargetIndex].name : '请先创建'}}</view></picker></view>
+          <view wx:if="{{planTypeIndex < 2}}" class="field"><text class="field-label">固定金额（可留空）</text><input class="field-input" type="digit" value="{{planAmountYuan}}" bindinput="onPlanAmountInput" placeholder="留空则到期转待处理" /></view>
+          <block wx:else>
+            <view class="field"><text class="field-label">每期本金</text><input class="field-input" type="digit" value="{{planPrincipalYuan}}" bindinput="onPlanPrincipalInput" placeholder="必须填写" /></view>
+            <view class="field"><text class="field-label">每期利息</text><input class="field-input" type="digit" value="{{planInterestYuan}}" bindinput="onPlanInterestInput" placeholder="必须填写" /></view>
+          </block>
+          <view class="field"><text class="field-label">周期</text><picker class="field-input" range="{{planRecurrenceLabels}}" value="{{planRecurrenceIndex}}" bindchange="onPlanRecurrenceChange"><view class="picker-value">{{planRecurrenceLabels[planRecurrenceIndex]}}</view></picker></view>
+          <view class="field"><text class="field-label">下次到期日</text><picker class="field-input" mode="date" value="{{planNextDueDate}}" bindchange="onPlanDueDateInput"><view class="picker-value">{{planNextDueDate || '请选择日期'}}</view></picker></view>
+          <view class="field"><text class="field-label">小程序内提醒</text><switch checked="{{planReminderEnabled}}" bindchange="onPlanReminderChange" /></view>
+          <checkbox-group wx:if="{{planReminderEnabled}}" class="reminder-options" bindchange="onPlanReminderDaysChange">
+            <label><checkbox value="3" checked="{{planReminder3Checked}}" />提前3天</label>
+            <label><checkbox value="1" checked="{{planReminder1Checked}}" />提前1天</label>
+            <label><checkbox value="0" checked="{{planReminder0Checked}}" />当天</label>
+          </checkbox-group>
+          <view class="hint">仅在小程序启动或回到前台时检查；不会冒充后台定时任务，也不会发送微信订阅消息。</view>
+          <button class="primary-button" bindtap="submitScheduledPlan">{{planEditId ? '保存未来计划' : '创建计划'}}</button>
+          <button wx:if="{{planEditId}}" class="link-button" bindtap="resetPlanForm">取消编辑</button>
+        </view>
+        <view class="card">
+          <view class="card-title">已有计划</view>
+          <view wx:if="{{!settings.plans.length}}" class="empty-state">暂无计划，可在上方填写并创建第一个计划。</view>
+          <view wx:for="{{settings.plans}}" wx:key="id" class="plan-list-item">
+            <view class="setting-line"><text>{{item.name}}</text><text>{{item.statusLabel}}</text></view>
+            <view class="hint">{{item.typeLabel}} · {{item.scheduleLabel}} · {{item.reminderLabel}}</view>
+            <view class="plan-actions"><button class="link-button" data-id="{{item.id}}" bindtap="editScheduledPlan">编辑未来</button><button wx:if="{{item.active}}" class="link-button danger" data-id="{{item.id}}" bindtap="disableScheduledPlan">停用</button></view>
+          </view>
+          <view wx:if="{{settings.pendingPlanItems.length}}" class="warning">有 {{settings.pendingPlanItems.length}} 项待处理；即使关闭逾期横幅，这里仍会保留。</view>
+        </view>
+      </view>
     </view>
 
-    <view class="card">
-      <view class="card-title">新增账户</view>
-      <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{newAccountName}}" bindinput="onNewAccountNameInput" placeholder="例如 工资卡" /></view>
-      <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{allAccountTypeLabels}}" value="{{newAccountTypeIndex}}" bindchange="onNewAccountTypeChange"><view class="picker-value">{{allAccountTypeLabels[newAccountTypeIndex]}}</view></picker></view>
-      <view class="field"><text class="field-label">{{newAccountTypeIndex === 3 || newAccountTypeIndex === 4 ? '当前欠款' : '当前余额'}}</text><input class="field-input" type="digit" value="{{newAccountBalanceYuan}}" bindinput="onNewAccountBalanceInput" /></view>
-      <view wx:if="{{newAccountTypeIndex === 5}}" class="field"><text class="field-label">投入成本</text><input class="field-input" type="digit" value="{{newAccountCostBasisYuan}}" bindinput="onNewAccountCostInput" /></view>
-      <button class="secondary-button" bindtap="addAssetAccount">添加账户</button>
+    <view class="accordion">
+      <view class="accordion-header" data-section="assets" bindtap="toggleSection" aria-expanded="{{expandedSection === 'assets'}}">
+        <view class="accordion-copy"><view class="accordion-title">资产账户</view><view class="accordion-summary">{{assetSummary}}</view></view>
+        <text class="accordion-mark">{{expandedSection === 'assets' ? '−' : '＋'}}</text>
+      </view>
+      <view wx:if="{{expandedSection === 'assets'}}" class="accordion-body">
+        <view wx:if="{{feedbackSection === 'assets' && error}}" class="error section-feedback">{{error}}</view>
+        <view wx:if="{{feedbackSection === 'assets' && notice}}" class="notice section-feedback">{{notice}}</view>
+        <view class="summary-grid">
+          <view class="summary-card"><text>总资产</text><strong>{{assets.totalAssets}}</strong></view>
+          <view class="summary-card liability"><text>总负债</text><strong>{{assets.totalLiabilities}}</strong></view>
+          <view class="summary-card net"><text>净资产</text><strong>{{assets.netAssets}}</strong></view>
+          <view class="summary-card"><text>奖励余额</text><strong>{{assets.rewardBalance}}</strong></view>
+        </view>
+        <view wx:if="{{!assets.accounts.length}}" class="card empty-state">暂无账户，请在下方添加第一个账户。</view>
+        <view wx:for="{{assets.accounts}}" wx:key="id" class="account-card">
+          <view class="account-copy"><view class="account-name">{{item.name}}</view><view class="account-type">{{item.typeLabel}}{{item.isInvestment ? ' · 投入成本 ' + item.costBasis : ''}}</view></view>
+          <view class="account-balance {{item.isLiability ? 'debt' : ''}}">{{item.balance}}</view>
+        </view>
+        <view class="card">
+          <view class="card-title">新增账户</view>
+          <view class="field"><text class="field-label">账户名称</text><input class="field-input" value="{{newAccountName}}" bindinput="onNewAccountNameInput" placeholder="例如 工资卡" /></view>
+          <view class="field"><text class="field-label">账户类型</text><picker class="field-input" range="{{allAccountTypeLabels}}" value="{{newAccountTypeIndex}}" bindchange="onNewAccountTypeChange"><view class="picker-value">{{allAccountTypeLabels[newAccountTypeIndex]}}</view></picker></view>
+          <view class="field"><text class="field-label">{{newAccountTypeIndex === 3 || newAccountTypeIndex === 4 ? '当前欠款' : '当前余额'}}</text><input class="field-input" type="digit" value="{{newAccountBalanceYuan}}" bindinput="onNewAccountBalanceInput" /></view>
+          <view wx:if="{{newAccountTypeIndex === 5}}" class="field"><text class="field-label">投入成本</text><input class="field-input" type="digit" value="{{newAccountCostBasisYuan}}" bindinput="onNewAccountCostInput" /></view>
+          <button class="secondary-button" bindtap="addAssetAccount">添加账户</button>
+        </view>
+        <view class="card">
+          <view class="card-title">债务与投资专项操作</view>
+          <view class="field"><text class="field-label">操作</text><picker class="field-input" range="{{operationLabels}}" value="{{operationIndex}}" bindchange="onOperationChange"><view class="picker-value">{{operationLabels[operationIndex]}}</view></picker></view>
+          <view wx:if="{{operationNeedsSource}}" class="field"><text class="field-label">{{operationIndex === 1 ? '收款账户' : '资金账户'}}</text><picker class="field-input" range="{{sourceAccounts}}" range-key="name" value="{{sourceIndex}}" bindchange="onSourceChange"><view class="picker-value">{{sourceAccounts.length ? sourceAccounts[sourceIndex].name : '请先创建'}}</view></picker></view>
+          <view class="field"><text class="field-label">{{operationIndex === 0 ? '信用卡' : operationIndex <= 3 ? '贷款账户' : '投资账户'}}</text><picker class="field-input" range="{{targetAccounts}}" range-key="name" value="{{targetIndex}}" bindchange="onTargetChange"><view class="picker-value">{{targetAccounts.length ? targetAccounts[targetIndex].name : '请先创建'}}</view></picker></view>
+          <view class="field"><text class="field-label">{{operationValueLabel}}</text><input class="field-input" type="digit" value="{{operationAmountYuan}}" bindinput="onOperationAmountInput" placeholder="0.00" /></view>
+          <view class="hint">还款、借贷、还本、利息和投资操作都不会占用可控预算；投资现值仅手工填写。</view>
+          <button class="primary-button" bindtap="performOperation">确认记录</button>
+        </view>
+      </view>
     </view>
 
-    <view class="card">
-      <view class="card-title">债务与投资专项操作</view>
-      <view class="field"><text class="field-label">操作</text><picker class="field-input" range="{{operationLabels}}" value="{{operationIndex}}" bindchange="onOperationChange"><view class="picker-value">{{operationLabels[operationIndex]}}</view></picker></view>
-      <view wx:if="{{operationNeedsSource}}" class="field"><text class="field-label">{{operationIndex === 1 ? '收款账户' : '资金账户'}}</text><picker class="field-input" range="{{sourceAccounts}}" range-key="name" value="{{sourceIndex}}" bindchange="onSourceChange"><view class="picker-value">{{sourceAccounts.length ? sourceAccounts[sourceIndex].name : '请先创建'}}</view></picker></view>
-      <view class="field"><text class="field-label">{{operationIndex === 0 ? '信用卡' : operationIndex <= 3 ? '贷款账户' : '投资账户'}}</text><picker class="field-input" range="{{targetAccounts}}" range-key="name" value="{{targetIndex}}" bindchange="onTargetChange"><view class="picker-value">{{targetAccounts.length ? targetAccounts[targetIndex].name : '请先创建'}}</view></picker></view>
-      <view class="field"><text class="field-label">{{operationValueLabel}}</text><input class="field-input" type="digit" value="{{operationAmountYuan}}" bindinput="onOperationAmountInput" placeholder="0.00" /></view>
-      <view class="hint">还款、借贷、还本、利息和投资操作都不会占用可控预算；投资现值仅手工填写。</view>
-      <button class="primary-button" bindtap="performOperation">确认记录</button>
+    <view class="accordion">
+      <view class="accordion-header" data-section="data" bindtap="toggleSection" aria-expanded="{{expandedSection === 'data'}}">
+        <view class="accordion-copy"><view class="accordion-title">数据与隐私</view><view class="accordion-summary">{{dataSummary}}</view></view>
+        <text class="accordion-mark">{{expandedSection === 'data' ? '−' : '＋'}}</text>
+      </view>
+      <view wx:if="{{expandedSection === 'data'}}" class="accordion-body">
+        <view wx:if="{{feedbackSection === 'data' && error}}" class="error section-feedback">{{error}}</view>
+        <view wx:if="{{feedbackSection === 'data' && notice}}" class="notice section-feedback">{{notice}}</view>
+        <view class="card data-card">
+          <view class="card-title">1. 完整备份</view>
+          <view class="hint">生成包含账户、流水、预算周期、计划、待处理和设置的 JSON。文件只在本地生成，不会自动分享、复制或上传。</view>
+          <button class="secondary-button" bindtap="exportBackup" disabled="{{busyAction}}" loading="{{busyAction === 'export-backup'}}">生成 JSON 完整备份</button>
+          <view wx:if="{{generatedFileType === 'backup'}}" class="file-result">
+            <view>{{generatedFileName}}</view>
+            <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
+            <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile" disabled="{{busyAction}}">主动分享这个文件</button>
+            <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText" disabled="{{busyAction}}">复制备份文本</button>
+          </view>
+        </view>
+        <view class="card data-card">
+          <view class="card-title">2. 恢复预览</view>
+          <view class="hint">只读取你主动选择的一个 JSON，或你手工粘贴的文本。选择与预检不会改写当前数据。</view>
+          <button class="secondary-button" bindtap="chooseBackupFile" disabled="{{busyAction}}" loading="{{busyAction === 'choose-backup'}}">选择一个 JSON 文件</button>
+          <textarea class="backup-input" value="{{pastedBackupText}}" bindinput="onPastedBackupInput" placeholder="也可在此手工粘贴 JSON；不会自动读取剪贴板" maxlength="-1"></textarea>
+          <button class="secondary-button" bindtap="previewPastedBackup" disabled="{{busyAction}}">预检粘贴内容</button>
+          <view wx:if="{{backupPreview}}" class="preview-card">
+            <view class="setting-line"><text>名称</text><text>{{backupPreview.fileName}}</text></view>
+            <view class="setting-line"><text>大小</text><text>{{backupPreview.displaySize}}</text></view>
+            <view class="setting-line"><text>版本</text><text>{{backupPreview.sourceSchemaVersion}} → {{backupPreview.targetSchemaVersion}}</text></view>
+            <view class="setting-line"><text>币种</text><text>{{backupPreview.currency}}</text></view>
+            <view class="setting-line"><text>账户 / 流水</text><text>{{backupPreview.accountCount}} / {{backupPreview.transactionCount}}</text></view>
+            <view class="setting-line"><text>周期 / 计划 / 待确认</text><text>{{backupPreview.budgetPeriodCount}} / {{backupPreview.planCount}} / {{backupPreview.pendingItemCount}}</text></view>
+            <view class="setting-line"><text>最近流水</text><text>{{backupPreview.latestTransactionDate}}</text></view>
+            <view class="setting-line"><text>生成时间</text><text>{{backupPreview.generatedAt}}</text></view>
+            <view class="field"><text class="field-label">输入“恢复”</text><input class="field-input" value="{{restorePhrase}}" bindinput="onRestorePhraseInput" /></view>
+            <button class="primary-button" bindtap="requestRestore" disabled="{{busyAction}}">进入最终恢复确认</button>
+          </view>
+        </view>
+        <view class="card data-card">
+          <view class="card-title">3. CSV 账单</view>
+          <view class="hint">CSV 复用固定账单列，仅供查看，不能恢复账本。</view>
+          <button class="secondary-button" bindtap="exportCsv" disabled="{{busyAction}}" loading="{{busyAction === 'export-csv'}}">生成 CSV 账单</button>
+          <view wx:if="{{generatedFileType === 'csv'}}" class="file-result">
+            <view>{{generatedFileName}}</view>
+            <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
+            <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile" disabled="{{busyAction}}">主动分享这个文件</button>
+            <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText" disabled="{{busyAction}}">复制 CSV</button>
+          </view>
+        </view>
+        <view class="card privacy-card">
+          <view class="card-title">4. 危险操作</view>
+          <view class="warning">清除会删除用度主数据、恢复临时数据和用度生成文件。清除后如果没有 JSON 备份，数据无法恢复。</view>
+          <view class="field"><text class="field-label">输入“清除”</text><input class="field-input" value="{{clearPhrase}}" bindinput="onClearPhraseInput" /></view>
+          <button class="secondary-button danger-button" bindtap="requestClearData" disabled="{{busyAction}}">进入最终清除确认</button>
+        </view>
+        <view class="card privacy-card">
+          <view class="card-title">5. 隐私说明</view>
+          <view class="privacy-line">数据默认仅存在本机，不上传、不用于 AI。</view>
+          <view class="privacy-line">只有你主动导出、分享或复制时，数据才会离开小程序。</view>
+          <view class="privacy-line">卸载小程序、清理微信缓存或设备故障可能导致数据丢失，请定期保存 JSON 完整备份。</view>
+          <view class="privacy-line">JSON 备份与 CSV 是未加密明文，可能包含敏感财务信息，请自行保管。</view>
+          <view class="privacy-line">不会读取剪贴板或扫描设备；本阶段没有云同步、账号恢复或加密承诺。</view>
+          <view class="privacy-line">以上是产品说明，不代表已完成平台法律合规。</view>
+        </view>
+      </view>
     </view>
 
     <button class="secondary-button" bindtap="submit">回到首页</button>
   </block>
-
-  <view class="section-title">数据管理</view>
-  <view class="card data-card">
-    <view class="card-title">1. 完整备份</view>
-    <view class="hint">生成包含账户、流水、预算周期、计划、待处理和设置的 JSON。文件只在本地生成，不会自动分享、复制或上传。</view>
-    <button class="secondary-button" bindtap="exportBackup">生成 JSON 完整备份</button>
-    <view wx:if="{{generatedFileType === 'backup'}}" class="file-result">
-      <view>{{generatedFileName}}</view>
-      <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
-      <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile">主动分享这个文件</button>
-      <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText">复制备份文本</button>
-    </view>
-  </view>
-
-  <view class="card data-card">
-    <view class="card-title">2. 恢复预览</view>
-    <view class="hint">只会读取你主动选择的一个 JSON，或你在下方手工粘贴的文本。选择与预检不会改写当前数据。</view>
-    <button class="secondary-button" bindtap="chooseBackupFile">选择一个 JSON 文件</button>
-    <textarea class="backup-input" value="{{pastedBackupText}}" bindinput="onPastedBackupInput" placeholder="也可在此手工粘贴 JSON；不会自动读取剪贴板" maxlength="-1"></textarea>
-    <button class="secondary-button" bindtap="previewPastedBackup">预检粘贴内容</button>
-    <view wx:if="{{backupPreview}}" class="preview-card">
-      <view class="setting-line"><text>名称</text><text>{{backupPreview.fileName}}</text></view>
-      <view class="setting-line"><text>大小</text><text>{{backupPreview.displaySize}}</text></view>
-      <view class="setting-line"><text>版本</text><text>{{backupPreview.sourceSchemaVersion}} → {{backupPreview.targetSchemaVersion}}</text></view>
-      <view class="setting-line"><text>币种</text><text>{{backupPreview.currency}}</text></view>
-      <view class="setting-line"><text>账户 / 流水</text><text>{{backupPreview.accountCount}} / {{backupPreview.transactionCount}}</text></view>
-      <view class="setting-line"><text>周期 / 计划 / 待确认</text><text>{{backupPreview.budgetPeriodCount}} / {{backupPreview.planCount}} / {{backupPreview.pendingItemCount}}</text></view>
-      <view class="setting-line"><text>最近流水</text><text>{{backupPreview.latestTransactionDate}}</text></view>
-      <view class="setting-line"><text>生成时间</text><text>{{backupPreview.generatedAt}}</text></view>
-      <view class="field"><text class="field-label">输入“恢复”</text><input class="field-input" value="{{restorePhrase}}" bindinput="onRestorePhraseInput" /></view>
-      <button class="primary-button" bindtap="requestRestore">进入最终恢复确认</button>
-    </view>
-  </view>
-
-  <view class="card data-card">
-    <view class="card-title">3. CSV 账单</view>
-    <view class="hint">CSV 复用固定账单列，仅供查看，不能恢复账本。</view>
-    <button class="secondary-button" bindtap="exportCsv">生成 CSV 账单</button>
-    <view wx:if="{{generatedFileType === 'csv'}}" class="file-result">
-      <view>{{generatedFileName}}</view>
-      <view class="hint">{{generatedFileSize}} · {{generatedFileKind}}</view>
-      <button wx:if="{{canShareGeneratedFile}}" class="secondary-button" bindtap="shareGeneratedFile">主动分享这个文件</button>
-      <button wx:if="{{canCopyGeneratedText}}" class="link-button" bindtap="copyGeneratedText">复制 CSV</button>
-    </view>
-  </view>
-
-  <view class="card privacy-card">
-    <view class="card-title">4. 危险操作</view>
-    <view class="warning">清除会删除用度主数据、恢复临时数据和用度生成文件。清除后如果没有 JSON 备份，数据无法恢复。</view>
-    <view class="field"><text class="field-label">输入“清除”</text><input class="field-input" value="{{clearPhrase}}" bindinput="onClearPhraseInput" /></view>
-    <button class="secondary-button danger-button" bindtap="requestClearData">进入最终清除确认</button>
-  </view>
-
-  <view class="section-title">数据与隐私</view>
-  <view class="card privacy-card">
-    <view class="card-title">5. 隐私说明</view>
-    <view class="privacy-line">数据默认仅存在本机，不上传、不用于 AI。</view>
-    <view class="privacy-line">只有你主动导出、分享或复制时，数据才会离开小程序。</view>
-    <view class="privacy-line">卸载小程序、清理微信缓存或设备故障可能导致数据丢失，请定期保存 JSON 完整备份。</view>
-    <view class="privacy-line">JSON 备份与 CSV 是未加密明文，可能包含敏感财务信息，请自行保管。</view>
-    <view class="privacy-line">不会读取剪贴板或扫描设备；本阶段没有云同步、账号恢复或加密承诺。</view>
-    <view class="privacy-line">以上是产品说明，不代表已完成平台法律合规。</view>
-  </view>
 </view>

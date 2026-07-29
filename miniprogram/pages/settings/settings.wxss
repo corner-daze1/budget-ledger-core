@@ -33,3 +33,24 @@
 .privacy-card { border: 2rpx solid #ded5ca; }
 .privacy-line { margin: 14rpx 0; color: #6f6258; font-size: 24rpx; line-height: 1.65; }
 .danger-button { color: #9b4d3a; border-color: #cda99d; }
+.accordion { box-sizing: border-box; width: 100%; margin: 18rpx 0; overflow: hidden; border: 1rpx solid #e2d8cf; border-radius: 22rpx; background: #fffdfa; }
+.accordion-header { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; min-height: 104rpx; padding: 22rpx 26rpx; box-sizing: border-box; }
+.accordion-copy { min-width: 0; }
+.accordion-title { font-size: 30rpx; font-weight: 600; }
+.accordion-summary { margin-top: 8rpx; color: #8b7d72; font-size: 22rpx; line-height: 1.45; overflow-wrap: anywhere; }
+.accordion-mark { flex: none; color: #b85c45; font-size: 36rpx; }
+.accordion-body { padding: 0 18rpx 18rpx; border-top: 1rpx solid #eee6dd; }
+.accordion-body .card { box-shadow: none; }
+.section-feedback { margin: 18rpx 4rpx 0; }
+.empty-state { color: #8b7d72; line-height: 1.6; text-align: center; }
+.account-copy { min-width: 0; }
+.account-name, .account-type, .account-balance, .setting-line text { overflow-wrap: anywhere; }
+
+@media (max-width: 320px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .setting-line, .account-card, .reminder-options { align-items: stretch; flex-direction: column; }
+  .setting-line text:last-child { text-align: left; }
+  .account-balance { margin-top: 12rpx; }
+  .accordion-header { padding: 20rpx; }
+  .accordion-body { padding-right: 12rpx; padding-left: 12rpx; }
+}

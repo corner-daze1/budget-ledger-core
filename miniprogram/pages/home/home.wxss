@@ -24,3 +24,10 @@
 .plan-line text:last-child { color: #9b4d3a; }
 .pending-plan { margin-top: 18rpx; padding-top: 8rpx; }
 .pending-plan .field-input { margin: 12rpx 0; }
+.hero-number, .status-value, .plan-line text, .settlement-line text { overflow-wrap: anywhere; }
+
+@media (max-width: 320px) {
+  .hero-number { font-size: 60rpx; }
+  .status-line, .settlement-line, .plan-line, .nav-row { align-items: stretch; flex-direction: column; }
+  .nav-row { gap: 0; }
+}

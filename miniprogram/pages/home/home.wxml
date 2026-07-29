@@ -53,7 +53,7 @@
     <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">
       <text>{{item.planName}}</text><text>今天到期</text>
     </view>
-    <view wx:if="{{!model.planExecutionResults.length && !model.planReminders.length && !model.planDueToday.length && !model.planPendingItems.length}}" class="hint">暂无计划提醒或待处理项</view>
+    <view wx:if="{{!model.planExecutionResults.length && !model.planReminders.length && !model.planDueToday.length && !model.planPendingItems.length}}" class="hint">暂无计划提醒或待处理项，可到设置页创建计划并开启小程序内提醒。</view>
   </view>
 
   <view wx:if="{{model.planPendingItems.length}}" class="plan-card">

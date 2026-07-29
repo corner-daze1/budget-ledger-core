@@ -36,3 +36,11 @@
 .bill-meta { margin-top: 12rpx; color: #9c8f83; font-size: 23rpx; }
 .bill-note { margin-top: 12rpx; color: #756b63; font-size: 24rpx; }
 .bill-budget { margin-top: 10rpx; padding: 5rpx 12rpx; border-radius: 10rpx; color: #756b63; background: #efe5db; font-size: 21rpx; }
+.bill-amount, .bill-meta, .bill-note, .period-values, .summary-value { overflow-wrap: anywhere; }
+
+@media (max-width: 320px) {
+  .chart-heading, .legend-row, .period-row, .bill-top, .bill-bottom { align-items: stretch; flex-direction: column; }
+  .period-values { flex: 1; text-align: left; }
+  .bill-category { white-space: normal; overflow-wrap: anywhere; }
+  .summary-value { align-self: flex-start; }
+}

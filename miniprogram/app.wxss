@@ -6,9 +6,11 @@ page {
 }
 
 .page {
+  width: 100%;
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 40rpx 32rpx 64rpx;
+  padding: 40rpx 32rpx calc(64rpx + env(safe-area-inset-bottom));
+  overflow-x: hidden;
 }
 
 .eyebrow {
@@ -45,9 +47,16 @@ page {
 
 .primary-button,
 .secondary-button {
+  min-height: 88rpx;
   margin: 20rpx 0;
   border-radius: 16rpx;
   font-size: 30rpx;
+}
+
+.primary-button[disabled],
+.secondary-button[disabled],
+.link-button[disabled] {
+  opacity: 0.45;
 }
 
 .primary-button {
@@ -106,4 +115,30 @@ page {
   border-radius: 16rpx;
   background: #f7dfd8;
   line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 320px) {
+  .page {
+    padding-right: 24rpx;
+    padding-left: 24rpx;
+  }
+
+  .field {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10rpx;
+    padding: 18rpx 0;
+  }
+
+  .field-label {
+    width: auto;
+  }
+
+  .field-input,
+  .picker-value {
+    width: 100%;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
 }

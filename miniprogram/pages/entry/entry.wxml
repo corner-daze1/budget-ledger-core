@@ -5,6 +5,7 @@
     <view wx:for="{{modes}}" wx:key="*this" class="mode-tab {{modeIndex === index ? 'active' : ''}}" data-index="{{index}}" bindtap="onModeChange">{{item}}</view>
   </view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
+  <view wx:if="{{!accounts.length}}" class="card empty-state">暂无可用账户，请先到设置页添加账户再记账。</view>
 
   <view class="card form-card">
     <view class="amount-label">金额</view>

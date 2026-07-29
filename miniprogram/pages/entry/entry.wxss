@@ -7,3 +7,10 @@
 .mode-tabs { display: flex; margin: 0 0 24rpx; padding: 8rpx; border-radius: 18rpx; background: #eadfd6; }
 .mode-tab { flex: 1; padding: 18rpx 0; border-radius: 14rpx; color: #756b63; text-align: center; }
 .mode-tab.active { color: #fffdfa; background: #b85c45; }
+.empty-state { color: #8b7d72; line-height: 1.6; text-align: center; }
+.amount-input, .previous-text { overflow-wrap: anywhere; }
+
+@media (max-width: 320px) {
+  .amount-input { font-size: 56rpx; }
+  .mode-tab { min-width: 0; padding-right: 4rpx; padding-left: 4rpx; }
+}

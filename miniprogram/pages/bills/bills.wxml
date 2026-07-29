@@ -8,7 +8,7 @@
     <button class="scope-option {{scope === 'all' ? 'active' : ''}}" data-scope="all" bindtap="onScopeTap">全部支出</button>
   </view>
 
-  <view wx:if="{{model.emptyText}}" class="card empty">{{model.emptyText}}</view>
+  <view wx:if="{{model.emptyText}}" class="card empty">{{model.emptyText}} 请先记下一笔真实收支，再回来查看分析。</view>
   <block wx:else>
     <view class="period-summary">
       <text>{{model.period.kindLabel}} · {{model.period.statusLabel}}</text>
@@ -60,7 +60,7 @@
   </block>
 
   <view class="section-title">最近流水</view>
-  <view wx:if="{{!flows.length}}" class="card empty">还没有流水，记下第一笔吧。</view>
+  <view wx:if="{{!flows.length}}" class="card empty">还没有流水，请先记下第一笔真实收支。</view>
   <view wx:for="{{flows}}" wx:key="id" class="bill-card">
     <view class="bill-top"><text class="bill-category">{{item.typeLabel}} · {{item.category}}</text><text class="bill-amount">{{item.amount}}</text></view>
     <view class="bill-bottom"><text class="bill-meta">{{item.accountFlow}}</text><text class="bill-meta">{{item.date}}</text></view>
