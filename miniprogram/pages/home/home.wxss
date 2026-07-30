@@ -225,12 +225,12 @@
   border-bottom: none;
 }
 
-.plan-line text:last-child {
+.plan-line-value {
   color: #9b4d3a;
   text-align: right;
 }
 
-.plan-line.due text:last-child {
+.plan-line.due .plan-line-value {
   font-weight: 600;
 }
 
@@ -299,8 +299,8 @@
 .hero-number,
 .status-value,
 .settlement-value,
-.plan-line text,
-.settlement-line text,
+.plan-line,
+.settlement-line,
 .plan-alert-text,
 .home-error {
   overflow-wrap: anywhere;
@@ -325,7 +325,7 @@
 
   .status-value,
   .settlement-value,
-  .plan-line text:last-child {
+  .plan-line-value {
     text-align: left;
   }
 

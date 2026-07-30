@@ -289,3 +289,15 @@ test('home layout sinks actions with auto margin and keeps 320px scroll contract
     /@media\s*\(max-width:\s*320px\)\s*\{[\s\S]*?\.home-actions\s*\{[^}]*margin-top:\s*16rpx/s,
   );
 });
+
+test('home plan styles use component-safe class selectors', () => {
+  const wxml = read('miniprogram/pages/home/home.wxml');
+  const wxss = read('miniprogram/pages/home/home.wxss');
+  assert.ok(
+    (wxml.match(/class="plan-line-value"/g) || []).length >= 4,
+    'all plan status values need an explicit class',
+  );
+  assert.match(wxss, /\.plan-line-value\s*\{/);
+  assert.match(wxss, /\.plan-line\.due\s+\.plan-line-value\s*\{/);
+  assert.doesNotMatch(wxss, /\.(?:plan|settlement)-line\s+text\b/);
+});
