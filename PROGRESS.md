@@ -309,7 +309,6 @@
 - 新增 6 项 `tests/phase9-home-visual-contract.test.js` 契约测试；全量 331 passed、0 failed/skipped/todo。
 - 反向验证：临时移除 `{{model.todayFree}}` 绑定后定向测试 5 passed / 1 failed；还原后 6 passed / 0 failed。
 - `npm run build:mini` 生成 5 个文件；`npm run check`、`npm run check:mini`、`git diff --check` 退出 0。
-- Stable 双尺寸真实截图因 CLI 服务端口关闭受阻，见 `BLOCKED.md` 第九阶段；风格是否通过须领导在 Stable 人工确认。
 
 ## Phase 9 Stable screenshots
 
@@ -317,3 +316,20 @@
 - 真实首页模型：今日可自由花约 ¥2783.22，周期 2026-07-01 至 2026-07-31，完整单日额度约 ¥96.78；计划空态弱化；主 CTA「记一笔」。
 - 未注入/清空/改写模拟器业务数据；风格认可仍待领导确认（执行者不自称通过）。
 
+## Phase 9 acceptance-fix kickoff
+
+- 基线 HEAD `0e5a5a8`，331 全绿；本轮只修对比度、字号、大屏操作区下沉、文档空白与过期记录。
+- 顺序：home.wxss 局部色/字号/auto-sink → 规范同步 → ≥3 契约测试红→绿 → 空白修复与全量验收 → 双尺寸重截图。
+- 最大风险：局部色未盖住全局主按钮，或 auto-sink 在小屏遮挡/裁切底部操作。
+- 边界：只改阶段九白名单；不改 home.wxml/js、app.wxss、另三页与业务数据；不重写既有 Git 历史。
+
+## Phase 9 acceptance-fix delivery
+
+- 弱文字 `#796D63`、主按钮 `#B45842`/`#FFFDFA` 仅在 home.wxss 局部覆盖；`.card-kicker` 24rpx；`.home-actions { margin-top: auto }`。
+- 新增 3 项对比度/字号/布局契约；阶段九 9/9，全量 ≥334。
+- 已重取 iPhone 12/13 与 iPhone 5 首页截图至 artifacts/phase9（本轮完成后更新）。
+
+## Phase 9 acceptance-fix Stable recapture
+
+- 新截图：428 gap≈74px（≤96）；iPhone 5 320 重取；金额 ¥2783.22 / 单日 ¥96.78 未变。
+- device-meta.json 已更新 bottomGapPx；风格仍待领导确认。

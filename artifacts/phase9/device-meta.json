@@ -3,15 +3,19 @@
     "file": "01-home-iphone12-13.png",
     "model": "iPhone 12/13 Pro Max",
     "screenWidth": 428,
-    "screenHeight": 926
+    "screenHeight": 926,
+    "sdk": "3.17.0",
+    "bottomGapPx": 74
   },
   "shot2": {
     "file": "02-home-iphone5-320.png",
     "model": "iPhone 5",
     "screenWidth": 320,
-    "screenHeight": 568
+    "screenHeight": 568,
+    "sdk": "3.17.0",
+    "bottomGapPx": 0
   },
-  "sdk": "3.17.0",
-  "capturedAt": "2026-07-30T05:27:08.005Z",
-  "note": "Non-destructive App.captureScreenshot via miniprogram-automator; simulator business data not mutated"
+  "capturedAt": "2026-07-30T06:13:13.609672+00:00",
+  "nonDestructive": true,
+  "note": "spacer ::after + margin-top:auto sink"
 }

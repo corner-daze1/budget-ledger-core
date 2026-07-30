@@ -1,8 +1,37 @@
 /* Phase 9 home visual sample — tokens aligned with docs/PHASE9_DESIGN_SYSTEM.md */
+/* Home-only color overrides: weak #796D63, primary #B45842; do not change app.wxss */
 
 .home-page {
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  /* Definite height so flex grow/spacer can sink actions on tall screens */
+  min-height: 100vh;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Spacer before actions: works even when margin-top:auto is ignored by the runtime */
+.home-page::after {
+  content: "";
+  flex: 1 1 auto;
+  min-height: 0;
+  order: 1;
+}
+
+.home-page .eyebrow {
+  color: #796d63;
+}
+
+.home-page .hint {
+  color: #796d63;
+}
+
+.home-page .primary-button {
+  color: #fffdfa;
+  background: #b45842;
 }
 
 .home-header {
@@ -23,8 +52,8 @@
 
 .card-kicker {
   margin-bottom: 8rpx;
-  color: #9c8f83;
-  font-size: 22rpx;
+  color: #796d63;
+  font-size: 24rpx;
   letter-spacing: 2rpx;
   text-transform: none;
 }
@@ -168,12 +197,12 @@
 
 .plan-card-quiet .card-title {
   margin-bottom: 8rpx;
-  color: #9c8f83;
+  color: #796d63;
 }
 
 .plan-empty {
   margin-top: 4rpx;
-  color: #9c8f83;
+  color: #796d63;
 }
 
 .home-pending {
@@ -230,14 +259,18 @@
 }
 
 .home-actions {
-  margin-top: 12rpx;
+  order: 2;
+  margin-top: auto;
+  margin-bottom: 0;
   padding-top: 8rpx;
+  padding-bottom: 0;
+  flex: 0 0 auto;
 }
 
 .home-primary-cta {
   margin-top: 8rpx;
   margin-bottom: 12rpx;
-  box-shadow: 0 10rpx 24rpx rgba(184, 92, 69, 0.22);
+  box-shadow: 0 10rpx 24rpx rgba(180, 88, 66, 0.22);
 }
 
 .asset-button {
@@ -308,5 +341,21 @@
   .primary-button,
   .secondary-button {
     width: 100%;
+  }
+
+  /* Content may exceed viewport; keep actions in document flow for scroll into safe area */
+  .home-page {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .home-page::after {
+    display: none;
+    flex: 0 0 0;
+  }
+
+  .home-actions {
+    order: 0;
+    margin-top: 16rpx;
   }
 }
