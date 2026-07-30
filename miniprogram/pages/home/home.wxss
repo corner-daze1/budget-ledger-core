@@ -1,33 +1,312 @@
+/* Phase 9 home visual sample — tokens aligned with docs/PHASE9_DESIGN_SYSTEM.md */
+
+.home-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-header {
+  margin-bottom: 8rpx;
+}
+
+.home-title {
+  margin: 8rpx 0 24rpx;
+}
+
+.home-error {
+  margin-bottom: 16rpx;
+}
+
+.home-panel {
+  margin: 16rpx 0;
+}
+
+.card-kicker {
+  margin-bottom: 8rpx;
+  color: #9c8f83;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  text-transform: none;
+}
+
 .hero-card {
-  margin: 34rpx 0 22rpx;
-  padding: 42rpx 34rpx;
+  margin: 16rpx 0 20rpx;
+  padding: 40rpx 32rpx 36rpx;
   border-radius: 28rpx;
   background: #2f302b;
   color: #fffdfa;
+  box-shadow: 0 12rpx 36rpx rgba(66, 52, 39, 0.12);
 }
 
-.hero-card .card-title { color: #c7bdb1; }
-.hero-number { margin: 12rpx 0; font-size: 76rpx; font-weight: 600; letter-spacing: 1rpx; }
-.hero-caption { color: #c7bdb1; font-size: 23rpx; }
-.settlement-card { margin: 34rpx 0 22rpx; padding: 30rpx; border: 1rpx solid #d9c5b7; border-radius: 28rpx; background: #fffaf5; }
-.settlement-line { display: flex; justify-content: space-between; margin: 14rpx 0; color: #756b63; }
-.settlement-line text:last-child { color: #2f302b; font-weight: 600; }
-.status-card { padding: 24rpx 30rpx; border-radius: 22rpx; background: #efe5db; }
-.status-line { display: flex; justify-content: space-between; margin: 8rpx 0; color: #756b63; }
-.status-value { color: #9b4d3a; font-weight: 600; }
-.nav-row { display: flex; gap: 18rpx; }
-.nav-button { flex: 1; }
-.asset-button { margin: 18rpx 0 4rpx; border: 1rpx solid #b85c45; border-radius: 16rpx; color: #9b4d3a; background: transparent; }
-.plan-card { margin: 22rpx 0; padding: 28rpx; border-radius: 22rpx; background: #fffdfa; border: 1rpx solid #eadfd6; }
-.plan-alert { margin: 22rpx 0; padding: 22rpx 26rpx; border-radius: 18rpx; background: #f8e4dc; color: #8f3f2f; }
-.plan-line { display: flex; justify-content: space-between; gap: 20rpx; padding: 14rpx 0; border-bottom: 1rpx solid #eee5de; color: #5f5751; font-size: 25rpx; }
-.plan-line text:last-child { color: #9b4d3a; }
-.pending-plan { margin-top: 18rpx; padding-top: 8rpx; }
-.pending-plan .field-input { margin: 12rpx 0; }
-.hero-number, .status-value, .plan-line text, .settlement-line text { overflow-wrap: anywhere; }
+.hero-kicker {
+  color: #c7bdb1;
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+}
+
+.hero-card .card-title {
+  color: #c7bdb1;
+}
+
+.hero-number {
+  margin: 8rpx 0 16rpx;
+  font-size: 80rpx;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 1rpx;
+  color: #fffdfa;
+}
+
+.hero-caption {
+  color: #c7bdb1;
+  font-size: 24rpx;
+  line-height: 1.55;
+}
+
+.hero-meta {
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid rgba(199, 189, 177, 0.28);
+}
+
+.hero-meta .hero-caption + .hero-caption {
+  margin-top: 8rpx;
+}
+
+.settlement-card {
+  margin: 16rpx 0 20rpx;
+  padding: 32rpx 28rpx;
+  border: 1rpx solid #d9c5b7;
+  border-radius: 28rpx;
+  background: #fffaf5;
+  box-shadow: 0 10rpx 28rpx rgba(66, 52, 39, 0.06);
+}
+
+.settlement-card .card-title {
+  margin-bottom: 12rpx;
+  color: #282521;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.settlement-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 14rpx 0;
+  color: #756b63;
+  font-size: 26rpx;
+}
+
+.settlement-value {
+  color: #2f302b;
+  font-weight: 600;
+  text-align: right;
+}
+
+.settlement-field {
+  margin-top: 8rpx;
+}
+
+.status-card {
+  padding: 22rpx 28rpx;
+  border-radius: 22rpx;
+  background: #efe5db;
+}
+
+.home-secondary {
+  margin: 0 0 8rpx;
+}
+
+.status-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin: 8rpx 0;
+  color: #756b63;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.status-value {
+  color: #9b4d3a;
+  font-weight: 600;
+  text-align: right;
+}
+
+.plan-alert {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin: 20rpx 0 8rpx;
+  padding: 22rpx 26rpx;
+  border-radius: 18rpx;
+  background: #f8e4dc;
+  color: #8f3f2f;
+}
+
+.plan-alert-text {
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.plan-card {
+  margin: 16rpx 0;
+  padding: 28rpx;
+  border-radius: 22rpx;
+  background: #fffdfa;
+  border: 1rpx solid #eadfd6;
+}
+
+.plan-card-quiet {
+  margin-top: 12rpx;
+  padding: 22rpx 24rpx;
+  border-color: #efe8e1;
+  background: rgba(255, 253, 250, 0.72);
+}
+
+.plan-card-quiet .card-title {
+  margin-bottom: 8rpx;
+  color: #9c8f83;
+}
+
+.plan-empty {
+  margin-top: 4rpx;
+  color: #9c8f83;
+}
+
+.home-pending {
+  border-color: #e2cfc4;
+  box-shadow: 0 8rpx 24rpx rgba(66, 52, 39, 0.05);
+}
+
+.plan-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #eee5de;
+  color: #5f5751;
+  font-size: 26rpx;
+  line-height: 1.45;
+}
+
+.plan-line:last-child {
+  border-bottom: none;
+}
+
+.plan-line text:last-child {
+  color: #9b4d3a;
+  text-align: right;
+}
+
+.plan-line.due text:last-child {
+  font-weight: 600;
+}
+
+.notice {
+  margin-bottom: 8rpx;
+  color: #756b63;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.pending-plan {
+  margin-top: 12rpx;
+  padding-top: 4rpx;
+}
+
+.pending-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  margin: 12rpx 0;
+  padding: 0 20rpx;
+  border: 1rpx solid #eadfd6;
+  border-radius: 16rpx;
+  background: #fffdfa;
+  text-align: left;
+}
+
+.home-actions {
+  margin-top: 12rpx;
+  padding-top: 8rpx;
+}
+
+.home-primary-cta {
+  margin-top: 8rpx;
+  margin-bottom: 12rpx;
+  box-shadow: 0 10rpx 24rpx rgba(184, 92, 69, 0.22);
+}
+
+.asset-button {
+  min-height: 88rpx;
+  margin: 8rpx 0 4rpx;
+  border: 1rpx solid #c9a89a;
+  border-radius: 16rpx;
+  color: #8a5a4c;
+  background: transparent;
+  font-size: 28rpx;
+  line-height: 1.4;
+}
+
+.nav-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.nav-button {
+  flex: 1;
+  margin-top: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.hero-number,
+.status-value,
+.settlement-value,
+.plan-line text,
+.settlement-line text,
+.plan-alert-text,
+.home-error {
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 320px) {
-  .hero-number { font-size: 60rpx; }
-  .status-line, .settlement-line, .plan-line, .nav-row { align-items: stretch; flex-direction: column; }
-  .nav-row { gap: 0; }
+  .hero-number {
+    font-size: 64rpx;
+  }
+
+  .hero-card {
+    padding: 32rpx 24rpx 28rpx;
+  }
+
+  .status-line,
+  .settlement-line,
+  .plan-line,
+  .nav-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .status-value,
+  .settlement-value,
+  .plan-line text:last-child {
+    text-align: left;
+  }
+
+  .nav-row {
+    gap: 0;
+  }
+
+  .nav-button {
+    width: 100%;
+  }
+
+  .asset-button,
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
 }

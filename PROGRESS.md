@@ -294,3 +294,20 @@
 - 清空旧 Console 后点击 Stable 编译按钮重新编译；当前为0 Errors、4条开发者工具/基础库环境 Warning，当前日志无 `timeout`，没有隐藏或再次清空编译结果。
 - 13张不含JSON原文的非破坏截图位于 `artifacts/phase8/`，覆盖四个折叠分区、四页、两种设备、真实汇总和编译后 Console。
 - 最终固定顺序验收：`npm run build:mini` 生成5个文件；阶段八16/16、全量325/325通过，failed/skipped/todo均为0；`npm run check`、`npm run check:mini` 与 `git diff --check` 均退出0。
+
+## Phase 9 home visual sample kickoff
+
+- 基线：HEAD `54f3daa49b49de4759c7b4ca3e9bbc91b2e30772`，工作区干净；325 passed；build/check/check:mini 均通过。
+- 目标：首页高保真样板 + 全局设计规范文档；不改业务逻辑与另三页。
+- 顺序：冻结设计规范 → 重排首页 WXML/WXSS → ≥6 契约测试 → 反向与全量验收 → Stable 双尺寸非破坏截图。
+- 最大风险：样式重构破坏绑定/导航/小屏可达；或视觉改动误触 home.js 与白名单外文件。
+
+## Phase 9 implementation and acceptance
+
+- 已创建 `docs/PHASE9_DESIGN_SYSTEM.md`：色板、字号、间距、组件层级、六种首页状态、三页复用与首页特例。
+- 仅重排 `home.wxml` / `home.wxss`：今日可自由花为主焦点，记一笔唯一主 CTA，计划区空态弱化，320px 纵排与断行保留；未改 `home.js` 与业务逻辑。
+- 新增 6 项 `tests/phase9-home-visual-contract.test.js` 契约测试；全量 331 passed、0 failed/skipped/todo。
+- 反向验证：临时移除 `{{model.todayFree}}` 绑定后定向测试 5 passed / 1 failed；还原后 6 passed / 0 failed。
+- `npm run build:mini` 生成 5 个文件；`npm run check`、`npm run check:mini`、`git diff --check` 退出 0。
+- Stable 双尺寸真实截图因 CLI 服务端口关闭受阻，见 `BLOCKED.md` 第九阶段；风格是否通过须领导在 Stable 人工确认。
+
