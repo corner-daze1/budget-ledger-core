@@ -311,3 +311,9 @@
 - `npm run build:mini` 生成 5 个文件；`npm run check`、`npm run check:mini`、`git diff --check` 退出 0。
 - Stable 双尺寸真实截图因 CLI 服务端口关闭受阻，见 `BLOCKED.md` 第九阶段；风格是否通过须领导在 Stable 人工确认。
 
+## Phase 9 Stable screenshots
+
+- 非破坏截图：`artifacts/phase9/01-home-iphone12-13.png`（iPhone 12/13 Pro Max, 428）与 `02-home-iphone5-320.png`（iPhone 5, 320）；元数据见 `artifacts/phase9/device-meta.json`。
+- 真实首页模型：今日可自由花约 ¥2783.22，周期 2026-07-01 至 2026-07-31，完整单日额度约 ¥96.78；计划空态弱化；主 CTA「记一笔」。
+- 未注入/清空/改写模拟器业务数据；风格认可仍待领导确认（执行者不自称通过）。
+
