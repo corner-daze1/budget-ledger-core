@@ -1,3 +1,4 @@
 node_modules/
 coverage/
 project.private.config.json
+.visual-qa/

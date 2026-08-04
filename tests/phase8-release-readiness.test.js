@@ -309,7 +309,9 @@ test('empty account plan and bill states explain a real next step without demo d
   const bills = read('miniprogram/pages/bills/bills.wxml');
   assert.match(settings, /暂无账户.*添加/);
   assert.match(settings, /暂无计划.*创建/);
-  assert.match(home, /暂无计划提醒或待处理项.*设置/);
+  // 首页计划为空时不常驻提示；空态由事件区与账单空文案承担
+  assert.doesNotMatch(home, /暂无计划提醒或待处理项/);
+  assert.match(home, /还没有账单，记下第一笔|hasPlanEvents|planPendingItems/);
   assert.match(entry, /暂无可用账户.*设置/);
   assert.match(bills, /没有.*先.*记/);
   for (const source of [settings, home, entry, bills]) assert.doesNotMatch(source, /演示数据|示例账单/);

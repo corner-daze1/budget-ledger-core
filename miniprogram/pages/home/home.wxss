@@ -1,121 +1,173 @@
-/* Phase 9 home visual sample — tokens aligned with docs/PHASE9_DESIGN_SYSTEM.md */
-/* Home-only color overrides: weak #796D63, primary #B45842; do not change app.wxss */
+/* Phase 9 product-review sample — tokens from docs/PHASE9_DESIGN_SYSTEM.md */
 
 .home-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  box-sizing: border-box;
-  /* Definite height so flex grow/spacer can sink actions on tall screens */
+  background: #f7f3ea;
+  color: #22231f;
   min-height: 100vh;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-/* Spacer before actions: works even when margin-top:auto is ignored by the runtime */
-.home-page::after {
-  content: "";
-  flex: 1 1 auto;
-  min-height: 0;
-  order: 1;
-}
-
-.home-page .eyebrow {
-  color: #796d63;
-}
-
-.home-page .hint {
-  color: #796d63;
-}
-
-.home-page .primary-button {
-  color: #fffdfa;
-  background: #b45842;
+  box-sizing: border-box;
 }
 
 .home-header {
-  margin-bottom: 8rpx;
+  margin-bottom: 20rpx;
+}
+
+.home-header-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
 .home-title {
-  margin: 8rpx 0 24rpx;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 1rpx;
+}
+
+.manage-link {
+  margin: 0;
+  padding: 0 16rpx;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #756b63;
+  background: transparent;
+  border: none;
+}
+
+.home-subtitle {
+  margin-top: 8rpx;
+}
+
+.home-secondary-text {
+  color: #756b63;
+  font-size: 24rpx;
+  line-height: 1.55;
 }
 
 .home-error {
   margin-bottom: 16rpx;
 }
 
-.home-panel {
+.budget-card,
+.settlement-card,
+.recent-bills,
+.plan-card {
   margin: 16rpx 0;
+  padding: 28rpx;
+  border-radius: 24rpx;
+  background: #fffdfa;
+  border: 1rpx solid #e8e1d6;
+  box-sizing: border-box;
 }
 
 .card-kicker {
   margin-bottom: 8rpx;
-  color: #796d63;
-  font-size: 24rpx;
-  letter-spacing: 2rpx;
-  text-transform: none;
-}
-
-.hero-card {
-  margin: 16rpx 0 20rpx;
-  padding: 40rpx 32rpx 36rpx;
-  border-radius: 28rpx;
-  background: #2f302b;
-  color: #fffdfa;
-  box-shadow: 0 12rpx 36rpx rgba(66, 52, 39, 0.12);
-}
-
-.hero-kicker {
-  color: #c7bdb1;
+  color: #756b63;
   font-size: 24rpx;
   letter-spacing: 1rpx;
 }
 
-.hero-card .card-title {
-  color: #c7bdb1;
+.card-title {
+  margin-bottom: 12rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #22231f;
 }
 
 .hero-number {
-  margin: 8rpx 0 16rpx;
-  font-size: 80rpx;
+  margin: 8rpx 0 20rpx;
+  font-size: 72rpx;
   font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: 1rpx;
-  color: #fffdfa;
+  line-height: 1.12;
+  color: #22231f;
+  overflow-wrap: anywhere;
 }
 
-.hero-caption {
-  color: #c7bdb1;
+.scale-track {
+  position: relative;
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: #efe8dc;
+  overflow: hidden;
+}
+
+.scale-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: #d8f15a;
+  max-width: 100%;
+}
+
+.scale-fill-prepaid {
+  background: #e8b4a8;
+}
+
+.scale-fill-normal {
+  background: #d8f15a;
+}
+
+.scale-mark {
+  position: absolute;
+  left: 40%;
+  top: -4rpx;
+  width: 4rpx;
+  height: 24rpx;
+  background: #22231f;
+  opacity: 0.25;
+}
+
+.scale-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 12rpx;
+  flex-wrap: wrap;
+}
+
+.status-normal {
+  color: #5f7055;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.status-prepaid {
+  color: #a94d3b;
   font-size: 24rpx;
   line-height: 1.55;
-}
-
-.hero-meta {
-  margin-top: 16rpx;
-  padding-top: 16rpx;
-  border-top: 1rpx solid rgba(199, 189, 177, 0.28);
-}
-
-.hero-meta .hero-caption + .hero-caption {
   margin-top: 8rpx;
+  overflow-wrap: anywhere;
 }
 
-.settlement-card {
-  margin: 16rpx 0 20rpx;
-  padding: 32rpx 28rpx;
-  border: 1rpx solid #d9c5b7;
-  border-radius: 28rpx;
-  background: #fffaf5;
-  box-shadow: 0 10rpx 28rpx rgba(66, 52, 39, 0.06);
+.prepaid-block {
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #e8e1d6;
 }
 
-.settlement-card .card-title {
-  margin-bottom: 12rpx;
-  color: #282521;
-  font-size: 32rpx;
-  font-weight: 600;
+.period-line {
+  margin-top: 12rpx;
+}
+
+.home-primary-cta {
+  min-height: 88rpx;
+  margin: 8rpx 0 20rpx;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  color: #fffdfa;
+  background: #22231f;
+  border: none;
+}
+
+.settlement-card .home-primary-cta {
+  margin-top: 20rpx;
+  margin-bottom: 0;
 }
 
 .settlement-line {
@@ -128,39 +180,85 @@
 }
 
 .settlement-value {
-  color: #2f302b;
+  color: #22231f;
   font-weight: 600;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .settlement-field {
   margin-top: 8rpx;
 }
 
-.status-card {
-  padding: 22rpx 28rpx;
-  border-radius: 22rpx;
-  background: #efe5db;
-}
-
-.home-secondary {
-  margin: 0 0 8rpx;
-}
-
-.status-line {
+.recent-bills-head {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
-  margin: 8rpx 0;
+  margin-bottom: 8rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #22231f;
+}
+
+.all-link {
+  margin: 0;
+  padding: 0 8rpx;
+  min-height: 88rpx;
+  line-height: 88rpx;
+  flex-shrink: 0;
+  font-size: 26rpx;
+  color: #5f7055;
+  background: transparent;
+}
+
+.bills-empty {
+  padding: 28rpx 0 12rpx;
   color: #756b63;
   font-size: 26rpx;
   line-height: 1.5;
 }
 
-.status-value {
-  color: #9b4d3a;
+.bill-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-top: 1rpx solid #efe8dc;
+}
+
+.bill-row:first-of-type {
+  border-top: none;
+}
+
+.bill-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.bill-category {
+  font-size: 28rpx;
+  color: #22231f;
+  margin-bottom: 4rpx;
+  overflow-wrap: anywhere;
+}
+
+.bill-amount {
+  flex-shrink: 0;
+  font-size: 28rpx;
   font-weight: 600;
+  color: #22231f;
   text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.plan-section {
+  margin-top: 8rpx;
 }
 
 .plan-alert {
@@ -168,55 +266,26 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 12rpx;
-  margin: 20rpx 0 8rpx;
+  margin: 16rpx 0;
   padding: 22rpx 26rpx;
   border-radius: 18rpx;
   background: #f8e4dc;
-  color: #8f3f2f;
+  color: #a94d3b;
 }
 
 .plan-alert-text {
   font-size: 26rpx;
   line-height: 1.55;
-}
-
-.plan-card {
-  margin: 16rpx 0;
-  padding: 28rpx;
-  border-radius: 22rpx;
-  background: #fffdfa;
-  border: 1rpx solid #eadfd6;
-}
-
-.plan-card-quiet {
-  margin-top: 12rpx;
-  padding: 22rpx 24rpx;
-  border-color: #efe8e1;
-  background: rgba(255, 253, 250, 0.72);
-}
-
-.plan-card-quiet .card-title {
-  margin-bottom: 8rpx;
-  color: #796d63;
-}
-
-.plan-empty {
-  margin-top: 4rpx;
-  color: #796d63;
-}
-
-.home-pending {
-  border-color: #e2cfc4;
-  box-shadow: 0 8rpx 24rpx rgba(66, 52, 39, 0.05);
+  overflow-wrap: anywhere;
 }
 
 .plan-line {
   display: flex;
   justify-content: space-between;
-  gap: 20rpx;
+  gap: 16rpx;
   padding: 14rpx 0;
-  border-bottom: 1rpx solid #eee5de;
-  color: #5f5751;
+  border-bottom: 1rpx solid #efe8dc;
+  color: #22231f;
   font-size: 26rpx;
   line-height: 1.45;
 }
@@ -226,12 +295,9 @@
 }
 
 .plan-line-value {
-  color: #9b4d3a;
+  color: #a94d3b;
   text-align: right;
-}
-
-.plan-line.due .plan-line-value {
-  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .notice {
@@ -243,7 +309,6 @@
 
 .pending-plan {
   margin-top: 12rpx;
-  padding-top: 4rpx;
 }
 
 .pending-input {
@@ -252,110 +317,96 @@
   min-height: 88rpx;
   margin: 12rpx 0;
   padding: 0 20rpx;
-  border: 1rpx solid #eadfd6;
+  border: 1rpx solid #e8e1d6;
   border-radius: 16rpx;
   background: #fffdfa;
   text-align: left;
-}
-
-.home-actions {
-  order: 2;
-  margin-top: auto;
-  margin-bottom: 0;
-  padding-top: 8rpx;
-  padding-bottom: 0;
-  flex: 0 0 auto;
-}
-
-.home-primary-cta {
-  margin-top: 8rpx;
-  margin-bottom: 12rpx;
-  box-shadow: 0 10rpx 24rpx rgba(180, 88, 66, 0.22);
-}
-
-.asset-button {
-  min-height: 88rpx;
-  margin: 8rpx 0 4rpx;
-  border: 1rpx solid #c9a89a;
-  border-radius: 16rpx;
-  color: #8a5a4c;
-  background: transparent;
   font-size: 28rpx;
-  line-height: 1.4;
 }
 
-.nav-row {
+.secondary-button {
+  min-height: 88rpx;
+  margin: 12rpx 0;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #22231f;
+  background: #efe8dc;
+  border: none;
+}
+
+.field {
   display: flex;
-  gap: 16rpx;
-  margin-top: 8rpx;
+  align-items: center;
+  min-height: 86rpx;
+  border-bottom: 1rpx solid #efe8dc;
 }
 
-.nav-button {
+.field-label {
+  width: 190rpx;
+  color: #756b63;
+  font-size: 26rpx;
+}
+
+.field-input,
+.picker-value {
   flex: 1;
-  margin-top: 8rpx;
-  margin-bottom: 8rpx;
-}
-
-.hero-number,
-.status-value,
-.settlement-value,
-.plan-line,
-.settlement-line,
-.plan-alert-text,
-.home-error {
-  overflow-wrap: anywhere;
+  color: #22231f;
+  text-align: right;
+  font-size: 26rpx;
 }
 
 @media (max-width: 320px) {
+  .home-title {
+    font-size: 36rpx;
+  }
+
   .hero-number {
-    font-size: 64rpx;
+    font-size: 56rpx;
   }
 
-  .hero-card {
-    padding: 32rpx 24rpx 28rpx;
+  /* Keep title+管理 and bill main+amount on one row at 320px */
+  .home-header-row,
+  .recent-bills-head,
+  .bill-row {
+    flex-direction: row;
+    align-items: center;
   }
 
-  .status-line,
+  .bill-row {
+    align-items: flex-start;
+  }
+
   .settlement-line,
   .plan-line,
-  .nav-row {
-    align-items: stretch;
+  .scale-legend {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .status-value,
   .settlement-value,
-  .plan-line-value {
+  .plan-line-value,
+  .picker-value,
+  .field-input {
     text-align: left;
   }
 
-  .nav-row {
-    gap: 0;
+  .bill-amount {
+    text-align: right;
   }
 
-  .nav-button {
-    width: 100%;
+  .field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8rpx;
+    padding: 12rpx 0;
   }
 
-  .asset-button,
-  .primary-button,
+  .field-label {
+    width: auto;
+  }
+
+  .home-primary-cta,
   .secondary-button {
     width: 100%;
-  }
-
-  /* Content may exceed viewport; keep actions in document flow for scroll into safe area */
-  .home-page {
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .home-page::after {
-    display: none;
-    flex: 0 0 0;
-  }
-
-  .home-actions {
-    order: 0;
-    margin-top: 16rpx;
   }
 }

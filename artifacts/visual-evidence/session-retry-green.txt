@@ -1,0 +1,25 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 0
+✔ visual evidence CLI arguments use the isolated project and never pass an automation account
+✔ visual evidence CLI argument builder rejects a non-absolute project path or invalid port
+✔ visual evidence reports an early CLI exit with exit code and raw stdout and stderr
+✔ visual evidence PNG validation reads a non-zero PNG IHDR size
+✔ visual evidence console classification keeps warnings visible and errors fatal
+✔ visual evidence fixtures include a real cross-budget-period state
+✔ compatibility failure removes old success artifacts and records the current failure
+✔ compatibility close failure removes success artifacts and preserves CLI output
+✔ compatibility run and close failures preserve both original errors
+✔ successful compatibility close clears an old error and keeps a valid PNG with ok true
+✔ full evidence close failure kills CLI, retains close-error console evidence, and removes success outputs
+✔ fresh-session retry abandons a hung runtime and succeeds with a different runtime and port
+✔ three screenshot timeouts create three distinct sessions and never reuse a failed runtime
+✔ deterministic fixture or application errors close once and do not retry
+✔ failed session cleanup preserves the screenshot timeout and cleanup errors and never retries
+✔ second fixture retry keeps the first fixture result and fixed fixture order
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0

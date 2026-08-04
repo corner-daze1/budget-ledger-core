@@ -1,30 +1,39 @@
 # 当前进度
 
-更新时间：2026-07-31
+更新时间：2026-08-04
 
-## 现役基线
+## 现役结论
 
-- 当前分支 `master`，基线提交 `577b345`；单一 worktree、未配置远端，收尾前工作区干净。
-- 当前参赛版是离线原生微信小程序：动态累计预算、六类账户、计划与小程序内提醒、三张账单分析图、JSON 完整备份与恢复预检、CSV 账单导出均已实现。
-- 微信开发者工具以 Stable `2.01.2510290` 为已验证环境；RC 版的旧路径与 AppID 故障不再是现役阻塞。
-- 2026-07-31 实测：`npm test` 为 335 passed、0 failed/skipped/todo；`npm run check`、`npm run build:mini`、`npm run check:mini` 均退出 0，构建生成 5 个文件。
-- 首页不受支持的标签组合选择器已在 `577b345` 修复；Stable 重编译后该项目源码警告消失。
+- 当前分支 `master`，HEAD `7bff64f`；工作区包含尚未提交的阶段九首页候选样板、自动视觉取证和文档改动，**不是干净工作区**。
+- 当前参赛版支持动态累计预算、六类账户、周期计划与小程序内提醒、三张账单分析图、JSON 完整备份/恢复预检和 CSV 导出。
+- 首页候选样板已展示预算刻度、积攒或预支恢复信息、“记一笔”和最多五笔近期账单；视觉规范见 `docs/PHASE9_DESIGN_SYSTEM.md`。
+- 首页视觉尚未获得产品确认；确认前不得把该样式铺到设置、记账和账单分析三页。
 
-## 当前产品决策
+## 自动视觉取证
 
-- 阶段九首页只是已实现的视觉样板，尚未获得产品视觉认可，不能继续铺到记账、账单、设置三页。
-- 下一版首页倾向采用方案 A“预算刻度带”，把固定日基准、累计可用额度、预支区间和恢复日期变成核心视觉符号。
-- 首页必须展示近期账单；设置项和计划管理不能继续占据首页主体。计划到期或待处理可以按事件出现，但不是常驻主内容。
-- 视觉风格要符合“预算有弹性、花钱更从容”的产品特点；避免银行、借贷、促销和卡通记账风。
-- 在 UI Notes 完成足量案例研究并由产品方确认方向前，不下发视觉改版开发任务。
+- 日常验收入口为 `npm run evidence:visual -- --compat` 和 `npm run evidence:visual`，详细机制见 `docs/VISUAL_EVIDENCE.md`。
+- 取证使用 `.visual-qa`、`touristappid` 和 `miniprogram-automator@0.12.1`；不传 `--auto-account`，不读取测试 AppID 的账本。
+- 每个 fixture 使用独立 CLI/automator 会话。截图或通信超时会废弃旧 runtime、确认关闭后换新端口重试；确定性数据、PNG 或应用错误不会被重试掩盖。
+- 当前四态证据位于 `artifacts/visual-evidence/`：正常积攒、预支恢复、空账单、跨预算周期。四张 PNG 均为 390×753，storage 与 fixture 哈希一致。
+- `manifest.json` 当前为四个不同端口、`sessionAttempt=1`；应用 error、exception、warning、timeout 和 runtimeErrors 均为 0。每个会话的五条空对象协议事件原样计入 `protocolArtifacts`。
 
-## 当前待办
+## 2026-08-04 实测基线
 
-1. 登录 UI Notes，研究至少 6 个相关 App、20 张关键截图，覆盖首页、近期账单、快速记账、预算反馈、资产入口和统计分析。
-2. 逐项确认首页信息层级、预算刻度形式、配色、卡片密度、导航与账单列表样式。
-3. 方向确认后，由管理会话使用 `leader` 输出一份执行 Agent 可直接运行的完整任务书；执行完成后再独立验收。
+- `node --test tests/visual-evidence.test.js`：16/16。
+- 永久挂起 screenshot 的独立暗测：30 秒后废弃端口 58001，并由端口 58002 成功完成，证明不是在同一 runtime 内重试。
+- `npm test`：356/356，fail/skip/todo 均为 0。
+- `npm run check`：359 test declarations。
+- `npm run build:mini`：5 generated files；`npm run check:mini` 与 `git diff --check` 通过。
+- 自动取证任务交付边界的保护文件 SHA-256 为 114→114、`changed=[]`；本次知识收尾随后按授权更新了 AGENTS、README 和产品规格，因此该任务级指纹不代表知识收尾后的整个工作区仍无文档变化。
 
-## 已知但不阻塞
+## 下一步
 
-- `npm run check` 当前报告 336 个测试声明，而 Node 测试运行器实际执行 335 项。原因是 `scripts/validate-project.js` 的正则把测试代码中的一次正则表达式 `.test(` 误算为测试声明；门禁仍通过，但该数字不能当作真实测试数。
-- 完整历史、阶段性金额、截图闭环和已解除故障保留在 Git 历史及 `artifacts/phase*/`，不再重复堆入当前进度。
+1. 产品方审阅 `artifacts/visual-evidence/` 的正常、预支、空账单和跨周期首页图，决定首页视觉是否通过。
+2. 通过后再单独规划另外三页的视觉统一；未通过则只迭代首页样板。
+3. 正式发布前另做真实账本的导出、恢复和真机冒烟。隔离 fixture 适合日常回归，但不能替代发布级数据安全验证。
+
+## 历史说明
+
+- `--auto-account touristappid`、同一 runtime 内重复 screenshot、成功证据先于关闭落盘等问题均已修复，不再是现役阻塞。
+- Computer Use 的 NW.js 窗口归属错误仍可能存在，但自动视觉取证已不依赖它；旧 21–23 人工证据不再作为日常视觉迭代门禁。
+- 早期失败证据仍保留在 `artifacts/phase9/` 和 `artifacts/visual-evidence/*-red.txt`，是否删除等待用户确认。

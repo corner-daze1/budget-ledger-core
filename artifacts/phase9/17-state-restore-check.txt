@@ -1,0 +1,8 @@
+before={"tx":9,"net":168000,"reward":0,"periods":["2026-07-01..2026-07-31:o","2026-08-01..2026-08-31:o"],"openNetSpend":[12000,0]}
+mid={"tx":10,"openNetSpend_note":"after UI entry 900 controlled; prepaidCents=14130; todayFreeCents=0"}
+after={"tx":9,"net":168000,"reward":0,"periods":["2026-07-01..2026-07-31:o","2026-08-01..2026-08-31:o"],"openNetSpend":[12000,0]}
+match=true
+iphone12_restore_match=true
+iphone5_restore_match=true
+compared_fields=tx,net,reward,periods,openNetSpend
+at=2026-08-04T13:40:00+08:00

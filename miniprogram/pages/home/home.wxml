@@ -1,15 +1,18 @@
 <view class="page home-page" wx:if="{{model}}">
   <view class="home-header">
-    <view class="eyebrow">YONGDU / TODAY</view>
-    <view class="title home-title">今天，慢一点花</view>
+    <view class="home-header-row">
+      <view class="home-title">今天还能花多少</view>
+      <button class="manage-link" bindtap="goSettings">管理</button>
+    </view>
+    <view class="home-secondary-text home-subtitle">额度按天积累，花完会如实告诉你</view>
   </view>
 
   <view wx:if="{{error}}" class="error home-error">{{error}}</view>
 
-  <view wx:if="{{model.needsSettlement}}" class="settlement-card home-panel">
+  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">
     <view class="card-kicker">本期已结束</view>
     <view class="card-title">先结算，再看今天能花多少</view>
-    <view class="hint">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>
+    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>
     <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>
     <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>
     <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">
@@ -20,35 +23,53 @@
       <text class="field-label">超支 {{model.settlement.grossDebt}}</text>
       <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>
     </view>
-    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="hint">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>
-    <button class="primary-button" bindtap="settlePeriod">确认结算并进入下期</button>
+    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>
+    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>
   </view>
 
-  <view wx:else class="hero-card home-panel">
-    <view class="card-kicker hero-kicker">今日可自由花</view>
+  <view wx:else class="budget-card">
+    <view class="card-kicker">今日可自由花</view>
     <view class="hero-number">{{model.todayFree}}</view>
-    <view class="hero-caption">已按实际天数累计释放，并扣除本期可控支出</view>
-    <view class="hero-meta">
-      <view class="hero-caption">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>
-      <view wx:if="{{model.pendingStartDay}}" class="hero-caption">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>
+    <view class="scale-track" aria-hidden="true">
+      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>
+      <view class="scale-mark"></view>
+    </view>
+    <view class="scale-legend">
+      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>
+      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>
+    </view>
+    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">
+      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>
+      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>
+    </view>
+    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>
+    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>
+  </view>
+
+  <button class="primary-button home-primary-cta" bindtap="goEntry" wx:if="{{!model.needsSettlement}}">＋ 记一笔</button>
+
+  <view class="recent-bills">
+    <view class="recent-bills-head">
+      <view class="section-title">最近账单</view>
+      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>
+    </view>
+    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，记下第一笔</view>
+    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">
+      <view class="bill-main">
+        <view class="bill-category">{{item.category}}</view>
+        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>
+      </view>
+      <view class="bill-amount">{{item.amount}}</view>
     </view>
   </view>
 
-  <view wx:if="{{!model.needsSettlement && model.prepaidCents > 0}}" class="status-card home-secondary">
-    <view class="status-line"><text>已预支未来额度</text><text class="status-value">{{model.prepaid}}</text></view>
-    <view class="status-line"><text>预计{{model.earliestRecoveryDate}}恢复至每日</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
-  </view>
-  <view wx:elif="{{!model.needsSettlement}}" class="status-card home-secondary">
-    <view class="status-line"><text>完整单日额度</text><text class="status-value">{{model.fullSingleDayQuota}}</text></view>
-  </view>
-
-  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert">
+  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">
     <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>
     <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>
   </view>
 
-  <view class="plan-card home-tertiary {{!model.planExecutionResults.length && !model.planReminders.length && !model.planDueToday.length && !model.planPendingItems.length ? 'plan-card-quiet' : ''}}">
-    <view class="card-title">计划与提醒</view>
+  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">
+    <view class="section-title">计划与提醒</view>
     <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>
     <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">
       <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>
@@ -59,11 +80,10 @@
     <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">
       <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>
     </view>
-    <view wx:if="{{!model.planExecutionResults.length && !model.planReminders.length && !model.planDueToday.length && !model.planPendingItems.length}}" class="hint plan-empty">暂无计划提醒或待处理项，可到设置页创建计划并开启小程序内提醒。</view>
   </view>
 
-  <view wx:if="{{model.planPendingItems.length}}" class="plan-card home-pending">
-    <view class="card-title">待处理计划</view>
+  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">
+    <view class="section-title">待处理计划</view>
     <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">
       <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>
       <block wx:if="{{item.reason !== 'plan_info_required'}}">
@@ -74,16 +94,7 @@
         </block>
         <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>
       </block>
-      <view wx:else class="hint">请到设置页编辑计划并补充周期与到期日。</view>
-    </view>
-  </view>
-
-  <view class="home-actions">
-    <button class="primary-button home-primary-cta" bindtap="goEntry">＋ 记一笔</button>
-    <button class="asset-button" bindtap="goAssets">资产中心</button>
-    <view class="nav-row">
-      <button class="secondary-button nav-button" bindtap="goBills">账单分析</button>
-      <button class="secondary-button nav-button" bindtap="goSettings">设置</button>
+      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>
     </view>
   </view>
 </view>

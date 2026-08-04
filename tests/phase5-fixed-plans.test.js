@@ -392,7 +392,14 @@ test('设置页和首页提供计划创建编辑停用提醒待处理重试及�
   for (const text of ['createScheduledPlan', 'editScheduledPlan', 'disableScheduledPlan', '提前3天', '提前1天', '当天']) {
     assert.equal(settingsJs.includes(text) || settingsWxml.includes(text), true, `missing settings contract: ${text}`);
   }
-  for (const text of ['retryPendingPlan', 'dismissOverduePlanBanner', '暂无计划提醒或待处理项', '已自动记账']) {
+  for (const text of ['retryPendingPlan', 'dismissOverduePlanBanner', '已自动记账']) {
     assert.equal(homeJs.includes(text) || homeWxml.includes(text), true, `missing home contract: ${text}`);
   }
+  // 首页计划区为事件驱动，不再要求常驻空计划提示文案
+  assert.equal(
+    homeJs.includes('hasPlanEvents') || homeWxml.includes('hasPlanEvents'),
+    true,
+    'missing home contract: event-driven hasPlanEvents',
+  );
+  assert.equal(homeWxml.includes('暂无计划提醒或待处理项'), false, 'home must not keep permanent empty-plan copy');
 });

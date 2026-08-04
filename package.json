@@ -7,6 +7,10 @@
     "test": "node --test",
     "check": "node scripts/validate-project.js",
     "build:mini": "node scripts/build-miniprogram.js",
-    "check:mini": "node scripts/check-miniprogram.js"
+    "check:mini": "node scripts/check-miniprogram.js",
+    "evidence:visual": "node scripts/visual-evidence.mjs"
+  },
+  "devDependencies": {
+    "miniprogram-automator": "0.12.1"
   }
 }

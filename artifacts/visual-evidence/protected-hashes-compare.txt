@@ -1,0 +1,1 @@
+{"beforeCount":114,"afterCount":114,"changed":[],"ok":true,"beforePath":"artifacts/visual-evidence/protected-hashes-before.txt","afterPath":"artifacts/visual-evidence/protected-hashes-after.txt"}

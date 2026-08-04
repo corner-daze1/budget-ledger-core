@@ -1,0 +1,424 @@
+PHASE9 FULL GATES LOG
+
+=== NPM TEST ===
+COMMAND=C:\WINDOWS\system32\cmd.exe /d /s /c npm test
+--- STDOUT ---
+
+> budget-ledger-core@0.1.0 test
+> node --test
+
+✔ parseYuanToCents parses two decimal yuan without floating arithmetic (2.5914ms)
+✔ parseYuanToCents pads a one digit fractional yuan amount (0.5831ms)
+✔ parseYuanToCents rejects a third decimal place instead of rounding (0.7599ms)
+✔ parseYuanToCents rejects amounts beyond safe integer cents (0.2656ms)
+✔ formatCents renders a signed integer-cent amount for UI display (0.308ms)
+✔ todayIso uses the supplied local calendar date (3.0034ms)
+✔ initializeState creates a current budget period and stores start-day settings (2.0087ms)
+✔ initializeState accepts multiple initial cash-like asset accounts (0.4285ms)
+✔ initializeState rejects setup without an initial asset account (0.3216ms)
+✔ categoryOptions exposes a built-in two-level category tree (0.4188ms)
+✔ getHomeModel shows one full daily quota before any spending in a 30-day cycle (0.8069ms)
+✔ getHomeModel returns 50 yuan on day three after 50 yuan then 200 yuan controlled spending (1.4614ms)
+✔ getHomeModel enters an explicit settlement state after the open period ends (1.0014ms)
+✔ settleCurrentPeriod carries a chosen surplus into the next period (1.1864ms)
+✔ settleCurrentPeriod moves a chosen surplus to reward balance (0.7066ms)
+✔ recordEntry with controlled budget on reduces the application period budget (0.4779ms)
+✔ recordEntry with controlled budget off records a fixed expense without reducing budget (0.5309ms)
+✔ recordEntry records a fixed expense after a period is waiting for settlement (0.4196ms)
+✔ recordEntry asks for settlement instead of exposing a missing-period error (0.3595ms)
+✔ settleCurrentPeriod carries an explicit overspend debt when the user chooses carry (0.46ms)
+✔ settleCurrentPeriod uses reward balance only when the user chooses reward offset (0.7443ms)
+✔ settleCurrentPeriod uses all available reward balance when it fully covers overspend debt (0.8237ms)
+✔ settleCurrentPeriod partially offsets overspend with insufficient reward and carries the remainder (0.8969ms)
+✔ settleCurrentPeriod keeps overspend as debt when reward balance is zero (0.4828ms)
+✔ settleCurrentPeriod applies reward offset after inherited debt is included (0.5683ms)
+✔ settlement model survives backup round trip with partial reward offset values (0.7439ms)
+✔ recordEntry preserves note, two-level category and selected account in the transaction (0.8415ms)
+✔ findPreviousSimilar prefers exact second-level category and returns only amount and date (0.624ms)
+✔ findPreviousSimilar falls back to latest first-level category when second-level has no match (0.3509ms)
+✔ findPreviousSimilar returns no record for an unused category (0.1692ms)
+✔ findPreviousSimilar uses the latest insertion when same-date entries share a category (12.8115ms)
+✔ listRecentBills sorts by date then newest insertion and marks controlled or fixed (2.0532ms)
+✔ savePersisted and loadPersisted round trip application state through versioned JSON (0.832ms)
+✔ loadPersisted preserves corrupted raw storage and returns a user-facing error (0.6972ms)
+✔ getSettingsModel exposes the configured budget and all initial accounts (3.3074ms)
+✔ daysInMonth returns 29 days for a leap February (3.5196ms)
+✔ daysInMonth rejects a month outside the calendar (0.9062ms)
+✔ normalizedStartDay uses the month end when day 31 is absent (0.3592ms)
+✔ cycleForMonth uses a normalized start and exact next start distance (2.127ms)
+✔ cycleForDate selects the previous cycle before the monthly start (0.6085ms)
+✔ cycleForDate selects the current cycle on its start day (0.3302ms)
+✔ addDays crosses a month boundary without changing the date string contract (0.2525ms)
+✔ dateDistance counts both the start and end through a one-day cycle distance (0.1617ms)
+✔ releasedCents returns zero before the first day (0.394ms)
+✔ releasedCents releases the full budget on the last day (0.3469ms)
+✔ releaseSchedule has the requested number of actual-day releases (0.5801ms)
+✔ releaseSchedule sums exactly to 330000 cents for 3300 yuan over 31 days (2.8704ms)
+✔ releaseSchedule neighboring releases differ by at most one cent (0.9636ms)
+✔ budgetSnapshot leaves 50 cents available after 50 cents on day one of a 3000 yuan month (0.3779ms)
+✔ budgetSnapshot clamps today availability to zero after spending exceeds released budget (0.129ms)
+✔ budgetSnapshot reports day six as recovery after a 500 yuan first-day spend (0.1958ms)
+✔ budgetSnapshot reports a negative debt when negative carry exceeds the base budget (0.1621ms)
+✔ actualBudgetCents clamps an over-large negative carry to zero usable budget (0.132ms)
+✔ budgetDebtCents preserves the unfulfilled negative carry separately (0.07ms)
+✔ applyBudgetChange only changes the current cycle for only_current (0.1203ms)
+✔ applyBudgetChange changes the current cycle and template for current_and_future (0.0504ms)
+✔ applyBudgetChange preserves the current cycle for next_and_future (0.0761ms)
+✔ settleBudgetCycle carries positive surplus when carry mode is selected (0.1662ms)
+✔ settleBudgetCycle moves positive surplus to reward balance when reward mode is selected (0.0513ms)
+✔ settleBudgetCycle carries remaining overspend as signed debt (0.0492ms)
+✔ settleBudgetCycle carries inherited debt forward even when the zero-budget period has no new spend (0.0451ms)
+✔ settleBudgetCycle uses only available reward balance to offset debt (0.0495ms)
+✔ settleBudgetCycle never produces a negative reward balance (0.0487ms)
+✔ planStartDayChange closes the old cycle before creating a one-time transition (0.3468ms)
+✔ planStartDayChange keeps historical old-cycle dates unchanged (0.1449ms)
+✔ budgetSnapshot accepts a refund as negative net budget spend (0.0595ms)
+✔ releaseSchedule supports a zero-budget period without division rounding errors (0.1007ms)
+✔ createLedger starts with CNY and separate account and budget collections (4.1273ms)
+✔ addAccount creates a wallet with an integer balance (0.581ms)
+✔ addAccount rejects duplicate account ids (0.66ms)
+✔ addBudgetPeriod creates an open period with zero net spend (0.6333ms)
+✔ recordIncome increases assets without increasing budget spend (0.5936ms)
+✔ recordExpense reduces cash and increases controlled budget spend (0.4262ms)
+✔ recordFixedExpense reduces cash without touching controlled budget spend (0.2578ms)
+✔ recordTransfer preserves total assets while moving money between asset accounts (1.0508ms)
+✔ recordCreditCardExpense increases card liability and controlled spend (0.3706ms)
+✔ recordCreditCardRepayment decreases both asset and card liability without budget impact (0.6135ms)
+✔ recordBorrowing increases cash and debt by the same amount (0.3585ms)
+✔ recordLoanPrincipalRepayment reduces cash and principal together (0.4517ms)
+✔ recordLoanInterestPayment is fixed expense and does not consume controlled budget (0.2979ms)
+✔ recordLoanInterestAccrual increases loan liability as a fixed interest event (0.273ms)
+✔ recordInvestmentBuy converts cash into investment value without changing net assets (0.4413ms)
+✔ recordInvestmentSell converts investment value back to cash without budget impact (0.3386ms)
+✔ setInvestmentValue accepts a manual current value without a market lookup (0.3382ms)
+✔ recordRewardPayment decreases reward balance and cash but not budget (0.7962ms)
+✔ recordExpense can partially use reward balance without charging that part to budget (0.2915ms)
+✔ recordRewardPayment rejects a payment larger than reward balance (0.2432ms)
+✔ recordRefund restores an open ordinary expense to the same budget period (0.7515ms)
+✔ recordRefund of a closed ordinary period enters reward balance (0.4063ms)
+✔ recordRefund of reward payment restores reward balance (0.2976ms)
+✔ recordRefund of credit card expense reduces the liability (0.3558ms)
+✔ recordRefund fully restores a mixed budget and reward expense in one refund (0.3578ms)
+✔ recordRefund restores two mixed partial refunds to exactly the original budget and reward amounts (0.5338ms)
+✔ recordRefund allocates mixed refunds consistently when the larger refund arrives first (0.7154ms)
+✔ recordRefund keeps cumulative budget restoration capped in an open mixed expense (0.5685ms)
+✔ recordRefund of a closed mixed expense follows the closed-period reward rule without changing budget spend (0.3253ms)
+✔ recordRefund of a mixed credit card expense restores the card liability and split impacts (0.3683ms)
+✔ recordRefund rejects more than the unrefunded original amount (0.3461ms)
+✔ createFixedPlan stores a revocable account-bound source (0.4681ms)
+✔ executeFixedPlan posts a fixed expense with its plan source (0.7321ms)
+✔ executeFixedPlan creates a pending item when amount is not set (0.3685ms)
+✔ executeFixedPlan creates a pending item when account balance is insufficient (0.3863ms)
+✔ revokeFixedPlan prevents a revoked plan from posting (0.4864ms)
+✔ closeBudgetPeriod prevents later controlled expenses from rewriting the period (0.2849ms)
+✔ budgetForPeriod preserves signed carry in the actual budget calculation (0.6836ms)
+✔ totals keep assets, liabilities, net assets and reward balance separate (0.2404ms)
+✔ recordExpense rejects an asset payment that would make the account negative (0.2003ms)
+✔ recordTransfer rejects a self transfer instead of inventing a transaction (0.2277ms)
+✔ recordCreditCardRepayment rejects a payment larger than card liability (0.1039ms)
+✔ recordLoanPrincipalRepayment rejects a payment larger than loan liability (0.2074ms)
+✔ recordInvestmentTrade rejects selling more than current investment value (0.1396ms)
+✔ recordExpense cannot use more reward offset than the expense (0.1223ms)
+✔ recordExpense cannot spend reward balance that is not available (0.3068ms)
+✔ recordLoanInterestPayment keeps the related loan optional for a fixed interest bill (0.2993ms)
+✔ project config points the mini program root at miniprogram (1.6423ms)
+✔ app config declares settings home entry and bills in the required order (1.3786ms)
+✔ mini program application bundle is generated from the application source (9.6011ms)
+✔ mini program build manifest records the application source hash (1.4936ms)
+✔ settings page contains the first-use budget form (1.3489ms)
+✔ home page binds the real today free amount model (0.59ms)
+✔ entry page contains account category note and budget switch controls (0.4391ms)
+✔ entry page contains the local previous similar bill panel (0.3611ms)
+✔ bills page contains controlled fixed date category account and amount fields (0.4571ms)
+✔ private developer config is ignored by the repository rules (0.5304ms)
+✔ asset account options expose exactly the six phase-three account types (3.883ms)
+✔ adding all six account types produces separate asset and liability cards (1.8118ms)
+✔ income increases an asset account without changing controlled budget spend (1.1178ms)
+✔ income rejects a liability account with a visible Chinese error and no half transaction (1.2725ms)
+✔ transfer moves cash between asset accounts without changing net assets or budget (1.0339ms)
+✔ transfer rejects the same source and destination without appending a transaction (0.5129ms)
+✔ credit-card controlled spending increases liability and consumes only controlled budget (0.6168ms)
+✔ credit-card repayment reduces asset and liability without consuming budget twice (0.4767ms)
+✔ borrowing increases cash and loan liability by the same amount (0.5386ms)
+✔ loan principal repayment reduces cash and principal without touching budget (0.5389ms)
+✔ loan interest payment is a fixed expense and preserves the related loan in the flow (0.6756ms)
+✔ investment buy converts cash to investment and increases cost basis without budget impact (0.5987ms)
+✔ investment sell returns value to cash without consuming controlled budget (0.2701ms)
+✔ manual investment valuation changes current value while preserving entered cost basis (0.3153ms)
+✔ insufficient asset balance returns Chinese feedback and leaves the original state unchanged (0.415ms)
+✔ phase-three nine-step acceptance produces exact assets liabilities net assets and account balances (0.993ms)
+✔ phase-three state round trips through the unchanged schema-version-one storage contract (2.2258ms)
+✔ recent flows expose income transfer debt interest and investment operations with account directions (14.5943ms)
+✔ legacy phase-two controlled expenses remain readable in both bill and flow models (3.0727ms)
+✔ settings model reuses the asset center contract after initialization (5.5727ms)
+✔ entry page contract exposes all three unified transaction modes (1.9859ms)
+✔ asset center contract exposes debt investment and four financial totals (0.9867ms)
+✔ recent flow page contract names income transfer repayment debt interest and investment records (0.8668ms)
+✔ 仅本周期修改只更新基础预算并逐字段保留财务历史 (5.4312ms)
+✔ 本周期及以后同时更新当前基础预算和两个默认预算字段 (0.4172ms)
+✔ 下周期及以后不改当前周期只更新两个默认预算字段 (0.2713ms)
+✔ 正结转在修改本期基础预算后仍参与实际天数累计释放 (1.1816ms)
+✔ 负结转在修改本期基础预算后保持原值且继续抵扣 (0.4967ms)
+✔ 待结算时拒绝修改本期预算且原状态没有半次修改 (0.6612ms)
+✔ 待结算时仍允许只修改下周期及以后默认预算 (0.279ms)
+✔ 没有流水时修改起始日立即重建当前空周期 (0.4775ms)
+✔ 已有流水时起始日只保存待生效规则且不改历史 (1.0914ms)
+✔ 待生效起始日可以取消且不改财务数据 (1.0042ms)
+✔ 待生效起始日再次设置时最后一次规则覆盖前一次 (0.6253ms)
+✔ 结算旧周期后创建无重叠无断档且按月实际天数折算的过渡周期 (0.797ms)
+✔ 结算过渡周期后从目标日期建立常规周期并正式启用新起始日 (0.7204ms)
+✔ 闰年二月和31日起始日的过渡预算按过渡开始月份精确折算 (0.2676ms)
+✔ 跨年起始日规划保持日期连续并正确处理30日 (0.2162ms)
+✔ 待生效规则经schemaVersion一存储往返后完整恢复 (1.197ms)
+✔ 预算修改逐字段保持资产负债投资流水和奖励余额不变 (1.06ms)
+✔ 待生效期间修改默认预算后过渡周期使用最新默认值折算 (0.6164ms)
+✔ 进入过渡周期后取消会明确失败并保持连续性规则 (1.0421ms)
+✔ 设置模型同时公开当前周期默认预算和待生效说明 (1.8068ms)
+✔ 设置页契约包含三个预算范围二次确认起始日预览取消和固定开支提示 (3.988ms)
+✔ 预算与起始日修改拒绝三类非法公历日期且失败保持原状态 (1.4255ms)
+✔ 结算后的空周期改起始日遇到前置周期时改为待生效并保持所有周期连续 (0.9777ms)
+✔ 延迟结算仍从上一周期次日创建下一周期而不按操作日期跳月 (0.388ms)
+✔ 过渡周期仅本周期按新月度基准折算为90000分且财务历史不变 (1.6793ms)
+✔ 过渡周期本期及以后折算当前预算并只把完整月度基准写入未来默认 (0.7614ms)
+✔ 过渡周期下周期及以后只改完整月度默认且不改当前折算预算 (1.1313ms)
+✔ 单次固定支出到期后自动记账并结束且不占可控预算 (4.3289ms)
+✔ 月度31日计划在短月取月末并在长月恢复31日 (2.041ms)
+✔ 非闰年月度31日计划按2月28日执行 (0.7316ms)
+✔ 年度2月29日计划非闰年取28日并在闰年恢复29日 (0.9391ms)
+✔ 错过多个月时从最早到期发生期逐笔补记 (9.9608ms)
+✔ 同一天重复启动只产生一个发生期结果 (0.8498ms)
+✔ 同一发生期重复点击处理不会重复流水 (1.3333ms)
+✔ 关闭重开备份后重复检查不重复发生期 (2.4939ms)
+✔ 信用卡计划同时减少资产和卡欠款且不影响预算 (1.938ms)
+✔ 信用卡固定还款超过欠款转待处理且不自动缩小金额 (1.221ms)
+✔ 信用卡金额为空到期转一条中文待处理 (0.7921ms)
+✔ 贷款还款成功原子生成本金和利息两笔流水 (1.2875ms)
+✔ 贷款还款余额不足时两笔都不记且账户逐字段不变 (0.705ms)
+✔ 贷款本金超过欠款时不记本金也不记利息 (0.7277ms)
+✔ 固定支出金额为空只建一个待处理且不改余额 (0.445ms)
+✔ 固定支出余额不足转待处理且预算与流水不变 (0.4804ms)
+✔ 账户失效时生成中文待处理且不产生交易 (0.5728ms)
+✔ 补金额重试成功后待处理解决并绑定交易 (0.8659ms)
+✔ 重试仍余额不足时抛中文错误且原state逐字段不变 (1.8306ms)
+✔ 已解决待处理重复重试无效且不重复交易 (0.6169ms)
+✔ 编辑只改变未来计划不改已执行流水 (0.6411ms)
+✔ 停用计划只阻止未来发生期且保留历史 (0.262ms)
+✔ 旧schemaVersion一无到期日计划只标记待补充且幂等 (0.2553ms)
+✔ 编辑旧计划补充到期信息后解除待补充标记 (0.3047ms)
+✔ 提醒开启默认选择提前1天和当天 (0.6862ms)
+✔ 提醒多选只在选中的提前3天和当天出现 (0.2757ms)
+✔ 关闭提醒的计划不出现在提前或当天横幅 (0.2503ms)
+✔ 关闭逾期横幅后待处理仍在首页和设置计划列表可见 (0.8262ms)
+✔ 成功自动执行只显示已自动记账且不显示逾期 (0.2815ms)
+✔ 计划待处理提醒和发生期键经schemaVersion一备份完整恢复 (0.3417ms)
+✔ 三类自动计划的预算净支出始终保持原值 (0.6189ms)
+✔ 未来未到期计划不会提前执行或改变state (0.196ms)
+✔ app启动和回前台复用同一幂等入口且只在变化后保存 (0.5611ms)
+✔ 设置页和首页提供计划创建编辑停用提醒待处理重试及空状态契约 (2.1007ms)
+✔ 分析周期首日和末日都计入且今天之后的交易不进入折线 (16.4066ms)
+✔ 跨月过渡周期按真实开始结束日期独立分析 (1.1091ms)
+✔ 今天不属于任何周期时选择最近已结束周期并绘制完整日期 (1.0772ms)
+✔ 每日折线按自然日稳定升序并给无支出日补零 (1.831ms)
+✔ 空账本仍输出完整周期零点且分类为空 (1.0527ms)
+✔ 同一天多笔支出合并为一个每日净额点 (1.1743ms)
+✔ 信用卡消费按可控支出口径进入每日和分类统计 (1.273ms)
+✔ 固定支出只进入全部支出而不进入可控支出 (1.6379ms)
+✔ 全部支出排除收入转账借款还本还卡投资买卖和估值 (2.3689ms)
+✔ 贷款利息作为固定消费进入全部支出 (0.6989ms)
+✔ 奖励支付进入全部支出但不进入可控支出 (0.4929ms)
+✔ 全部支出退款按实际退款日冲减并继承原一级分类 (0.5935ms)
+✔ 开放周期退款按真实budgetImpactCents恢复可控净支出 (0.3828ms)
+✔ 关闭周期退款不改写历史可控支出 (1.6932ms)
+✔ 跨期退款在全部支出中只记退款发生日不搬回消费日 (0.5017ms)
+✔ 分类净额小于等于零时不画扇区但文字合计保留负退款 (0.384ms)
+✔ 退款原账单缺少分类时不会凭空创建其他分类 (0.3711ms)
+✔ 少于六个预算周期时趋势只展示真实周期 (1.394ms)
+✔ 等于六个预算周期时趋势按开始日升序完整展示 (0.3758ms)
+✔ 多于六个预算周期时趋势只取最近六个且不伪造月份 (0.2373ms)
+✔ 今天所在真实周期在趋势中标记进行中 (0.1923ms)
+✔ 过渡周期在趋势中作为独立周期显示 (0.1815ms)
+✔ 趋势实际可用预算包含正结转且直接读取可控净支出 (0.1446ms)
+✔ 趋势实际可用预算遇过大负结转归零而支出保持原值 (0.1661ms)
+✔ 切换全部支出不会改变可控预算趋势或隐藏最近流水 (0.7027ms)
+✔ 长一级分类名在统计模型中保持原文且不被改写为其他 (0.5391ms)
+✔ 没有预算周期时三图返回真实空状态而不造演示数据 (0.3079ms)
+✔ 分析模型只读且不会修改传入账本的任何字段 (0.8836ms)
+✔ 非法分析范围被明确拒绝而不是退回错误口径 (0.9652ms)
+✔ 账单分析页面契约包含范围切换三图文字兜底和最近流水 (3.267ms)
+✔ JSON export uses the required local timestamp filename (5.8411ms)
+✔ JSON export preserves every ledger field through parsing (1.3894ms)
+✔ JSON export reports its actual UTF-8 byte size (0.8138ms)
+✔ JSON export declares that it can restore (0.4237ms)
+✔ CSV export uses the required local timestamp filename (0.6809ms)
+✔ CSV export retains the existing fixed domain columns (0.3191ms)
+✔ CSV export explicitly declares that it cannot restore (0.4231ms)
+✔ backup preview rejects a reported file size above 5 MiB before restore (0.5449ms)
+✔ backup preview rejects text whose actual UTF-8 size exceeds 5 MiB after read (9.2553ms)
+✔ backup preview returns damaged JSON unchanged with a Chinese error (1.3194ms)
+✔ backup preview rejects unsupported future schema versions (2.013ms)
+✔ backup preview rejects non-CNY ledgers (1.026ms)
+✔ backup preview rejects a missing required array with a Chinese field error (0.7892ms)
+✔ schema-one backup preview rejects missing application settings instead of guessing them (0.819ms)
+✔ backup preview rejects duplicate budget period identifiers (0.7843ms)
+✔ backup preview rejects duplicate plan identifiers (0.9169ms)
+✔ backup preview rejects duplicate pending-item identifiers (0.7094ms)
+✔ backup preview rejects a transaction referencing a missing account (0.6984ms)
+✔ backup preview rejects a transaction referencing a missing budget period (0.8317ms)
+✔ backup preview rejects a transaction referencing a missing related transaction (0.8265ms)
+✔ backup preview reports file metadata and all required counts (1.221ms)
+✔ backup preview reports schema, currency, latest transaction date and unknown generated date (0.3561ms)
+✔ backup preview migrates a schema zero snapshot without writing storage (0.5242ms)
+✔ restore with the wrong phrase performs zero storage operations (0.9811ms)
+✔ cancelled restore performs zero storage operations (0.4635ms)
+✔ invalid restore candidate is rejected before any storage operation (2.8409ms)
+✔ successful restore verifies temporary and main storage before returning state (0.789ms)
+✔ successful restore does not execute an overdue plan inside the restore transaction (0.465ms)
+✔ temporary-key write failure retains the original main value (0.4834ms)
+✔ original-main read failure never attempts to remove or overwrite the main key (0.4678ms)
+✔ temporary-key readback mismatch retains the original main value (0.3245ms)
+✔ temporary-key readback exception retains the original main value and never writes main (0.3622ms)
+✔ main-key write failure retains the original main value (0.6156ms)
+✔ main-key readback mismatch rolls back the original main value (0.5706ms)
+✔ main-key readback exception rolls back the original main value (0.5567ms)
+✔ one rollback write failure is retried and still restores the original main value (0.4865ms)
+✔ temporary cleanup failure rolls back main data and retries cleanup (0.3605ms)
+✔ persistent temporary cleanup failure is reported while the original main value is restored (0.3849ms)
+✔ failed restore removes a newly-created main key when no original existed (0.3988ms)
+✔ clear with the wrong phrase performs zero storage operations (0.4028ms)
+✔ cancelled clear performs zero storage operations (0.118ms)
+✔ confirmed clear removes only the main and temporary keys (0.2322ms)
+✔ clear failure on the temporary key rolls back both specified keys and keeps unrelated storage (0.3143ms)
+✔ settings page contains five separate data-safety blocks and the required privacy statements (0.9175ms)
+✔ generated-file matcher accepts only the two exact timestamped Yongdu filename families (0.4507ms)
+✔ generated-file matcher binds each Yongdu prefix to its required extension (0.0785ms)
+✔ file adapter writes a generated file only inside the mini-program user directory (0.4336ms)
+✔ file adapter refuses both crossed generated extensions before any write (0.6708ms)
+✔ file adapter rejects a selected non-JSON file before reading it (0.5342ms)
+✔ file adapter rejects an oversized selected file before reading it (0.2077ms)
+✔ file adapter uses stat for the pre-read size check when chooser metadata has no size (0.2976ms)
+✔ file adapter rejects content above the limit after reading despite small chooser metadata (8.4903ms)
+✔ file adapter returns cancellation without reading or reporting a false success (0.4011ms)
+✔ file adapter deletes only exact generated filenames and preserves unrelated user files (0.389ms)
+✔ file adapter deletes the two canonical files but preserves crossed extensions and ordinary files (0.1576ms)
+✔ file adapter invokes sharing and clipboard only after their explicit methods are called (0.1832ms)
+✔ initialized settings defaults to the budget section and exposes four summary values (7.1843ms)
+✔ section title opens a collapsed section through the real page handler (2.5944ms)
+✔ clicking the expanded section title collapses all sections (3.4729ms)
+✔ switching sections keeps only one open and never saves or invokes business functions (3.1581ms)
+✔ refresh derives all four section summaries from the real settings model (2.5613ms)
+✔ asset operation error opens the asset section and places feedback there (1.9785ms)
+✔ plan form error opens the plan section through the real submit handler (1.8322ms)
+✔ budget preview error opens the budget section through the real preview handler (2.3366ms)
+✔ backup generation busy lock accepts one trigger and releases after success (2.6548ms)
+✔ file selection busy lock accepts one trigger and preserves input after failure (2.3797ms)
+✔ editing a plan automatically opens the plan section without saving (2.1557ms)
+✔ backup preview automatically opens data section and removes raw pasted text (2.4068ms)
+✔ settings markup has four initialized accordion sections with real summaries (1.2387ms)
+✔ empty account plan and bill states explain a real next step without demo data (1.482ms)
+✔ global and page styles protect safe area small screens buttons and horizontal width (1.1933ms)
+✔ README and product spec describe current capabilities and exclude only unbuilt features (1.4367ms)
+✔ home binds real free amount quota prepaid recovery and scale fields (2.6504ms)
+✔ home.js loads recent bills through core.listRecentBills capped at five (3.8144ms)
+✔ home covers settlement prepaid plan pending error and bills-empty states (1.0757ms)
+✔ home keeps settlement pending overdue and navigation handlers (4.5941ms)
+✔ home layout order is header budget cta bills then conditional alerts (1.0907ms)
+✔ home styles freeze warm sample tokens tap size and 320 rules (1.6835ms)
+✔ home body and primary colors meet WCAG contrast ≥4.5 on shipped hex (1.5693ms)
+✔ design system documents warm sample structure and bans (2.0768ms)
+✔ home bill rows bind real category date account amount fields (0.8527ms)
+✔ home scale is status expression not a fake month percent bar (0.7516ms)
+✔ home.wxml has no hidden empty-plan contract anchors or source tokens (0.5169ms)
+✔ hasPlanEvents is false for overdue-only or pending-only; true only for generic summary fields (1.0129ms)
+✔ formatBillCategory filters null/undefined and falls back to 未分类 (2.1305ms)
+✔ home onShow uses formatBillCategory from categoryLevel1/2 not string replace theater (2.2174ms)
+✔ 320px keeps header row and bill row horizontal; manage/all tap ≥88rpx (1.8015ms)
+✔ CURRENT_SCHEMA_VERSION is explicitly version one (0.7834ms)
+✔ serializeBackup emits a versioned complete JSON snapshot (0.7074ms)
+✔ restoreBackup round trips account balances, dates and transaction relations exactly (0.8432ms)
+✔ restoreBackup returns malformed raw data instead of silently clearing it (0.2108ms)
+✔ restoreBackup returns a clear error for an unsupported schema version and preserves raw data (0.1382ms)
+✔ restoreBackup returns a clear error when required arrays are missing (0.1073ms)
+✔ restoreBackup rejects a non-string backup without inventing an empty ledger (0.1252ms)
+✔ migrateSnapshot converts version zero account balance to integer cents (0.193ms)
+✔ migrateSnapshot rejects an invalid current-version balance (0.3879ms)
+✔ serializeBackup rejects a ledger with an unsupported currency (0.4323ms)
+✔ CSV export includes a stable header for bill transactions (0.363ms)
+✔ CSV export preserves cents and source values (0.759ms)
+✔ CSV export escapes embedded quotes in source metadata (0.224ms)
+✔ CSV export emits one final newline for portable file handoff (0.1991ms)
+✔ restoreBackup preserves linked transaction ids through a full backup cycle (0.1272ms)
+ℹ tests 340
+ℹ suites 0
+ℹ pass 340
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1073.6811
+--- STDERR ---
+
+EXIT_CODE=0
+
+=== PROJECT CHECK ===
+COMMAND=C:\WINDOWS\system32\cmd.exe /d /s /c npm run check
+--- STDOUT ---
+
+> budget-ledger-core@0.1.0 check
+> node scripts/validate-project.js
+
+PROJECT CHECK PASSED: 341 test declarations, required spec sections present, domain boundary clean
+--- STDERR ---
+
+EXIT_CODE=0
+
+=== MINIPROGRAM BUILD ===
+COMMAND=C:\WINDOWS\system32\cmd.exe /d /s /c npm run build:mini
+--- STDOUT ---
+
+> budget-ledger-core@0.1.0 build:mini
+> node scripts/build-miniprogram.js
+
+MINIPROGRAM BUILD PASSED: 5 generated files
+--- STDERR ---
+
+EXIT_CODE=0
+
+=== MINIPROGRAM CHECK ===
+COMMAND=C:\WINDOWS\system32\cmd.exe /d /s /c npm run check:mini
+--- STDOUT ---
+
+> budget-ledger-core@0.1.0 check:mini
+> node scripts/check-miniprogram.js
+
+MINIPROGRAM CHECK PASSED: four pages, generated application bundle, and source boundary are valid
+--- STDERR ---
+
+EXIT_CODE=0
+
+=== GIT DIFF CHECK ===
+COMMAND=C:\WINDOWS\system32\cmd.exe /d /s /c git diff --check
+--- STDOUT ---
+
+--- STDERR ---
+warning: in the working copy of 'BLOCKED.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'PROGRESS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/PHASE9_DESIGN_SYSTEM.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/lib/application.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/lib/build-manifest.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/lib/domain/budget.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/lib/domain/ledger.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/lib/domain/storage.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/pages/home/home.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/pages/home/home.wxml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'miniprogram/pages/home/home.wxss', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/phase5-fixed-plans.test.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/phase8-release-readiness.test.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/phase9-home-visual-contract.test.js', LF will be replaced by CRLF the next time Git touches it
+EXIT_CODE=0
+
+=== UTF8_VALIDATION ===
+encoding=utf8
+bad_fragments_absent=true
+bad_fragments=[]
+contains_设置页和首页=true
+contains_未分类=true

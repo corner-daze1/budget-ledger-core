@@ -1,8 +1,77 @@
 const core = require('../../lib/application.js');
 
+function hasPlanEvents(model) {
+  if (!model) return false;
+  // Generic plan summary only — overdue banner and pending lists render in their own regions.
+  return Boolean(
+    (model.planExecutionResults && model.planExecutionResults.length)
+    || (model.planReminders && model.planReminders.length)
+    || (model.planDueToday && model.planDueToday.length)
+    || model.planExecutionMessage,
+  );
+}
+
+function normalizeCategoryPart(value) {
+  if (value == null) return '';
+  const text = String(value).trim();
+  if (!text || text === 'null' || text === 'undefined') return '';
+  return text;
+}
+
+function formatBillCategory(bill) {
+  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]
+    .map(normalizeCategoryPart)
+    .filter(Boolean);
+  return parts.length ? parts.join(' · ') : '未分类';
+}
+
+function buildScale(model) {
+  if (!model || model.needsSettlement) {
+    return {
+      mode: 'settlement',
+      fillPercent: 0,
+      surplusText: '',
+      dailyLabel: '',
+    };
+  }
+  const free = Number(model.todayFreeCents) || 0;
+  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);
+  if ((model.prepaidCents || 0) > 0) {
+    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);
+    return {
+      mode: 'prepaid',
+      fillPercent: Math.min(100, over),
+      surplusText: '',
+      dailyLabel: model.fullSingleDayQuota,
+    };
+  }
+  const ratio = free / daily;
+  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.
+  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));
+  const surplusCents = free - daily;
+  let surplusText = '';
+  if (surplusCents > 0) {
+    const yuan = (surplusCents / 100).toFixed(2);
+    surplusText = `比今日基准多 ¥${yuan}`;
+  } else if (surplusCents === 0) {
+    surplusText = '刚好等于今日基准额度';
+  } else {
+    surplusText = '今日可用已低于单日基准';
+  }
+  return {
+    mode: 'normal',
+    fillPercent,
+    surplusText,
+    dailyLabel: model.fullSingleDayQuota,
+  };
+}
+
 Page({
   data: {
     model: null,
+    recentBills: [],
+    scale: null,
+    hasPlanEvents: false,
     error: '',
     positiveModeIndex: 0,
     positiveModeSelected: false,
@@ -24,8 +93,16 @@ Page({
       return;
     }
     try {
+      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);
+      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({
+        ...item,
+        category: formatBillCategory(item),
+      }));
       this.setData({
-        model: core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary),
+        model,
+        recentBills,
+        scale: buildScale(model),
+        hasPlanEvents: hasPlanEvents(model),
         error: app.globalData.storageError || '',
         positiveModeSelected: false,
         positiveModeLabel: '请选择',
@@ -33,14 +110,13 @@ Page({
         overspendModeLabel: '请选择',
       });
     } catch (error) {
-      this.setData({ model: null, error: error.message });
+      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });
     }
   },
 
   goEntry() { wx.navigateTo({ url: '/pages/entry/entry' }); },
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },
   goSettings() { wx.navigateTo({ url: '/pages/settings/settings' }); },
-  goAssets() { wx.navigateTo({ url: '/pages/settings/settings' }); },
   onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },
   onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },
   onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },
@@ -108,3 +184,10 @@ Page({
     }
   },
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.hasPlanEvents = hasPlanEvents;
+  module.exports.formatBillCategory = formatBillCategory;
+  module.exports.normalizeCategoryPart = normalizeCategoryPart;
+  module.exports.buildScale = buildScale;
+}

@@ -1,0 +1,88 @@
+PHASE9 TARGETED GREEN LOG
+
+=== TARGETED THREE FILES ===
+COMMAND=C:\Program Files\nodejs\node.exe --test tests/phase5-fixed-plans.test.js tests/phase8-release-readiness.test.js tests/phase9-home-visual-contract.test.js
+--- STDOUT ---
+✔ 单次固定支出到期后自动记账并结束且不占可控预算 (3.5878ms)
+✔ 月度31日计划在短月取月末并在长月恢复31日 (1.997ms)
+✔ 非闰年月度31日计划按2月28日执行 (0.649ms)
+✔ 年度2月29日计划非闰年取28日并在闰年恢复29日 (0.8622ms)
+✔ 错过多个月时从最早到期发生期逐笔补记 (10.6103ms)
+✔ 同一天重复启动只产生一个发生期结果 (0.5361ms)
+✔ 同一发生期重复点击处理不会重复流水 (0.5061ms)
+✔ 关闭重开备份后重复检查不重复发生期 (1.0564ms)
+✔ 信用卡计划同时减少资产和卡欠款且不影响预算 (0.5791ms)
+✔ 信用卡固定还款超过欠款转待处理且不自动缩小金额 (0.6489ms)
+✔ 信用卡金额为空到期转一条中文待处理 (0.2729ms)
+✔ 贷款还款成功原子生成本金和利息两笔流水 (0.4622ms)
+✔ 贷款还款余额不足时两笔都不记且账户逐字段不变 (0.6284ms)
+✔ 贷款本金超过欠款时不记本金也不记利息 (0.3315ms)
+✔ 固定支出金额为空只建一个待处理且不改余额 (0.2737ms)
+✔ 固定支出余额不足转待处理且预算与流水不变 (0.5398ms)
+✔ 账户失效时生成中文待处理且不产生交易 (0.7415ms)
+✔ 补金额重试成功后待处理解决并绑定交易 (0.7422ms)
+✔ 重试仍余额不足时抛中文错误且原state逐字段不变 (2.9998ms)
+✔ 已解决待处理重复重试无效且不重复交易 (0.725ms)
+✔ 编辑只改变未来计划不改已执行流水 (1.2065ms)
+✔ 停用计划只阻止未来发生期且保留历史 (0.5452ms)
+✔ 旧schemaVersion一无到期日计划只标记待补充且幂等 (0.2117ms)
+✔ 编辑旧计划补充到期信息后解除待补充标记 (0.2631ms)
+✔ 提醒开启默认选择提前1天和当天 (1.2591ms)
+✔ 提醒多选只在选中的提前3天和当天出现 (0.6375ms)
+✔ 关闭提醒的计划不出现在提前或当天横幅 (0.4528ms)
+✔ 关闭逾期横幅后待处理仍在首页和设置计划列表可见 (1.2782ms)
+✔ 成功自动执行只显示已自动记账且不显示逾期 (0.4602ms)
+✔ 计划待处理提醒和发生期键经schemaVersion一备份完整恢复 (0.5312ms)
+✔ 三类自动计划的预算净支出始终保持原值 (0.8876ms)
+✔ 未来未到期计划不会提前执行或改变state (0.2976ms)
+✔ app启动和回前台复用同一幂等入口且只在变化后保存 (1.2369ms)
+✔ 设置页和首页提供计划创建编辑停用提醒待处理重试及空状态契约 (1.1397ms)
+✔ initialized settings defaults to the budget section and exposes four summary values (4.104ms)
+✔ section title opens a collapsed section through the real page handler (1.4467ms)
+✔ clicking the expanded section title collapses all sections (1.1149ms)
+✔ switching sections keeps only one open and never saves or invokes business functions (1.885ms)
+✔ refresh derives all four section summaries from the real settings model (1.1687ms)
+✔ asset operation error opens the asset section and places feedback there (1.0485ms)
+✔ plan form error opens the plan section through the real submit handler (1.7048ms)
+✔ budget preview error opens the budget section through the real preview handler (1.6807ms)
+✔ backup generation busy lock accepts one trigger and releases after success (1.9377ms)
+✔ file selection busy lock accepts one trigger and preserves input after failure (1.3581ms)
+✔ editing a plan automatically opens the plan section without saving (1.1597ms)
+✔ backup preview automatically opens data section and removes raw pasted text (1.1143ms)
+✔ settings markup has four initialized accordion sections with real summaries (0.4822ms)
+✔ empty account plan and bill states explain a real next step without demo data (0.8274ms)
+✔ global and page styles protect safe area small screens buttons and horizontal width (0.9432ms)
+✔ README and product spec describe current capabilities and exclude only unbuilt features (1.0694ms)
+✔ home binds real free amount quota prepaid recovery and scale fields (1.5491ms)
+✔ home.js loads recent bills through core.listRecentBills capped at five (1.7978ms)
+✔ home covers settlement prepaid plan pending error and bills-empty states (0.4258ms)
+✔ home keeps settlement pending overdue and navigation handlers (1.5978ms)
+✔ home layout order is header budget cta bills then conditional alerts (0.3275ms)
+✔ home styles freeze warm sample tokens tap size and 320 rules (0.6545ms)
+✔ home body and primary colors meet WCAG contrast ≥4.5 on shipped hex (0.725ms)
+✔ design system documents warm sample structure and bans (1.2553ms)
+✔ home bill rows bind real category date account amount fields (0.5345ms)
+✔ home scale is status expression not a fake month percent bar (0.6368ms)
+✔ home.wxml has no hidden empty-plan contract anchors or source tokens (0.4611ms)
+✔ hasPlanEvents is false for overdue-only or pending-only; true only for generic summary fields (0.8641ms)
+✔ formatBillCategory filters null/undefined and falls back to 未分类 (1.0059ms)
+✔ home onShow uses formatBillCategory from categoryLevel1/2 not string replace theater (1.097ms)
+✔ 320px keeps header row and bill row horizontal; manage/all tap ≥88rpx (1.1849ms)
+ℹ tests 65
+ℹ suites 0
+ℹ pass 65
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 291.3933
+--- STDERR ---
+
+EXIT_CODE=0
+
+=== UTF8_VALIDATION ===
+encoding=utf8
+bad_fragments_absent=true
+bad_fragments=[]
+contains_设置页和首页=true
+contains_未分类=true

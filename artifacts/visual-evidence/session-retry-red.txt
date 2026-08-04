@@ -1,0 +1,15 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 1
+Output:
+file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:19
+  SCREENSHOT_TIMEOUT_MS,
+  ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: The requested module '../scripts/visual-evidence.mjs' does not provide an export named 'SCREENSHOT_TIMEOUT_MS'
+
+Node.js v24.16.0
+✖ tests\visual-evidence.test.js (106.5557ms)
+ℹ tests 1
+ℹ pass 0
+ℹ fail 1
+ℹ skipped 0
+ℹ todo 0

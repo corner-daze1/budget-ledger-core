@@ -1,6 +1,6 @@
 # 记账小程序财务内核
 
-这是首版离线财务内核：原生 JavaScript、整数分、CNY、无第三方依赖。预算计算、账户流水、信用卡与借贷、投资形态转换、奖励余额、固定计划、版本化备份迁移和 CSV 导出都在 `src/domain/` 中以可组合函数提供。
+这是首版离线财务内核：原生 JavaScript、整数分、CNY，产品运行时不依赖第三方包。预算计算、账户流水、信用卡与借贷、投资形态转换、奖励余额、固定计划、版本化备份迁移和 CSV 导出都在 `src/domain/` 中以可组合函数提供。开发期仅使用精确锁定的 `miniprogram-automator@0.12.1` 做本地自动视觉取证。
 
 运行：
 
@@ -10,6 +10,15 @@ npm run check
 npm run build:mini
 npm run check:mini
 ```
+
+微信开发者工具 Stable 已安装并保持当前登录会话时，可运行：
+
+```text
+npm run evidence:visual -- --compat
+npm run evidence:visual
+```
+
+视觉取证只使用 `.visual-qa` 隔离副本和 `touristappid`，不会读取测试 AppID 的账本。完整机制、产物和失败规则见 `docs/VISUAL_EVIDENCE.md`。
 
 ## 设计边界
 
