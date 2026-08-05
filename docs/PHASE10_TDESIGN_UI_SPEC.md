@@ -60,6 +60,8 @@
 | 右 | 我的 | `/pages/settings/settings` | `wx.switchTab` | 当前路由为 settings |
 
 - `app.json` 的 tab 列表只有账本/home与我的/settings两个目的地；完整账单与分析页 bills 保留为非 Tab 页面，中央“记一笔”也不是 tab 项。
+- 已初始化用户冷启动默认从 `/pages/home/home`（账本）进入。
+- 首次没有账本时仍由 `home.onShow` 使用 `wx.switchTab('/pages/settings/settings')` 跳转到“我的”完成设置。
 - custom-tab-bar 每次显示都从 `getCurrentPages()` 读取当前路由，不能把上一次点击的 tab 当作选中态。
 - bills与entry都不是 tab 页，二者不出现选中态；记账页保持专注模式，不显示底部导航。
 - 左右两个 tab 使用 `switchTab`；账本页“全部”账单入口使用 `navigateTo('/pages/bills/bills')`，返回后仍在账本。

@@ -65,8 +65,8 @@ test('app config exposes exactly two tab destinations and keeps bills and entry 
     { pagePath: 'pages/settings/settings', text: '我的' },
   ]);
   assert.deepEqual(config.pages, [
-    'pages/settings/settings',
     'pages/home/home',
+    'pages/settings/settings',
     'pages/entry/entry',
     'pages/bills/bills',
   ]);

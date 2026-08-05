@@ -6,6 +6,7 @@
 
 - 无现役代码、测试、构建或自动视觉阻塞。
 - 首页视觉产品审阅仍属于后续人工事项；本阶段不铺开另外三页内容重绘。
+- 21–23 号真实 UI 证据及本轮状态恢复核对仍受 Stable 窗口绑定/状态读取失败阻塞，细节见文末收尾记录。
 
 ## 发布前待完成
 
@@ -64,3 +65,18 @@
 - 按新任务允许范围，取证脚本将 fixture 首页进入从 `redirectTo` 改为经 `withSessionTimeout` 的单一 `switchToHomeTab`；旧逻辑 17 项中 1 项真实失败，改后视觉单测 17/17。
 - `npm run evidence:visual -- --compat` 真实退出 0，生成 `compatibility.json` 与 `compatibility/sample.png`；`npm run evidence:visual` 真实退出 0，生成四张新版 PNG、`manifest.json` 与 `four-states-green.txt`。
 - 本轮未使用测试 AppID 或真实账本；协议空对象事件仍保留并计数，不当作应用错误吞掉。
+
+## 启动页修复与检查器同步（2026-08-05）
+
+- 启动页代码和导航测试已转绿：`app.json.pages` 与目标测试统一为 home、settings、entry、bills，目标测试 21/21。
+- 旧检查器仍硬编码 settings、home、entry、bills，导致 `npm run check:mini` 以旧错误退出 1；该冲突已按本轮授权仅同步检查器顺序和错误文案。
+- 同步后 `npm run check:mini` 退出 0；临时恢复旧顺序时真实退出 1，并显示 `app.json must declare the ledger-first four-page order`。
+- 旧顺序已立即用补丁恢复为 home、settings、entry、bills，恢复后 `npm run check:mini` 再次退出 0。
+- 页面、样式、导航、视觉证据、依赖、项目配置和其他检查逻辑均未改；当前该阻塞已解除，无新增未解决阻塞。
+
+## 历史任务2：21–23最终收尾（2026-08-05）
+
+- Stable 重开后再次由 `list_apps()` 唯一返回项目窗口 `2887566`；按规程重新绑定并读取状态失败，原始错误仍为：`window id 2887566 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`。
+- 按恢复规程重新选择窗口后仅重试一次，仍为同一错误；随后停止输入，不复用旧坐标、截图或可访问树。
+- 21/22/23 证据文件仍缺失；未执行导出、预支、恢复或清除，未访问测试 AppID 账本，也未创建占位文件。
+- 历史 `artifacts/phase9/17-state-restore-check.txt` 的 `match=true` 不替代本轮 UI 闭环；状态恢复本轮仍未验证。当前阻塞未解除，原因是 Stable 窗口绑定/状态读取不可用。

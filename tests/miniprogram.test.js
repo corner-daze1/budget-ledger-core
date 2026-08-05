@@ -13,12 +13,18 @@ test('project config points the mini program root at miniprogram', () => {
 });
 test('app config preserves the required four page order alongside the ledger and mine tabs', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
-  assert.deepEqual(config.pages, ['pages/settings/settings', 'pages/home/home', 'pages/entry/entry', 'pages/bills/bills']);
+  assert.deepEqual(config.pages, ['pages/home/home', 'pages/settings/settings', 'pages/entry/entry', 'pages/bills/bills']);
   assert.deepEqual(config.tabBar.list.map((item) => item.pagePath), [
     'pages/home/home',
     'pages/settings/settings',
   ]);
   assert.deepEqual(config.tabBar.list.map((item) => item.text), ['账本', '我的']);
+});
+test('initialized users start on ledger while first use switches to mine', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
+  assert.equal(config.pages[0], 'pages/home/home');
+  const home = fs.readFileSync(path.join(root, 'miniprogram/pages/home/home.js'), 'utf8');
+  assert.match(home, /if\s*\(!app\.globalData\.state\)\s*\{[\s\S]{0,120}wx\.switchTab\(\{\s*url:\s*['"]\/pages\/settings\/settings['"]/);
 });
 test('mini program application bundle is generated from the application source', () => {
   const expected = generatedOutputs().get('miniprogram/lib/application.js');

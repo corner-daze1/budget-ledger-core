@@ -44,7 +44,7 @@ for (const relative of pageFiles) {
 }
 
 const appConfig = fs.existsSync(path.join(root, 'miniprogram/app.json')) ? JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8')) : {};
-if (JSON.stringify(appConfig.pages) !== JSON.stringify(['pages/settings/settings', 'pages/home/home', 'pages/entry/entry', 'pages/bills/bills'])) failures.push('app.json must declare the four phase-two pages in order');
+if (JSON.stringify(appConfig.pages) !== JSON.stringify(['pages/home/home', 'pages/settings/settings', 'pages/entry/entry', 'pages/bills/bills'])) failures.push('app.json must declare the ledger-first four-page order');
 
 if (failures.length) {
   console.error('MINIPROGRAM CHECK FAILED');

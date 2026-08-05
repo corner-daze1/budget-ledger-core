@@ -84,6 +84,13 @@
 - 因没有可信的当前状态，本轮没有点击导出、预支、恢复或清除，没有访问测试 AppID 账本；21/22/23 仍无证据文件，状态恢复 `match=true` 仍未验证。
 - 本轮只更新 `PROGRESS.md` 与 `BLOCKED.md`；未改业务代码、测试、配置或数据文件，未提交 Git。
 
+## 历史任务2：21–23最终收尾（2026-08-05）
+
+- Stable 重开后再次由 `list_apps()` 唯一选出项目窗口 `2887566`；按恢复规程重新绑定并读取状态仍返回同一 NW.js 所有权错误，第二次新鲜重选后重试也未改变结果。
+- 因无法取得可信的当前 UI 状态，本轮没有点击导出、预支、恢复或清除，没有访问测试 AppID 账本；21/22/23 三个目标证据文件仍不存在。
+- `artifacts/phase9/17-state-restore-check.txt` 的 `match=true` 明确保留为历史参考，不替代本轮恢复前后核对；本轮状态恢复仍为未验证。
+- 本轮只收尾进度与阻塞文档；未重跑已完成自动门禁、未改业务代码/测试/配置/数据、未提交 Git。
+
 ## 阶段十导航收敛任务基线（2026-08-05）
 
 - 新任务基线实测符合：HEAD `9f8ad8e`；上一轮阶段十改动仍在工作区；导航单测 10/10、视觉单测 16/16、全量 366/366，skip/todo 均为 0。
@@ -123,3 +130,38 @@
 - `npm run check`：370 test declarations；`npm run check:mini` 通过；`git diff --check` 退出 0（仅 CRLF 提示）。
 - 保护审计：`git diff --exit-code 9f8ad8e -- src` 无输出；`git diff --name-only 9f8ad8e -- scripts` 仅 `scripts/visual-evidence.mjs`；依赖与项目配置无差异。
 - 当前只剩按任务书创建 `feat: finish phase ten ledger navigation` 提交，提交后复核 Git 工作区状态。
+
+## 启动页修复任务基线与红证据（2026-08-05）
+
+- 任务 0 实测符合：HEAD `c604e8a`、工作区干净；目标测试 20/20；全量 367/367，skip/todo 均为 0。
+- 目标：将 `app.json.pages` 固定为 home、settings、entry、bills；保留 home 无账本时 `switchTab` 到 settings 的首次设置流程。
+- 顺序：先修改测试并验证旧配置变红，再改 app.json 与规范，最后做四个白名单文件验收和新提交。
+- 最大风险：默认启动调整不能改变 Tab、视觉证据或首次设置行为；本轮不运行视觉取证。
+- 红证据：目标测试 21 项、18 pass、3 fail、skip/todo 均为 0；失败为旧页面顺序与默认启动页断言，未改 app.json。
+
+## 启动页修复已转绿（2026-08-05）
+
+- `app.json.pages` 已改为 home、settings、entry、bills；TabBar内容、窗口配置和其他字段未改。
+- 规范已补充：初始化用户默认从账本启动；首次无账本仍由 `home.onShow` 跳转到我的完成设置。
+- 目标测试真实转绿：21/21，fail/skip/todo 均为 0；独立断言输出“默认启动页为账本”。
+
+## 启动页总验收阻塞（2026-08-05）
+
+- `npm test` 已真实达到 368/368，fail/skip/todo 均为 0；`npm run check` 已达到 371 declarations。
+- `npm run check:mini` 确定性失败，原始输出：`MINIPROGRAM CHECK FAILED`、`app.json must declare the four phase-two pages in order`。
+- 不可修改的 `scripts/check-miniprogram.js:47` 硬编码旧顺序 settings、home、entry、bills；本任务要求同一 `app.json` 为 home、settings、entry、bills，二者无法同时通过同一 `JSON.parse`。
+- 按任务规矩停止，不修改脚本、不回滚启动契约、不提交 Git；真实阻塞已写入 `BLOCKED.md`。
+- 不受影响的只读审计已通过：`git diff --check` 退出 0；相对 `c604e8a` 的 src/scripts/dependency/project config 与 `artifacts/visual-evidence/**` 均无差异；工作区仅有六个白名单文件改动。
+
+## 启动页检查器同步任务基线（2026-08-05）
+- 目标：让默认启动、导航测试与小程序检查器统一认定 home、settings、entry、bills。
+- 顺序：只同步检查器两处口径，先绿检查，再用旧顺序反向变红并恢复。
+- 最大风险：误改既有六文件成果或削弱严格页面顺序校验；视觉取证保持只读。
+
+## 启动页检查器同步完成（2026-08-05）
+
+- 检查器已严格改为 home、settings、entry、bills，并将失败文案改为 `ledger-first four-page order`；反向旧顺序真实退出 1，恢复后退出 0。
+- 目标测试 `node --test tests/miniprogram.test.js tests/phase10-navigation.test.js`：21/21，fail/skip/todo 均为 0。
+- `npm test`：368/368，fail/skip/todo 均为 0；`npm run check`：371 test declarations；`npm run check:mini`：退出 0。
+- `git diff --check`：退出 0；相对 `c604e8a` 的 src、依赖、项目配置和视觉证据无差异，scripts 仅为 `scripts/check-miniprogram.js`。
+- 本轮未运行视觉取证，既有六文件成果均保留；检查器冲突已解除，无新增未解决阻塞。
