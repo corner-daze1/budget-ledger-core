@@ -89,7 +89,7 @@ Page({
   onShow() {
     const app = getApp();
     if (!app.globalData.state) {
-      wx.redirectTo({ url: '/pages/settings/settings' });
+      wx.switchTab({ url: '/pages/settings/settings' });
       return;
     }
     try {
@@ -114,9 +114,7 @@ Page({
     }
   },
 
-  goEntry() { wx.navigateTo({ url: '/pages/entry/entry' }); },
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },
-  goSettings() { wx.navigateTo({ url: '/pages/settings/settings' }); },
   onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },
   onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },
   onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },

@@ -11,9 +11,14 @@ test('project config points the mini program root at miniprogram', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
   assert.equal(config.miniprogramRoot, 'miniprogram/');
 });
-test('app config declares settings home entry and bills in the required order', () => {
+test('app config preserves the required four page order alongside the ledger and mine tabs', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8'));
   assert.deepEqual(config.pages, ['pages/settings/settings', 'pages/home/home', 'pages/entry/entry', 'pages/bills/bills']);
+  assert.deepEqual(config.tabBar.list.map((item) => item.pagePath), [
+    'pages/home/home',
+    'pages/settings/settings',
+  ]);
+  assert.deepEqual(config.tabBar.list.map((item) => item.text), ['账本', '我的']);
 });
 test('mini program application bundle is generated from the application source', () => {
   const expected = generatedOutputs().get('miniprogram/lib/application.js');

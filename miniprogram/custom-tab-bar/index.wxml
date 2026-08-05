@@ -1,0 +1,16 @@
+<view class="tab-bar" aria-label="底部导航">
+  <view class="tab-item {{selected === 'home' ? 'is-selected' : ''}}" data-index="0" bindtap="onTabTap" aria-label="账本">
+    <view class="tab-icon tab-icon-ledger" aria-hidden="true"></view>
+    <text>账本</text>
+  </view>
+  <view class="tab-action-wrap">
+    <view class="tab-action" bindtap="onEntryTap" aria-label="记一笔">
+      <view class="tab-icon tab-icon-add" aria-hidden="true"></view>
+    </view>
+    <text class="tab-action-label">记一笔</text>
+  </view>
+  <view class="tab-item {{selected === 'settings' ? 'is-selected' : ''}}" data-index="1" bindtap="onTabTap" aria-label="我的">
+    <view class="tab-icon tab-icon-profile" aria-hidden="true"></view>
+    <text>我的</text>
+  </view>
+</view>

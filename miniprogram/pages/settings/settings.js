@@ -628,7 +628,7 @@ Page({
         getApp().applyRestoredState(result.state);
         this._restoreCandidate = null;
         this.setData({ pastedBackupText: '', backupPreview: null, restorePhrase: '', notice: '恢复成功', error: '' });
-        wx.redirectTo({ url: '/pages/home/home' });
+        wx.switchTab({ url: '/pages/home/home' });
       },
     });
   },
@@ -656,7 +656,7 @@ Page({
           getApp().globalData.state = null;
           getApp().globalData.storageError = null;
           getApp().globalData.planRunSummary = null;
-          wx.reLaunch({ url: '/pages/settings/settings' });
+          wx.switchTab({ url: '/pages/settings/settings' });
         } catch (error) {
           this.showSectionFeedback('data', { error: error.message });
         } finally {
@@ -667,7 +667,7 @@ Page({
   },
   submit() {
     if (this.data.initialized) {
-      wx.navigateTo({ url: '/pages/home/home' });
+      wx.switchTab({ url: '/pages/home/home' });
       return;
     }
     try {
@@ -684,7 +684,7 @@ Page({
         accounts,
       });
       app.saveState();
-      wx.redirectTo({ url: '/pages/home/home' });
+      wx.switchTab({ url: '/pages/home/home' });
     } catch (error) {
       this.setData({ error: error.message });
     }

@@ -1,0 +1,343 @@
+✖ app config exposes exactly two tab destinations and keeps bills and entry non-tab (3.7044ms)
+✔ custom tab bar entry is declared as a native component (0.4984ms)
+✖ custom tab bar selected state follows the current route including neutral entry mode (2.6955ms)
+✖ ledger and mine use switchTab while the central record action uses the ledger source stack (1.2409ms)
+✖ custom tab bar template exposes exactly ledger, record and mine (0.4188ms)
+✔ custom tab bar reserves safe area and at least 88rpx interaction height (0.6904ms)
+✔ missing-ledger bills and entry pages route to management with switchTab (0.6253ms)
+✖ home bills entry and settings route transitions preserve tab navigation types (2.1418ms)
+✔ home keeps real budget states and removes duplicate normal record and management CTAs (0.7723ms)
+✔ shipped Phase10 scope has no legacy retail starter reference (7.6296ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 5
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159.1319
+
+✖ failing tests:
+
+test at tests\phase10-navigation.test.js:60:1
+✖ app config exposes exactly two tab destinations and keeps bills and entry non-tab (3.7044ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+        pagePath: 'pages/home/home',
+  +     text: '首页'
+  -     text: '账本'
+      },
+      {
+  +     pagePath: 'pages/bills/bills',
+  +     text: '账单'
+  +   },
+  +   {
+        pagePath: 'pages/settings/settings',
+  +     text: '管理'
+  -     text: '我的'
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:63:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { pagePath: 'pages/home/home', text: '首页' }, { pagePath: 'pages/bills/bills', text: '账单' }, { pagePath: 'pages/settings/settings', text: '管理' } ],
+    expected: [ { pagePath: 'pages/home/home', text: '账本' }, { pagePath: 'pages/settings/settings', text: '我的' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase10-navigation.test.js:82:1
+✖ custom tab bar selected state follows the current route including neutral entry mode (2.6955ms)
+  AssertionError [ERR_ASSERTION]: /pages/bills/bills selected state
+  
+  'bills' !== ''
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:92:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'bills',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase10-navigation.test.js:98:1
+✖ ledger and mine use switchTab while the central record action uses the ledger source stack (1.2409ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      [
+        'switchTab',
+        '/pages/home/home'
+      ],
+      [
+        'switchTab',
+  +     '/pages/bills/bills'
+  -     '/pages/settings/settings'
+      ],
+      [
+        'navigateTo',
+        '/pages/entry/entry'
+      ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:103:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'switchTab', '/pages/home/home' ], [ 'switchTab', '/pages/bills/bills' ], [ 'navigateTo', '/pages/entry/entry' ] ],
+    expected: [ [ 'switchTab', '/pages/home/home' ], [ 'switchTab', '/pages/settings/settings' ], [ 'navigateTo', '/pages/entry/entry' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase10-navigation.test.js:117:1
+✖ custom tab bar template exposes exactly ledger, record and mine (0.4188ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 2
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:119:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase10-navigation.test.js:158:1
+✖ home bills entry and settings route transitions preserve tab navigation types (2.1418ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /goBills\(\)\s*\{\s*wx\.navigateTo\(\{\s*url:\s*['"]\/pages\/bills\/bills['"]/s. Input:
+  
+  "const core = require('../../lib/application.js');\n" +
+    '\n' +
+    'function hasPlanEvents(model) {\n' +
+    '  if (!model) return false;\n' +
+    '  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n' +
+    '  return Boolean(\n' +
+    '    (model.planExecutionResults && model.planExecutionResults.length)\n' +
+    '    || (model.planReminders && model.planReminders.length)\n' +
+    '    || (model.planDueToday && model.planDueToday.length)\n' +
+    '    || model.planExecutionMessage,\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    'function normalizeCategoryPart(value) {\n' +
+    "  if (value == null) return '';\n" +
+    '  const text = String(value).trim();\n' +
+    "  if (!text || text === 'null' || text === 'undefined') return '';\n" +
+    '  return text;\n' +
+    '}\n' +
+    '\n' +
+    'function formatBillCategory(bill) {\n' +
+    '  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n' +
+    '    .map(normalizeCategoryPart)\n' +
+    '    .filter(Boolean);\n' +
+    "  return parts.length ? parts.join(' · ') : '未分类';\n" +
+    '}\n' +
+    '\n' +
+    'function buildScale(model) {\n' +
+    '  if (!model || model.needsSettlement) {\n' +
+    '    return {\n' +
+    "      mode: 'settlement',\n" +
+    '      fillPercent: 0,\n' +
+    "      surplusText: '',\n" +
+    "      dailyLabel: '',\n" +
+    '    };\n' +
+    '  }\n' +
+    '  const free = Number(model.todayFreeCents) || 0;\n' +
+    '  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n' +
+    '  if ((model.prepaidCents || 0) > 0) {\n' +
+    '    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n' +
+    '    return {\n' +
+    "      mode: 'prepaid',\n" +
+    '      fillPercent: Math.min(100, over),\n' +
+    "      surplusText: '',\n" +
+    '      dailyLabel: model.fullSingleDayQuota,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  const ratio = free / daily;\n' +
+    '  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n' +
+    '  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n' +
+    '  const surplusCents = free - daily;\n' +
+    "  let surplusText = '';\n" +
+    '  if (surplusCents > 0) {\n' +
+    '    const yuan = (surplusCents / 100).toFixed(2);\n' +
+    '    surplusText = `比今日基准多 ¥${yuan}`;\n' +
+    '  } else if (surplusCents === 0) {\n' +
+    "    surplusText = '刚好等于今日基准额度';\n" +
+    '  } else {\n' +
+    "    surplusText = '今日可用已低于单日基准';\n" +
+    '  }\n' +
+    '  return {\n' +
+    "    mode: 'normal',\n" +
+    '    fillPercent,\n' +
+    '    surplusText,\n' +
+    '    dailyLabel: model.fullSingleDayQuota,\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    'Page({\n' +
+    '  data: {\n' +
+    '    model: null,\n' +
+    '    recentBills: [],\n' +
+    '    scale: null,\n' +
+    '    hasPlanEvents: false,\n' +
+    "    error: '',\n" +
+    '    positiveModeIndex: 0,\n' +
+    '    positiveModeSelected: false,\n' +
+    "    positiveModeLabel: '请选择',\n" +
+    '    overspendModeIndex: 0,\n' +
+    '    overspendModeSelected: false,\n' +
+    "    overspendModeLabel: '请选择',\n" +
+    "    positiveModeLabels: ['带入下期', '转入奖励余额'],\n" +
+    "    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n" +
+    "    pendingAmountYuan: '',\n" +
+    "    pendingPrincipalYuan: '',\n" +
+    "    pendingInterestYuan: '',\n" +
+    '  },\n' +
+    '\n' +
+    '  onShow() {\n' +
+    '    const app = getApp();\n' +
+    '    if (!app.globalData.state) {\n' +
+    "      wx.switchTab({ url: '/pages/settings/settings' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n' +
+    '      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n' +
+    '        ...item,\n' +
+    '        category: formatBillCategory(item),\n' +
+    '      }));\n' +
+    '      this.setData({\n' +
+    '        model,\n' +
+    '        recentBills,\n' +
+    '        scale: buildScale(model),\n' +
+    '        hasPlanEvents: hasPlanEvents(model),\n' +
+    "        error: app.globalData.storageError || '',\n" +
+    '        positiveModeSelected: false,\n' +
+    "        positiveModeLabel: '请选择',\n" +
+    '        overspendModeSelected: false,\n' +
+    "        overspendModeLabel: '请选择',\n" +
+    '      });\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '\n' +
+    "  goBills() { wx.switchTab({ url: '/pages/bills/bills' }); },\n" +
+    '  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n' +
+    '  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n' +
+    '  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n' +
+    '  retryPendingPlan(event) {\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n' +
+    '        pendingId: event.currentTarget.dataset.id,\n' +
+    '        amountYuan: this.data.pendingAmountYuan,\n' +
+    '        principalYuan: this.data.pendingPrincipalYuan,\n' +
+    '        interestYuan: this.data.pendingInterestYuan,\n' +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      app.globalData.planRunSummary = {\n' +
+    '        date: core.todayIso(),\n' +
+    '        executed: [],\n' +
+    '        pending: [],\n' +
+    '        legacy: [],\n' +
+    "        message: '待处理计划已补记',\n" +
+    '      };\n' +
+    "      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n" +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '  dismissPlanOverdueBanner() {\n' +
+    '    const app = getApp();\n' +
+    '    app.globalData.state = core.dismissOverduePlanBanner(\n' +
+    '      app.globalData.state,\n' +
+    '      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n' +
+    '    );\n' +
+    '    app.saveState();\n' +
+    '    this.onShow();\n' +
+    '  },\n' +
+    '  onPositiveModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n' +
+    '  },\n' +
+    '  onOverspendModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n' +
+    '  },\n' +
+    '  settlePeriod() {\n' +
+    '    const settlement = this.data.model?.settlement;\n' +
+    '    if (!settlement) return;\n' +
+    '    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n' +
+    "      this.setData({ error: '请先选择结余处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n' +
+    "      this.setData({ error: '请先选择超支处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n' +
+    "        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n" +
+    "        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n" +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '});\n' +
+    '\n' +
+    "if (typeof module !== 'undefined' && module.exports) {\n" +
+    '  module.exports.hasPlanEvents = hasPlanEvents;\n' +
+    '  module.exports.formatBillCategory = formatBillCategory;\n' +
+    '  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n' +
+    '  module.exports.buildScale = buildScale;\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:160:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const core = require('../../lib/application.js');\n\nfunction hasPlanEvents(model) {\n  if (!model) return false;\n  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n  return Boolean(\n    (model.planExecutionResults && model.planExecutionResults.length)\n    || (model.planReminders && model.planReminders.length)\n    || (model.planDueToday && model.planDueToday.length)\n    || model.planExecutionMessage,\n  );\n}\n\nfunction normalizeCategoryPart(value) {\n  if (value == null) return '';\n  const text = String(value).trim();\n  if (!text || text === 'null' || text === 'undefined') return '';\n  return text;\n}\n\nfunction formatBillCategory(bill) {\n  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n    .map(normalizeCategoryPart)\n    .filter(Boolean);\n  return parts.length ? parts.join(' · ') : '未分类';\n}\n\nfunction buildScale(model) {\n  if (!model || model.needsSettlement) {\n    return {\n      mode: 'settlement',\n      fillPercent: 0,\n      surplusText: '',\n      dailyLabel: '',\n    };\n  }\n  const free = Number(model.todayFreeCents) || 0;\n  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n  if ((model.prepaidCents || 0) > 0) {\n    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n    return {\n      mode: 'prepaid',\n      fillPercent: Math.min(100, over),\n      surplusText: '',\n      dailyLabel: model.fullSingleDayQuota,\n    };\n  }\n  const ratio = free / daily;\n  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n  const surplusCents = free - daily;\n  let surplusText = '';\n  if (surplusCents > 0) {\n    const yuan = (surplusCents / 100).toFixed(2);\n    surplusText = `比今日基准多 ¥${yuan}`;\n  } else if (surplusCents === 0) {\n    surplusText = '刚好等于今日基准额度';\n  } else {\n    surplusText = '今日可用已低于单日基准';\n  }\n  return {\n    mode: 'normal',\n    fillPercent,\n    surplusText,\n    dailyLabel: model.fullSingleDayQuota,\n  };\n}\n\nPage({\n  data: {\n    model: null,\n    recentBills: [],\n    scale: null,\n    hasPlanEvents: false,\n    error: '',\n    positiveModeIndex: 0,\n    positiveModeSelected: false,\n    positiveModeLabel: '请选择',\n    overspendModeIndex: 0,\n    overspendModeSelected: false,\n    overspendModeLabel: '请选择',\n    positiveModeLabels: ['带入下期', '转入奖励余额'],\n    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n    pendingAmountYuan: '',\n    pendingPrincipalYuan: '',\n    pendingInterestYuan: '',\n  },\n\n  onShow() {\n    const app = getApp();\n    if (!app.globalData.state) {\n      wx.switchTab({ url: '/pages/settings/settings' });\n      return;\n    }\n    try {\n      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n        ...item,\n        category: formatBillCategory(item),\n      }));\n      this.setData({\n        model,\n        recentBills,\n        scale: buildScale(model),\n        hasPlanEvents: hasPlanEvents(model),\n        error: app.globalData.storageError || '',\n        positiveModeSelected: false,\n        positiveModeLabel: '请选择',\n        overspendModeSelected: false,\n        overspendModeLabel: '请选择',\n      });\n    } catch (error) {\n      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n    }\n  },\n\n  goBills() { wx.switchTab({ url: '/pages/bills/bills' }); },\n  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n  retryPendingPlan(event) {\n    try {\n      const app = getApp();\n      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n        pendingId: event.currentTarget.dataset.id,\n        amountYuan: this.data.pendingAmountYuan,\n        principalYuan: this.data.pendingPrincipalYuan,\n        interestYuan: this.data.pendingInterestYuan,\n      });\n      app.saveState();\n      app.globalData.planRunSummary = {\n        date: core.todayIso(),\n        executed: [],\n        pending: [],\n        legacy: [],\n        message: '待处理计划已补记',\n      };\n      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n  dismissPlanOverdueBanner() {\n    const app = getApp();\n    app.globalData.state = core.dismissOverduePlanBanner(\n      app.globalData.state,\n      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n    );\n    app.saveState();\n    this.onShow();\n  },\n  onPositiveModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n  },\n  onOverspendModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n  },\n  settlePeriod() {\n    const settlement = this.data.model?.settlement;\n    if (!settlement) return;\n    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n      this.setData({ error: '请先选择结余处理方式' });\n      return;\n    }\n    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n      this.setData({ error: '请先选择超支处理方式' });\n      return;\n    }\n    try {\n      const app = getApp();\n      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n      });\n      app.saveState();\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n});\n\nif (typeof module !== 'undefined' && module.exports) {\n  module.exports.hasPlanEvents = hasPlanEvents;\n  module.exports.formatBillCategory = formatBillCategory;\n  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n  module.exports.buildScale = buildScale;\n}\n",
+    expected: /goBills\(\)\s*\{\s*wx\.navigateTo\(\{\s*url:\s*['"]\/pages\/bills\/bills['"]/s,
+    operator: 'match',
+    diff: 'simple'
+  }

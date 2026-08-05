@@ -7,10 +7,27 @@
   ],
   "window": {
     "navigationBarTitleText": "用度",
-    "navigationBarBackgroundColor": "#f7f4ef",
+    "navigationBarBackgroundColor": "#F6F5F0",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f7f4ef",
+    "backgroundColor": "#F6F5F0",
     "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#5F665F",
+    "selectedColor": "#3E725E",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "账本"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "我的"
+      }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

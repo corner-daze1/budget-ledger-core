@@ -85,7 +85,7 @@ Page({
   refresh() {
     const app = getApp();
     if (!app.globalData.state) {
-      wx.redirectTo({ url: '/pages/settings/settings' });
+      wx.switchTab({ url: '/pages/settings/settings' });
       return;
     }
     const model = core.getBillAnalysisModel(app.globalData.state, {

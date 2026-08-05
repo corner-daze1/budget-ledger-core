@@ -1,6 +1,6 @@
 page {
-  background: #f7f4ef;
-  color: #282521;
+  background: #F6F5F0;
+  color: #202521;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   font-size: 28rpx;
 }
@@ -9,12 +9,12 @@ page {
   width: 100%;
   min-height: 100vh;
   box-sizing: border-box;
-  padding: 40rpx 32rpx calc(64rpx + env(safe-area-inset-bottom));
+  padding: 40rpx 32rpx calc(180rpx + env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 
 .eyebrow {
-  color: #9c8f83;
+  color: #5F665F;
   font-size: 24rpx;
   letter-spacing: 3rpx;
 }
@@ -27,7 +27,7 @@ page {
 }
 
 .subtitle {
-  color: #756b63;
+  color: #5F665F;
   line-height: 1.7;
 }
 
@@ -35,13 +35,13 @@ page {
   margin: 22rpx 0;
   padding: 30rpx;
   border-radius: 24rpx;
-  background: #fffdfa;
-  box-shadow: 0 10rpx 30rpx rgba(66, 52, 39, 0.07);
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(32, 37, 33, 0.06);
 }
 
 .card-title {
   margin-bottom: 18rpx;
-  color: #756b63;
+  color: #5F665F;
   font-size: 24rpx;
 }
 
@@ -60,19 +60,19 @@ page {
 }
 
 .primary-button {
-  color: #fffdfa;
-  background: #b85c45;
+  color: #FFFFFF;
+  background: #3E725E;
 }
 
 .secondary-button {
-  color: #6d5147;
-  background: #eadbd2;
+  color: #3E725E;
+  background: #E8F0EB;
 }
 
 .link-button {
   margin: 0;
   padding: 0 14rpx;
-  color: #b85c45;
+  color: #3E725E;
   background: transparent;
   font-size: 26rpx;
 }
@@ -81,24 +81,24 @@ page {
   display: flex;
   align-items: center;
   min-height: 86rpx;
-  border-bottom: 1rpx solid #eee6dd;
+  border-bottom: 1rpx solid #E5E7E2;
 }
 
 .field-label {
   width: 190rpx;
-  color: #756b63;
+  color: #5F665F;
 }
 
 .field-input,
 .picker-value {
   flex: 1;
-  color: #282521;
+  color: #202521;
   text-align: right;
 }
 
 .hint {
   margin-top: 16rpx;
-  color: #9c8f83;
+  color: #5F665F;
   font-size: 24rpx;
   line-height: 1.6;
 }
@@ -111,9 +111,9 @@ page {
 
 .error {
   padding: 22rpx;
-  color: #9b3f32;
+  color: #B85A4A;
   border-radius: 16rpx;
-  background: #f7dfd8;
+  background: #F9E9E5;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }

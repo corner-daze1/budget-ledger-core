@@ -4,8 +4,8 @@
 
 ## 现役阻塞
 
-- 无代码、测试、构建或自动视觉取证阻塞。
-- 首页阶段九候选样板尚未获得产品视觉确认；这是当前唯一会改变后续开发方向的待裁决项。确认前禁止铺到另外三页。
+- 无现役代码、测试、构建或自动视觉阻塞。
+- 首页视觉产品审阅仍属于后续人工事项；本阶段不铺开另外三页内容重绘。
 
 ## 发布前待完成
 
@@ -25,3 +25,42 @@
 - 兼容性或关闭失败仍遗留 `ok:true`、旧 PNG、manifest 或 green 的假成功风险。
 - 四态自动取证缺失；当前兼容探针和四态命令均已真实通过。
 - 2026-08-05 已按用户确认清理一次性会话残留、可重建 QA 副本和被替代的阶段九中间证据。
+
+## 阶段十基线提交差异（2026-08-05）
+
+- 任务书记录的基线为 `ff89517`，但实测 `git rev-parse --short HEAD` 返回 `9f8ad8e`，工作区当时干净。该差异无法仅凭任务书推断原因。
+- 已完成且通过任务0：`npm ci`、`build:mini`、`npm test` 356/356、`npm run check` 359 declarations、`check:mini`；未修改业务/UI文件。
+- 后续以当前仓库为权威继续；最终仍执行 `git diff --exit-code ff89517 -- src scripts`，若基线不存在或差异不为零，保留原始输出并报告，不伪造通过。
+
+## 历史任务2：21–23号证据与恢复闭环（2026-08-05）
+
+- 当前仍缺少 `artifacts/phase9/21-private-backup-proof.txt`、`artifacts/phase9/22-home-prepaid-top-iphone12-13.png` 和 `artifacts/phase9/23-home-prepaid-top-iphone5-320.png`；没有用旧 PNG、旧备份或占位文件补齐。
+- Stable 确实存在且能显示真实设置页，但 Computer Use 只能取得截图，无法取得可访问树。窗口 ID `4131396` 的重绑定/激活原始错误为：`window id 4131396 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`；输入后刷新还出现 `node_repl exec context not found`，不能证明点击已生效。
+- 在可验证状态恢复前，不能安全执行导出、制造预支支出、导入恢复或声称 `match=true`。因此本轮未改变账本、未访问测试 AppID 存储、未创建仓库外备份，也未修改业务代码、测试或配置。
+- `artifacts/phase9/17-state-restore-check.txt` 仅是历史参考，不替代本轮 UI 导出→预支截图→恢复前后核对；需要有效的 Stable/Computer Use 窗口绑定后从可见 UI 重新完成。
+
+## 历史任务2：Stable 重开后的复核结果（2026-08-05）
+
+- 已终止旧 Stable 主窗口并按原用户数据目录重新启动；新项目窗口被发现为 ID `2887566`，但状态读取仍返回同一所有权矛盾：`window id 2887566 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`。
+- 用 `process:C:\Program Files (x86)\Tencent\微信web开发者工具\wechatdevtools.exe` 代替 `nwjs` 标识再次验证时，Computer Use 会话返回 `Error: node_repl exec context not found`；因此仍没有可信的可访问树、点击确认或截图闭环。
+- 21/22/23 证据继续缺失；未执行导出、预支、恢复或清除，未访问测试 AppID 存储，未制造占位证据。状态恢复的 `match=true` 仍未验证，历史 `17-state-restore-check.txt` 不得升格为当前证据。
+
+## 历史任务2：21–23最终核对（2026-08-05）
+
+- 按用户要求没有重跑已完成自动门禁。重新调用 `list_apps()` 后，Stable 项目窗口唯一返回为 ID `2887566`。
+- 对该次返回的窗口对象执行状态读取仍返回：`window id 2887566 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`。
+- 按 Computer Use 恢复规程在重新选择/重试后停止，不使用旧坐标或旧状态；因此没有可信 UI 闭环，21/22/23 证据和恢复前后 `match=true` 仍不能声称完成。
+- 未点击导出、预支、恢复或清除，未访问测试 AppID 存储，未创建占位证据；本轮仅更新进度与阻塞文档，未提交 Git。
+
+## 历史：阶段十自动视觉取证阻塞（2026-08-05，已解除）
+
+- `npm run evidence:visual -- --compat` 已用三个不同端口分别真实运行三次，均在兼容性 fixture 的 `redirectTo('/pages/home/home')` 处失败；每次 QA 会话均由脚本确认关闭，未复用 runtime。
+- automator 协议日志确认原始 RPC 为 `App.callWxMethod`，返回 `error.message="Uncaught [object Object]"`；当前 `/pages/home/home` 已是 tab 页，微信运行时拒绝用 `redirectTo` 进入 tab 页。五条空对象 console 事件仍按协议伪影记录，不当作应用错误吞掉。
+- 取证脚本属于禁止修改的判卷标准，页面级 `wx.redirectTo` 兼容层试验也无法影响 `App.callWxMethod`，已还原；未生成成功 `compatibility.json`、sample PNG、四态新版 PNG 或 green manifest，不伪造视觉通过。
+- 当时可继续验证的代码、业务测试、构建、静态检查和阶段十导航反向红→绿均已完成；该脚本/运行时路径冲突已由阶段十三允许的首页 Tab 助手修复，历史失败不再是现役阻塞。
+
+## 阶段十三视觉取证解除记录（2026-08-05）
+
+- 按新任务允许范围，取证脚本将 fixture 首页进入从 `redirectTo` 改为经 `withSessionTimeout` 的单一 `switchToHomeTab`；旧逻辑 17 项中 1 项真实失败，改后视觉单测 17/17。
+- `npm run evidence:visual -- --compat` 真实退出 0，生成 `compatibility.json` 与 `compatibility/sample.png`；`npm run evidence:visual` 真实退出 0，生成四张新版 PNG、`manifest.json` 与 `four-states-green.txt`。
+- 本轮未使用测试 AppID 或真实账本；协议空对象事件仍保留并计数，不当作应用错误吞掉。

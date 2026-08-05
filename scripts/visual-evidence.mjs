@@ -756,6 +756,16 @@ async function readSystemInfo(runtime, { retryableTimeouts = false, deadline = n
   })), 'systemInfo', AUTOMATOR_TIMEOUT_MS, { retryable: retryableTimeouts, deadline });
 }
 
+async function switchToHomeTab(miniProgram, { retryableTimeouts = false, deadline = null } = {}) {
+  if (!miniProgram || typeof miniProgram.switchTab !== 'function') throw new Error('首页 Tab 助手需要 miniProgram.switchTab');
+  return withSessionTimeout(
+    () => miniProgram.switchTab(HOME_ROUTE),
+    `switchTab ${HOME_ROUTE}`,
+    AUTOMATOR_TIMEOUT_MS,
+    { retryable: retryableTimeouts, deadline },
+  );
+}
+
 async function writeAndReadFixture(runtime, fixture, { retryableTimeouts = false, deadline = null } = {}) {
   await clearQaStorage(runtime, { retryableTimeouts, deadline });
   await withSessionTimeout(
@@ -769,12 +779,7 @@ async function writeAndReadFixture(runtime, fixture, { retryableTimeouts = false
     app.onLaunch();
     return Boolean(app.globalData.state);
   }), `reload app from QA fixture ${fixture.name}`, AUTOMATOR_TIMEOUT_MS, { retryable: retryableTimeouts, deadline });
-  await withSessionTimeout(
-    () => runtime.miniProgram.redirectTo(HOME_ROUTE),
-    `redirectTo ${fixture.name}`,
-    AUTOMATOR_TIMEOUT_MS,
-    { retryable: retryableTimeouts, deadline },
-  );
+  await switchToHomeTab(runtime.miniProgram, { retryableTimeouts, deadline });
   const readbackRaw = await withSessionTimeout(
     () => runtime.miniProgram.callWxMethod('getStorageSync', STORAGE_KEY),
     `read QA fixture ${fixture.name}`,
@@ -1500,4 +1505,6 @@ export {
   formatCliExit,
   runFixtureWithFreshSession,
   runFixturesWithFreshSessions,
+  switchToHomeTab,
+  writeAndReadFixture,
 };

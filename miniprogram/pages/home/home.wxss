@@ -1,44 +1,20 @@
-/* Phase 9 product-review sample — tokens from docs/PHASE9_DESIGN_SYSTEM.md */
-
 .home-page {
-  background: #f7f3ea;
-  color: #22231f;
   min-height: 100vh;
   box-sizing: border-box;
+  color: #202521;
+  background: #F6F5F0;
 }
 
 .home-header {
-  margin-bottom: 20rpx;
-}
-
-.home-header-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
+  margin-bottom: 24rpx;
 }
 
 .home-title {
   margin: 0;
-  flex: 1;
-  min-width: 0;
   font-size: 44rpx;
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: 1rpx;
-}
-
-.manage-link {
-  margin: 0;
-  padding: 0 16rpx;
-  min-height: 88rpx;
-  line-height: 88rpx;
-  flex-shrink: 0;
-  font-size: 26rpx;
-  color: #756b63;
-  background: transparent;
-  border: none;
 }
 
 .home-subtitle {
@@ -46,7 +22,7 @@
 }
 
 .home-secondary-text {
-  color: #756b63;
+  color: #5F665F;
   font-size: 24rpx;
   line-height: 1.55;
 }
@@ -59,128 +35,121 @@
 .settlement-card,
 .recent-bills,
 .plan-card {
+  box-sizing: border-box;
   margin: 16rpx 0;
   padding: 28rpx;
+  border: 1rpx solid #E5E7E2;
   border-radius: 24rpx;
-  background: #fffdfa;
-  border: 1rpx solid #e8e1d6;
-  box-sizing: border-box;
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(32, 37, 33, 0.05);
 }
 
 .card-kicker {
   margin-bottom: 8rpx;
-  color: #756b63;
+  color: #5F665F;
   font-size: 24rpx;
   letter-spacing: 1rpx;
 }
 
 .card-title {
   margin-bottom: 12rpx;
+  color: #202521;
   font-size: 32rpx;
   font-weight: 600;
-  color: #22231f;
 }
 
 .hero-number {
   margin: 8rpx 0 20rpx;
+  color: #202521;
   font-size: 72rpx;
   font-weight: 600;
   line-height: 1.12;
-  color: #22231f;
   overflow-wrap: anywhere;
 }
 
 .scale-track {
   position: relative;
   height: 16rpx;
-  border-radius: 999rpx;
-  background: #efe8dc;
   overflow: hidden;
+  border-radius: 999rpx;
+  background: #E8F0EB;
 }
 
 .scale-fill {
   height: 100%;
-  border-radius: 999rpx;
-  background: #d8f15a;
   max-width: 100%;
-}
-
-.scale-fill-prepaid {
-  background: #e8b4a8;
+  border-radius: 999rpx;
 }
 
 .scale-fill-normal {
-  background: #d8f15a;
+  background: #3E725E;
+}
+
+.scale-fill-prepaid {
+  background: #B85A4A;
+}
+
+.scale-fill-settlement {
+  background: #E5E7E2;
 }
 
 .scale-mark {
   position: absolute;
-  left: 40%;
   top: -4rpx;
+  left: 40%;
   width: 4rpx;
   height: 24rpx;
-  background: #22231f;
-  opacity: 0.25;
+  background: #202521;
+  opacity: 0.3;
 }
 
 .scale-legend {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12rpx;
   margin-top: 12rpx;
-  flex-wrap: wrap;
+}
+
+.status-normal,
+.status-prepaid {
+  font-size: 24rpx;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
 }
 
 .status-normal {
-  color: #5f7055;
-  font-size: 24rpx;
-  line-height: 1.5;
+  color: #3E725E;
 }
 
 .status-prepaid {
-  color: #a94d3b;
-  font-size: 24rpx;
-  line-height: 1.55;
   margin-top: 8rpx;
-  overflow-wrap: anywhere;
+  color: #B85A4A;
 }
 
 .prepaid-block {
   margin-top: 12rpx;
   padding-top: 12rpx;
-  border-top: 1rpx solid #e8e1d6;
+  border-top: 1rpx solid #E5E7E2;
 }
 
 .period-line {
   margin-top: 12rpx;
 }
 
-.home-primary-cta {
-  min-height: 88rpx;
-  margin: 8rpx 0 20rpx;
-  border-radius: 16rpx;
-  font-size: 30rpx;
-  color: #fffdfa;
-  background: #22231f;
-  border: none;
-}
-
-.settlement-card .home-primary-cta {
-  margin-top: 20rpx;
-  margin-bottom: 0;
-}
-
 .settlement-line {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   gap: 16rpx;
   margin: 14rpx 0;
-  color: #756b63;
+  color: #5F665F;
   font-size: 26rpx;
 }
 
 .settlement-value {
-  color: #22231f;
+  color: #202521;
   font-weight: 600;
   text-align: right;
   overflow-wrap: anywhere;
@@ -188,6 +157,16 @@
 
 .settlement-field {
   margin-top: 8rpx;
+}
+
+.home-primary-cta {
+  min-height: 88rpx;
+  margin: 20rpx 0 0;
+  color: #FFFFFF;
+  font-size: 28rpx;
+  border: 0;
+  border-radius: 16rpx;
+  background: #3E725E;
 }
 
 .recent-bills-head {
@@ -199,41 +178,41 @@
 }
 
 .section-title {
+  color: #202521;
   font-size: 28rpx;
   font-weight: 600;
-  color: #22231f;
 }
 
 .all-link {
+  min-height: 88rpx;
   margin: 0;
   padding: 0 8rpx;
-  min-height: 88rpx;
-  line-height: 88rpx;
-  flex-shrink: 0;
+  color: #3E725E;
   font-size: 26rpx;
-  color: #5f7055;
+  line-height: 88rpx;
   background: transparent;
 }
 
 .bills-empty {
   padding: 28rpx 0 12rpx;
-  color: #756b63;
+  color: #5F665F;
   font-size: 26rpx;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .bill-row {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
   align-items: flex-start;
+  justify-content: space-between;
   gap: 16rpx;
   padding: 18rpx 0;
-  border-top: 1rpx solid #efe8dc;
+  border-top: 1rpx solid #E5E7E2;
 }
 
 .bill-row:first-of-type {
-  border-top: none;
+  border-top: 0;
 }
 
 .bill-main {
@@ -242,17 +221,17 @@
 }
 
 .bill-category {
-  font-size: 28rpx;
-  color: #22231f;
   margin-bottom: 4rpx;
+  color: #202521;
+  font-size: 28rpx;
   overflow-wrap: anywhere;
 }
 
 .bill-amount {
   flex-shrink: 0;
+  color: #202521;
   font-size: 28rpx;
   font-weight: 600;
-  color: #22231f;
   text-align: right;
   overflow-wrap: anywhere;
 }
@@ -268,41 +247,48 @@
   gap: 12rpx;
   margin: 16rpx 0;
   padding: 22rpx 26rpx;
+  color: #B85A4A;
+  border: 1rpx solid #F0D1C9;
   border-radius: 18rpx;
-  background: #f8e4dc;
-  color: #a94d3b;
+  background: #F9E9E5;
+}
+
+.plan-alert-text,
+.plan-line,
+.notice {
+  overflow-wrap: anywhere;
 }
 
 .plan-alert-text {
   font-size: 26rpx;
   line-height: 1.55;
-  overflow-wrap: anywhere;
 }
 
 .plan-line {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   gap: 16rpx;
   padding: 14rpx 0;
-  border-bottom: 1rpx solid #efe8dc;
-  color: #22231f;
+  color: #202521;
   font-size: 26rpx;
   line-height: 1.45;
+  border-bottom: 1rpx solid #E5E7E2;
 }
 
 .plan-line:last-child {
-  border-bottom: none;
+  border-bottom: 0;
 }
 
 .plan-line-value {
-  color: #a94d3b;
+  color: #B85A4A;
   text-align: right;
   overflow-wrap: anywhere;
 }
 
 .notice {
   margin-bottom: 8rpx;
-  color: #756b63;
+  color: #5F665F;
   font-size: 24rpx;
   line-height: 1.5;
 }
@@ -317,63 +303,52 @@
   min-height: 88rpx;
   margin: 12rpx 0;
   padding: 0 20rpx;
-  border: 1rpx solid #e8e1d6;
-  border-radius: 16rpx;
-  background: #fffdfa;
-  text-align: left;
+  color: #202521;
   font-size: 28rpx;
+  text-align: left;
+  border: 1rpx solid #E5E7E2;
+  border-radius: 16rpx;
+  background: #FFFFFF;
 }
 
 .secondary-button {
   min-height: 88rpx;
   margin: 12rpx 0;
-  border-radius: 16rpx;
+  color: #3E725E;
   font-size: 28rpx;
-  color: #22231f;
-  background: #efe8dc;
-  border: none;
+  border: 0;
+  border-radius: 16rpx;
+  background: #E8F0EB;
 }
 
 .field {
   display: flex;
   align-items: center;
   min-height: 86rpx;
-  border-bottom: 1rpx solid #efe8dc;
+  border-bottom: 1rpx solid #E5E7E2;
 }
 
 .field-label {
   width: 190rpx;
-  color: #756b63;
+  color: #5F665F;
   font-size: 26rpx;
 }
 
 .field-input,
 .picker-value {
   flex: 1;
-  color: #22231f;
-  text-align: right;
+  color: #202521;
   font-size: 26rpx;
+  text-align: right;
 }
 
 @media (max-width: 320px) {
   .home-title {
-    font-size: 36rpx;
+    font-size: 38rpx;
   }
 
   .hero-number {
     font-size: 56rpx;
-  }
-
-  /* Keep title+管理 and bill main+amount on one row at 320px */
-  .home-header-row,
-  .recent-bills-head,
-  .bill-row {
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .bill-row {
-    align-items: flex-start;
   }
 
   .settlement-line,
@@ -390,6 +365,10 @@
     text-align: left;
   }
 
+  .bill-row {
+    flex-direction: row;
+  }
+
   .bill-amount {
     text-align: right;
   }
@@ -403,10 +382,5 @@
 
   .field-label {
     width: auto;
-  }
-
-  .home-primary-cta,
-  .secondary-button {
-    width: 100%;
   }
 }

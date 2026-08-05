@@ -23,7 +23,7 @@ Page({
   onShow() {
     const app = getApp();
     if (!app.globalData.state) {
-      wx.redirectTo({ url: '/pages/settings/settings' });
+      wx.switchTab({ url: '/pages/settings/settings' });
       return;
     }
     const categories = core.categoryOptions();

@@ -1,10 +1,7 @@
 <view class="page home-page" wx:if="{{model}}">
   <view class="home-header">
-    <view class="home-header-row">
-      <view class="home-title">今天还能花多少</view>
-      <button class="manage-link" bindtap="goSettings">管理</button>
-    </view>
-    <view class="home-secondary-text home-subtitle">额度按天积累，花完会如实告诉你</view>
+    <view class="home-title">用度</view>
+    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>
   </view>
 
   <view wx:if="{{error}}" class="error home-error">{{error}}</view>
@@ -46,14 +43,12 @@
     <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>
   </view>
 
-  <button class="primary-button home-primary-cta" bindtap="goEntry" wx:if="{{!model.needsSettlement}}">＋ 记一笔</button>
-
   <view class="recent-bills">
     <view class="recent-bills-head">
       <view class="section-title">最近账单</view>
       <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>
     </view>
-    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，记下第一笔</view>
+    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>
     <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">
       <view class="bill-main">
         <view class="bill-category">{{item.category}}</view>

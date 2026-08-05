@@ -18,6 +18,7 @@ import {
   runFixturesWithFreshSessions,
   SCREENSHOT_TIMEOUT_MS,
 } from '../scripts/visual-evidence.mjs';
+import * as visualEvidence from '../scripts/visual-evidence.mjs';
 
 async function pathExists(filePath) {
   try {
@@ -134,6 +135,35 @@ test('visual evidence fixtures include a real cross-budget-period state', () => 
   assert.equal(fixture.expected.budgetPeriodCount, 2);
   assert.equal(fixture.expected.periodId, fixture.state.budgetPeriods[1].id);
   assert.equal(fixture.expected.billCount, 1);
+});
+
+test('home fixture route uses one switchTab assistant and never redirectTo', async () => {
+  const { switchToHomeTab, writeAndReadFixture } = visualEvidence;
+  assert.equal(typeof switchToHomeTab, 'function');
+  assert.equal(typeof writeAndReadFixture, 'function');
+
+  const assistantCalls = [];
+  await switchToHomeTab({
+    switchTab: async (url) => assistantCalls.push(['switchTab', url]),
+    redirectTo: async (url) => assistantCalls.push(['redirectTo', url]),
+  });
+  assert.deepEqual(assistantCalls, [['switchTab', '/pages/home/home']]);
+
+  const fixture = makeFixture('empty-bills', '2026-08-04');
+  let storedRaw = '';
+  const routeCalls = [];
+  const miniProgram = {
+    async callWxMethod(method, ...args) {
+      if (method === 'setStorageSync') storedRaw = args[1];
+      if (method === 'getStorageSync') return storedRaw;
+      return null;
+    },
+    async evaluate() { return true; },
+    async switchTab(url) { routeCalls.push(['switchTab', url]); },
+    async redirectTo() { throw new Error('redirectTo must not be called'); },
+  };
+  await writeAndReadFixture({ miniProgram }, fixture);
+  assert.deepEqual(routeCalls, [['switchTab', '/pages/home/home']]);
 });
 
 test('compatibility failure removes old success artifacts and records the current failure', async (t) => {

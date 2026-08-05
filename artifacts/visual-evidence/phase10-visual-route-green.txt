@@ -1,0 +1,25 @@
+✔ visual evidence CLI arguments use the isolated project and never pass an automation account (1.728ms)
+✔ visual evidence CLI argument builder rejects a non-absolute project path or invalid port (0.4058ms)
+✔ visual evidence reports an early CLI exit with exit code and raw stdout and stderr (0.1798ms)
+✔ visual evidence PNG validation reads a non-zero PNG IHDR size (0.2172ms)
+✔ visual evidence console classification keeps warnings visible and errors fatal (0.3245ms)
+✔ visual evidence fixtures include a real cross-budget-period state (2.6259ms)
+✔ home fixture route uses one switchTab assistant and never redirectTo (0.9827ms)
+✔ compatibility failure removes old success artifacts and records the current failure (24.5974ms)
+✔ compatibility close failure removes success artifacts and preserves CLI output (15.6737ms)
+✔ compatibility run and close failures preserve both original errors (7.0856ms)
+✔ successful compatibility close clears an old error and keeps a valid PNG with ok true (12.0854ms)
+✔ full evidence close failure kills CLI, retains close-error console evidence, and removes success outputs (16.9562ms)
+✔ fresh-session retry abandons a hung runtime and succeeds with a different runtime and port (0.6476ms)
+✔ three screenshot timeouts create three distinct sessions and never reuse a failed runtime (0.286ms)
+✔ deterministic fixture or application errors close once and do not retry (0.2363ms)
+✔ failed session cleanup preserves the screenshot timeout and cleanup errors and never retries (0.2258ms)
+✔ second fixture retry keeps the first fixture result and fixed fixture order (0.5665ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 635.3091

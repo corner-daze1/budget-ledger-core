@@ -1,0 +1,17 @@
+✔ app config exposes exactly three tab destinations and a non-tab entry page (2.6643ms)
+✔ custom tab bar selected state follows the current route including neutral entry mode (3.0153ms)
+✔ tab destinations use switchTab while the central record action uses navigateTo (0.8014ms)
+✔ custom tab bar template keeps three destinations and one independent record action (0.4519ms)
+✔ custom tab bar reserves safe area and at least 88rpx interaction height (0.5628ms)
+✔ missing-ledger bills and entry pages route to management with switchTab (0.538ms)
+✔ home bills entry and settings route transitions preserve tab navigation types (1.4665ms)
+✔ home keeps real budget states and removes duplicate normal record and management CTAs (0.6988ms)
+✔ shipped Phase10 scope has no legacy retail starter reference (8.082ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 157.7474

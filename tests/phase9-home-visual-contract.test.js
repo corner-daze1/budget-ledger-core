@@ -104,6 +104,7 @@ function loadHomePage(listRecentBillsImpl) {
     wx: {
       navigateTo({ url }) { navigations.push(['navigateTo', url]); },
       redirectTo({ url }) { navigations.push(['redirectTo', url]); },
+      switchTab({ url }) { navigations.push(['switchTab', url]); },
     },
   });
   return { definition, navigations, listCalls, core, helpers: moduleObj.exports };
@@ -165,18 +166,16 @@ test('home covers settlement prepaid plan pending error and bills-empty states',
   assert.match(wxml, /model\.planPendingItems\.length/);
   assert.match(wxml, /model\.planReminders|model\.planDueToday|model\.planExecutionResults/);
   assert.match(wxml, /wx:if="\{\{error\}\}"/);
-  assert.match(wxml, /还没有账单，记下第一笔/);
+  assert.match(wxml, /还没有账单，用底部“记一笔”记下第一笔/);
   assert.match(wxml, /recentBills\.length/);
   // plan block only when events exist — not a permanent empty-plan card
   assert.doesNotMatch(wxml, /class="[^"]*plan-card[^"]*"[\s\S]{0,40}暂无计划提醒/);
 });
 
-test('home keeps settlement pending overdue and navigation handlers', () => {
+test('home keeps settlement pending overdue and bills navigation handlers', () => {
   const { definition, navigations } = loadHomePage();
   for (const name of [
-    'goEntry',
     'goBills',
-    'goSettings',
     'settlePeriod',
     'retryPendingPlan',
     'dismissPlanOverdueBanner',
@@ -185,52 +184,40 @@ test('home keeps settlement pending overdue and navigation handlers', () => {
   ]) {
     assert.equal(typeof definition[name], 'function', `missing ${name}`);
   }
-  definition.goEntry();
   definition.goBills();
-  definition.goSettings();
   assert.deepEqual(navigations, [
-    ['navigateTo', '/pages/entry/entry'],
     ['navigateTo', '/pages/bills/bills'],
-    ['navigateTo', '/pages/settings/settings'],
   ]);
   const wxml = read('miniprogram/pages/home/home.wxml');
-  assert.match(wxml, /bindtap="goEntry"/);
   assert.match(wxml, /bindtap="goBills"/);
-  assert.match(wxml, /bindtap="goSettings"/);
+  assert.doesNotMatch(wxml, /bindtap="goEntry"|bindtap="goSettings"/);
   assert.match(wxml, /bindtap="settlePeriod"/);
   assert.match(wxml, /bindtap="retryPendingPlan"/);
   assert.match(wxml, /bindtap="dismissPlanOverdueBanner"/);
-  assert.match(wxml, /＋\s*记一笔|＋记一笔/);
+  assert.doesNotMatch(wxml, /＋\s*记一笔|＋记一笔/);
   assert.match(wxml, /全部/);
   assert.doesNotMatch(wxml, /资产中心/);
   assert.doesNotMatch(wxml, /bindtap="goAssets"/);
 });
 
-test('home layout order is header budget cta bills then conditional alerts', () => {
+test('home layout order is header budget bills then conditional alerts', () => {
   const wxml = read('miniprogram/pages/home/home.wxml');
   const header = wxml.indexOf('home-header');
   const budget = wxml.indexOf('budget-card');
-  const cta = wxml.indexOf('bindtap="goEntry"');
   const bills = wxml.indexOf('recent-bills');
   const plan = wxml.indexOf('plan-section');
   assert.ok(header >= 0 && budget > header);
-  assert.ok(cta > budget);
-  assert.ok(bills > cta);
+  assert.ok(bills > budget);
   assert.ok(plan > bills);
-  assert.match(wxml, /管理/);
+  assert.doesNotMatch(wxml, /bindtap="goSettings"|class="[^"]*manage-link/);
 });
 
 test('home styles freeze warm sample tokens tap size and 320 rules', () => {
   const wxss = read('miniprogram/pages/home/home.wxss');
   const app = read('miniprogram/app.wxss');
-  assert.match(wxss, /#f7f3ea/i);
-  assert.match(wxss, /#fffdfa/i);
-  assert.match(wxss, /#22231f/i);
-  assert.match(wxss, /#756b63/i);
-  assert.match(wxss, /#d8f15a/i);
-  assert.match(wxss, /#5f7055/i);
-  assert.match(wxss, /#a94d3b/i);
-  assert.match(wxss, /#e8e1d6/i);
+  for (const token of ['#F6F5F0', '#FFFFFF', '#202521', '#5F665F', '#3E725E', '#E8F0EB', '#B85A4A', '#E5E7E2']) {
+    assert.match(wxss, new RegExp(token, 'i'));
+  }
   assert.match(wxss, /min-height:\s*88rpx/);
   assert.match(wxss, /@media\s*\(max-width:\s*320px\)/);
   assert.match(wxss, /overflow-wrap:\s*anywhere|word-break/);
@@ -249,11 +236,11 @@ test('home body and primary colors meet WCAG contrast ≥4.5 on shipped hex', ()
   const secondary = firstColor(wxss, '\\.home-secondary-text', 'color');
   const primaryBg = firstColor(wxss, '\\.home-primary-cta', 'background');
   const primaryFg = firstColor(wxss, '\\.home-primary-cta', 'color');
-  assert.match(pageBg, /#f7f3ea/i);
-  assert.match(body, /#22231f/i);
-  assert.match(secondary, /#756b63/i);
-  assert.match(primaryBg, /#22231f/i);
-  assert.match(primaryFg, /#fffdfa|#f7f3ea|#ffffff/i);
+  assert.match(pageBg, /#f6f5f0/i);
+  assert.match(body, /#202521/i);
+  assert.match(secondary, /#5f665f/i);
+  assert.match(primaryBg, /#3e725e/i);
+  assert.match(primaryFg, /#ffffff/i);
   const cBody = contrastRatio(body, pageBg);
   const cSecondary = contrastRatio(secondary, pageBg);
   const cPrimary = contrastRatio(primaryFg, primaryBg);
@@ -294,7 +281,7 @@ test('home bill rows bind real category date account amount fields', () => {
   assert.match(wxml, /item\.date/);
   assert.match(wxml, /item\.account/);
   assert.match(wxml, /item\.amount/);
-  assert.match(wxml, /还没有账单，记下第一笔/);
+  assert.match(wxml, /还没有账单，用底部“记一笔”记下第一笔/);
 });
 
 test('home scale is status expression not a fake month percent bar', () => {
@@ -434,7 +421,7 @@ test('home onShow uses formatBillCategory from categoryLevel1/2 not string repla
   assert.doesNotMatch(definition.data.recentBills[0].category, /null|undefined/i);
 });
 
-test('320px keeps header row and bill row horizontal; manage/all tap ≥88rpx', () => {
+test('320px keeps header row and bill row horizontal; bill list action ≥88rpx', () => {
   const wxss = read('miniprogram/pages/home/home.wxss');
   const media = mediaBlock(wxss);
 
@@ -446,12 +433,11 @@ test('320px keeps header row and bill row horizontal; manage/all tap ≥88rpx', 
     assert.doesNotMatch(group, /home-header-row/);
   }
 
-  // manage-link / all-link must not be width:100% in 320 media
-  assert.doesNotMatch(media, /\.manage-link[\s\S]{0,80}width\s*:\s*100%/i);
+  // all-link must not be width:100% in 320 media
   assert.doesNotMatch(media, /\.all-link[\s\S]{0,80}width\s*:\s*100%/i);
   const widthGroup = media.match(/([^{}]+)\{\s*width\s*:\s*100%/gi) || [];
   for (const group of widthGroup) {
-    assert.doesNotMatch(group, /manage-link|all-link/);
+    assert.doesNotMatch(group, /all-link/);
   }
 
   // bill main shrinks; amount does not
@@ -464,6 +450,5 @@ test('320px keeps header row and bill row horizontal; manage/all tap ≥88rpx', 
     assert.doesNotMatch(group, /(?:^|[\s,])\.?bill-row(?:[\s,]|$)/);
   }
 
-  assert.ok(minHeightRpx(wxss, 'manage-link') >= 88, 'manage-link min-height must be ≥88rpx');
   assert.ok(minHeightRpx(wxss, 'all-link') >= 88, 'all-link min-height must be ≥88rpx');
 });
