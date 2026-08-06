@@ -1,0 +1,5 @@
+SHA-256 comparison: sha256-before.txt vs sha256-after.txt
+Compared scope entries: 19
+Changed entries: 0
+Missing/present status changes: 0
+Result: ok=true

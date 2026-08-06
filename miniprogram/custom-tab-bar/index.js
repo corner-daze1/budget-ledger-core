@@ -12,6 +12,11 @@ function currentPagePath() {
   return current?.route ? `/${current.route.replace(/^\//, '')}` : '';
 }
 
+function currentPage() {
+  const pages = getCurrentPages();
+  return pages[pages.length - 1] || null;
+}
+
 Component({
   data: {
     items: TAB_ITEMS,
@@ -43,6 +48,11 @@ Component({
       if (!item) return;
       // Do not optimistically change selected: the current route is the source of truth.
       this.syncSelected();
+      if (item.path === HOME_PATH && currentPagePath() === HOME_PATH) {
+        const page = currentPage();
+        if (typeof page?.resetHomeLedger === 'function') page.resetHomeLedger();
+        return;
+      }
       wx.switchTab({ url: item.path });
     },
 

@@ -9,7 +9,7 @@
 
 ## 视觉取证
 
-- 日常首页验收使用 `npm run evidence:visual -- --compat` 和 `npm run evidence:visual`，机制以 `docs/VISUAL_EVIDENCE.md` 为准。
+- 首页自动取证入口为 `npm run evidence:visual -- --compat` 和 `npm run evidence:visual`，机制及当前可用性以 `docs/VISUAL_EVIDENCE.md` 为准；文档记录截图链路阻塞期间，不得把这两个入口当作已绿的日常门禁反复重跑。
 - 自动取证只允许使用 `.visual-qa`、`touristappid` 和独立 CLI/automator 会话；禁止传 `--auto-account`，禁止读取测试 AppID 的账本。
 - Computer Use 截图不再是日常视觉迭代门禁；正式发布前的真实账本导出、恢复和真机冒烟仍需单独执行，不能由隔离 fixture 替代。
 

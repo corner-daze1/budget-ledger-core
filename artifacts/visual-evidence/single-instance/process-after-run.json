@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-06T20:42:06.6518349+08:00",
+  "resultPath": "artifacts/visual-evidence/single-instance/result.json",
+  "decision": {
+    "sessionCount": 2,
+    "successCount": 0,
+    "ports": [54962, 60191],
+    "distinctPorts": true,
+    "decision": "stable-single-instance-0-of-2",
+    "classification": "d-coexistence-not-necessary",
+    "continueCurrentProject": false,
+    "canDeclareApplicationIssue": false
+  },
+  "dCount": 0,
+  "dProcesses": [],
+  "exactAutomationResidualCount": 0,
+  "exactAutomationResidual": [],
+  "ports": [
+    { "Port": 54962, "Open": false },
+    { "Port": 60191, "Open": false }
+  ],
+  "allPortsClosed": true,
+  "probeDirectoryExists": false,
+  "cCliExists": true,
+  "cNodeExists": true,
+  "cToolExists": true,
+  "oldDiagnosticJsonSha256": "0948F7C16590E4B593CF57A880CFC721363E01F6952C8A48F61060539F13838A",
+  "oldDiagnosticLogSha256": "58E69E9B8E8D47413285BB848A365D775491938D34FE6A2D16CD5FA1CD19689C",
+  "oldHashesUnchanged": true,
+  "note": "C盘旧诊断文件当前SHA-256与任务0/PROGRESS记录的64位基线一致。"
+}

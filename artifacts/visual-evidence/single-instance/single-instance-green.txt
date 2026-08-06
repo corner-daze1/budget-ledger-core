@@ -1,0 +1,10 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 0
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1513.8825

@@ -1,0 +1,21 @@
+# SHA-256 read-only audit scope; captured 2026-08-06 Asia/Shanghai after report generation
+# Columns: status | sha256 | bytes | absolute path
+present|de56f84cb7baa22f8caf9eae1607b780d3e31738afbe32cedb48f833e8062e00|426|C:\Users\Administrator\Desktop\记账小程序\package.json
+present|6e5ea9a9c98c1b4240ed89b09c2481e09b043d478de1075e6203d96b8a360923|34857|C:\Users\Administrator\Desktop\记账小程序\package-lock.json
+present|de3fe1780b3cc3f56e5cda4319cb9560cc48d9a908670730e2e7611cb7a03025|1011|C:\Users\Administrator\Desktop\记账小程序\project.config.json
+present|76e77f55af14347a36de6241326401eee69bc1471ea2ce0775acdae7ad0c90d4|1426|C:\Users\Administrator\Desktop\记账小程序\node_modules\miniprogram-automator\package.json
+present|b629c671a8f938b53f0b32825e661225b2496f4f2266a7eb748dbc08eada27bc|5053|C:\Users\Administrator\Desktop\记账小程序\node_modules\miniprogram-automator\out\MiniProgram.js
+present|0948f7c16590e4b593cf57a880cfc721363e01f6952c8a48f61060539f13838a|35928|C:\Users\Administrator\Desktop\记账小程序\artifacts\visual-evidence\screenshot-diagnostic.json
+present|58e69e9b8e8d47413285bb848a365d775491938d34fe6a2d16cd5fa1cd19689c|33716|C:\Users\Administrator\Desktop\记账小程序\artifacts\visual-evidence\screenshot-diagnostic.log
+present|7866d95494dcc0d89b1d6f9941f6a31f72ad0ce6e6959b1e0a8e386e29286461|65|C:\Program Files (x86)\Tencent\微信web开发者工具\cli.bat
+present|6e95ca81226cbe9e76257576fa32482c42eb18ce50449007f0dbf289c28ec4a0|11404|C:\Program Files (x86)\Tencent\微信web开发者工具\cli.js
+present|ab96dbedc04f5a826ed2ba6d5718b10a27abf21d3be86c87d8573f55a5630d72|5298216|C:\Program Files (x86)\Tencent\微信web开发者工具\微信开发者工具.exe
+present|bd0deaaf3a3209f843103244ca4132f245df2cd943c8596ab5923e86b8df38c9|2278440|C:\Program Files (x86)\Tencent\微信web开发者工具\wechatdevtools.exe
+present|8dba65b36e500a768cc3b5050edb688836c3c60750043e3620226e3014fab3e6|59396304|C:\Program Files (x86)\Tencent\微信web开发者工具\node.exe
+present|9d34a7ee466ce0a3eeab57fcdee7bb29d297426fd95bcde6b5c60097397aae48|69874392|C:\Program Files (x86)\Tencent\微信web开发者工具\node-18.exe
+present|15a8176b62e9c99a0fa4b9da69521ecf22d3ee11cf4b1227031357541bda06fb|1549356|C:\Program Files (x86)\Tencent\微信web开发者工具\code\package.nw\js\common\cli\index.js
+present|7866d95494dcc0d89b1d6f9941f6a31f72ad0ce6e6959b1e0a8e386e29286461|65|D:\微信\微信web开发者工具\cli.bat
+present|6e95ca81226cbe9e76257576fa32482c42eb18ce50449007f0dbf289c28ec4a0|11404|D:\微信\微信web开发者工具\cli.js
+present|5bba7ab1adcc3bb221b7fe09cb80f416ec8c736303592ad31d9c3766e0a4dcf2|202930736|D:\微信\微信web开发者工具\微信开发者工具.exe
+missing|-|-|D:\微信\微信web开发者工具\node.exe
+missing|-|-|D:\微信\微信web开发者工具\resources\app.asar.unpacked\js\common\cli\index.js

@@ -1,0 +1,25 @@
+截图链路兼容性审计一手来源矩阵
+审计日期：2026-08-06（Asia/Shanghai）
+
+[1] 微信自动化快速入门（官方）
+URL: https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html
+只读HTTP实测：200，正文可取得。
+原文门槛：Node.js > 8.0；基础库 >= 2.7.3；开发者工具 >= 1.02.1907232；必须开启工具安全设置中的 CLI/HTTP 调用。
+当前值：系统Node v24.16.0；C盘注册版本 2.01.2510290；D盘副本文件版本 2.02.0；基础库版本未记录；CLI/HTTP开关现场状态未记录。
+判断：Node满足；工具数字版本满足；基础库和开关未知。
+
+[2] 微信 miniProgram.screenshot API（官方）
+URL: https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/miniprogram.html#miniProgram-screenshot
+只读HTTP实测：200，正文可取得。
+原文门槛：automator >= 0.9.0；基础库 >= 2.9.5；开发者工具 >= 1.02.2001082；仅开发者工具模拟器支持，客户端不可用。
+当前值：本地 miniprogram-automator 0.12.1；工具数字版本满足；基础库版本未记录；既有最小探针截图 0/4。
+判断：包和工具数字门槛满足；基础库未知；现场运行未通过。
+
+[3] npm 官方版本页/registry
+URL: https://www.npmjs.com/package/miniprogram-automator?activeTab=versions
+只读命令：npm view miniprogram-automator version time --json
+原始输出要点：version 0.12.1；0.12.1发布时间 2023-11-07T03:05:39.610Z；modified 2023-11-07T03:05:39.780Z。
+当前值：本地安装 0.12.1；package.json 无 engines 字段。
+判断：版本一致；发布时间久是事实，不单独推出不兼容因果。
+
+文档解释边界：通用最低版本与截图最低版本分开记录；达到门槛只证明文档门槛，不证明本机截图链路通过。

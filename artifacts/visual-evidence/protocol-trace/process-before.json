@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-06T22:03:53.3413673+08:00",
+  "cToolProcessCount": 30,
+  "dToolProcessCount": 0,
+  "exactAutomationResidualCount": 0,
+  "probeDirectoryExists": false,
+  "cVisibleWindow": {
+    "processId": 37540,
+    "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+    "mainWindowHandle": 2887566,
+    "mainWindowTitle": "记账小程序 - 微信开发者工具 Stable v2.01.2510290"
+  },
+  "dProcesses": [],
+  "status": "D盘已关闭；未启动协议追踪会话。"
+}

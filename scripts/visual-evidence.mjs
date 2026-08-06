@@ -9,32 +9,62 @@ import { fileURLToPath } from 'node:url';
 import automator from 'miniprogram-automator';
 
 import {
+  addAssetAccount,
   getHomeModel,
   initializeState,
   listRecentBills,
+  listRecentTransactions,
+  recordIncomeEntry,
   recordEntry,
+  recordTransferEntry,
   settleCurrentPeriod,
   todayIso,
 } from '../src/application/app-core.js';
 import { addDays, budgetSnapshot, dateDistance } from '../src/domain/budget.js';
+import { recordRefund } from '../src/domain/ledger.js';
 import { restoreBackup, serializeBackup } from '../src/domain/storage.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const QA_ROOT = path.join(ROOT, '.visual-qa');
+const PROBE_ROOT = path.join(ROOT, '.visual-probe');
+const DIAGNOSTIC_ROOT = 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\yongdu-phase11-diag-b9f5b75e6b3743ba9ba43ddaff8c4907\\.visual-qa';
 const EVIDENCE_ROOT = path.join(ROOT, 'artifacts', 'visual-evidence');
 const COMPAT_ROOT = path.join(EVIDENCE_ROOT, 'compatibility');
+const SINGLE_INSTANCE_ROOT = path.join(EVIDENCE_ROOT, 'single-instance');
+const PROTOCOL_TRACE_ROOT = path.join(EVIDENCE_ROOT, 'protocol-trace');
+const C_STABLE_CLI_PATH = 'C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat';
+const C_STABLE_NODE_PATH = 'C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe';
 const QA_APP_ID = 'touristappid';
 const STORAGE_KEY = 'yongdu-ledger-v1';
 const HOME_ROUTE = '/pages/home/home';
+const SCREENSHOT_DIAGNOSTIC_PREFIX = 'screenshot-diagnostic-';
+const DIAGNOSTIC_STAGE_NAMES = ['connect', 'currentPage', 'evaluate', 'screenshot', 'cleanup'];
+const STABLE_NODE_CANDIDATES = [
+  process.env.WECHAT_STABLE_NODE,
+  'C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe',
+  'C:\\Program Files\\Tencent\\微信web开发者工具\\node.exe',
+].filter(Boolean);
 const AUTOMATOR_TIMEOUT_MS = 60_000;
 const SCREENSHOT_TIMEOUT_MS = 30_000;
 const SESSION_CLEANUP_TIMEOUT_MS = 5_000;
+const QA_CLEANUP_VERIFY_TIMEOUT_MS = 10_000;
+const PROCESS_QUERY_TIMEOUT_MS = 10_000;
 const EVIDENCE_RUN_TIMEOUT_MS = 12 * 60_000;
+const PROTOCOL_TRACE_CLASSIFICATIONS = [
+  'send-not-observed',
+  'sent-no-matching-reply',
+  'explicit-protocol-error',
+  'reply-success-postprocess-failure',
+  'screenshot-success',
+  'trace-inconclusive',
+];
 const FIXTURE_NAMES = [
   'normal-accumulated',
   'prepaid-recovery',
   'empty-bills',
   'cross-budget-period',
+  'ledger-overview',
+  'ledger-expanded',
 ];
 
 const ownedOutputNames = new Set([
@@ -42,9 +72,12 @@ const ownedOutputNames = new Set([
   'prepaid-recovery.png',
   'empty-bills.png',
   'cross-budget-period.png',
+  'ledger-overview.png',
+  'ledger-expanded.png',
   'long-text-large-amount.png',
   'console.jsonl',
   'manifest.json',
+  'six-states-green.txt',
   'four-states-green.txt',
 ]);
 
@@ -130,8 +163,49 @@ function visualEvidenceOutputPaths(root = EVIDENCE_ROOT) {
   return {
     consolePath: path.join(root, 'console.jsonl'),
     manifestPath: path.join(root, 'manifest.json'),
-    greenPath: path.join(root, 'four-states-green.txt'),
+    greenPath: path.join(root, 'six-states-green.txt'),
     pngPaths: FIXTURE_NAMES.map((name) => path.join(root, `${name}.png`)),
+  };
+}
+
+function screenshotDiagnosticOutputPaths(root = EVIDENCE_ROOT) {
+  return {
+    resultPath: path.join(root, 'screenshot-diagnostic.json'),
+    logPath: path.join(root, 'screenshot-diagnostic.log'),
+  };
+}
+
+function stableSingleInstanceOutputPaths(root = SINGLE_INSTANCE_ROOT) {
+  return {
+    resultPath: path.join(root, 'result.json'),
+    logPath: path.join(root, 'run.log'),
+    pngPath(sessionNumber) {
+      if (!Number.isInteger(sessionNumber) || sessionNumber < 1 || sessionNumber > 2) {
+        throw new Error(`invalid strict single-instance session number: ${sessionNumber}`);
+      }
+      return path.join(root, `stable-single-instance-${sessionNumber}.png`);
+    },
+  };
+}
+
+function protocolTraceOutputPaths(root = PROTOCOL_TRACE_ROOT) {
+  return {
+    rawProtocolPath: path.join(root, 'raw-protocol.log'),
+    resultPath: path.join(root, 'result.json'),
+    processBeforePath: path.join(root, 'process-before.json'),
+    processAfterPath: path.join(root, 'process-after.json'),
+    reportPath: path.join(root, 'report.md'),
+    screenshotPath: path.join(root, 'screenshot.png'),
+  };
+}
+
+function stableSingleInstanceConfig({ projectPath = PROBE_ROOT, port }) {
+  return {
+    cliPath: C_STABLE_CLI_PATH,
+    nodeExecutable: C_STABLE_NODE_PATH,
+    projectPath,
+    appid: QA_APP_ID,
+    cliArguments: buildCliArguments({ projectPath, port }),
   };
 }
 
@@ -203,6 +277,7 @@ function isAllowedPath(relative) {
   if (relative.startsWith('tests/fixtures/visual/')) return true;
   if (relative.startsWith('artifacts/visual-evidence/')) return true;
   if (relative.startsWith('.visual-qa/')) return true;
+  if (relative.startsWith('.visual-probe/')) return true;
   return false;
 }
 
@@ -286,7 +361,14 @@ async function findStableCli() {
   throw new Error(`未找到微信开发者工具 CLI；候选路径：${candidates.join('；')}`);
 }
 
-async function freeTcpPort() {
+async function findStableNode() {
+  for (const candidate of STABLE_NODE_CANDIDATES) {
+    if (await exists(candidate)) return candidate;
+  }
+  throw new Error(`未找到 Stable 内置 Node；候选路径：${STABLE_NODE_CANDIDATES.join('；')}`);
+}
+
+async function freeTcpPort(excludedPorts = []) {
   const server = net.createServer();
   await new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -296,6 +378,7 @@ async function freeTcpPort() {
   await new Promise((resolve, reject) => {
     server.close((error) => (error ? reject(error) : resolve()));
   });
+  if (excludedPorts.includes(port)) return freeTcpPort(excludedPorts);
   return port;
 }
 
@@ -334,11 +417,282 @@ async function runCliCommand(cliPath, cliArguments, label, timeoutMs = 20_000) {
   return exitInfo;
 }
 
-async function closeQaProject(cliPath, timeoutMs = SESSION_CLEANUP_TIMEOUT_MS) {
-  return runCliCommand(cliPath, ['close', '--project', QA_ROOT], 'close stale QA project', timeoutMs);
+async function closeQaProject(cliPath, timeoutMs = SESSION_CLEANUP_TIMEOUT_MS, projectPath = QA_ROOT) {
+  return runCliCommand(cliPath, ['close', '--project', projectPath], `close QA project ${projectPath}`, timeoutMs);
+}
+
+async function runCapturedProcess(file, args, label, timeoutMs = PROCESS_QUERY_TIMEOUT_MS, { env = null } = {}) {
+  const child = spawn(file, args, {
+    cwd: ROOT,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+    ...(env ? { env } : {}),
+  });
+  const output = { stdout: [], stderr: [] };
+  child.stdout?.on('data', (chunk) => output.stdout.push(Buffer.from(chunk)));
+  child.stderr?.on('data', (chunk) => output.stderr.push(Buffer.from(chunk)));
+  try {
+    return await withTimeout(() => observeCliExit(child, output), label, timeoutMs);
+  } catch (error) {
+    if (!child.killed) child.kill();
+    throw error;
+  }
+}
+
+function normalizeWindowsPath(value) {
+  return path.resolve(String(value)).replaceAll('/', '\\').toLowerCase();
+}
+
+function normalizeCommandLine(value) {
+  return String(value || '').replaceAll('/', '\\').toLowerCase();
+}
+
+function commandLineHasProject(commandLine, projectPath) {
+  return normalizeCommandLine(commandLine).includes(normalizeWindowsPath(projectPath));
+}
+
+function commandLineHasPort(commandLine, port) {
+  if (port == null) return true;
+  const command = normalizeCommandLine(commandLine);
+  const token = String(port);
+  return new RegExp(`(?:--auto-port|--port)\\s+["']?${token}["']?(?:\\s|$)`, 'i').test(command);
+}
+
+function commandLinePorts(commandLine) {
+  const ports = [];
+  const expression = /(?:--auto-port|--port)\s+["']?(\d{1,5})["']?/gi;
+  for (const match of String(commandLine || '').matchAll(expression)) {
+    const port = Number(match[1]);
+    if (port >= 1 && port <= 65_535) ports.push(port);
+  }
+  return [...new Set(ports)];
+}
+
+function isAutoCommandLine(commandLine) {
+  return /(?:^|[\\/\s"'])auto(?:[\\/\s"']|$)/i.test(String(commandLine || ''));
+}
+
+function normalizeProcessRecord(record) {
+  return {
+    processId: Number(record?.ProcessId ?? record?.processId),
+    parentProcessId: Number(record?.ParentProcessId ?? record?.parentProcessId),
+    name: String(record?.Name ?? record?.name ?? ''),
+    commandLine: String(record?.CommandLine ?? record?.commandLine ?? ''),
+  };
+}
+
+async function listWindowsProcesses() {
+  if (process.platform !== 'win32') return [];
+  const script = [
+    '$ErrorActionPreference = \'Stop\'',
+    '[Console]::OutputEncoding = [System.Text.Encoding]::UTF8',
+    '@(Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine) | ConvertTo-Json -Compress',
+  ].join('; ');
+  const exitInfo = await runCapturedProcess(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script],
+    'inspect Windows QA processes',
+  );
+  if (exitInfo.type !== 'exit' || exitInfo.code !== 0) {
+    throw new Error(`Windows QA process inspection failed: ${json(exitInfo)}`);
+  }
+  const raw = exitInfo.stdout.trim();
+  if (!raw) return [];
+  const parsed = JSON.parse(raw);
+  return (Array.isArray(parsed) ? parsed : [parsed]).map(normalizeProcessRecord).filter((record) => Number.isInteger(record.processId));
+}
+
+function processLooksLikeWeChatTool(record) {
+  const text = `${record?.name || ''} ${record?.commandLine || ''}`;
+  return /wechatdevtools|wxfilewatcher_x64|微信web开发者工具|(?:^|[\\/])cli\.js(?:["'\s]|$)/i.test(text);
+}
+
+function processCommandLineStartsOnDrive(record, drive) {
+  const commandLine = normalizeCommandLine(record?.commandLine || '');
+  return commandLine.includes(`${String(drive).toLowerCase()}:\\`);
+}
+
+async function captureProtocolTraceProcessSnapshot({ ports = [] } = {}) {
+  const records = await listWindowsProcesses();
+  const toolRecords = records.filter(processLooksLikeWeChatTool);
+  const dProcesses = toolRecords.filter((record) => processCommandLineStartsOnDrive(record, 'D'));
+  const cProcesses = toolRecords.filter((record) => processCommandLineStartsOnDrive(record, 'C'));
+  const exactAutomationResidual = records.filter((record) => {
+    const commandLine = record.commandLine || '';
+    const ownedProject = commandLineHasProject(commandLine, PROBE_ROOT) || commandLineHasProject(commandLine, QA_ROOT);
+    return ownedProject && (/(?:^|[\\/])cli\.js(?:["'\s]|$)/i.test(commandLine) || isAutoCommandLine(commandLine));
+  });
+  const portStates = {};
+  for (const port of [...new Set(ports.filter((candidate) => Number.isInteger(candidate)))]) {
+    portStates[String(port)] = await probeTcpPort(port);
+  }
+  return {
+    schemaVersion: 1,
+    capturedAt: isoNow(),
+    cToolProcessCount: cProcesses.length,
+    dToolProcessCount: dProcesses.length,
+    cProcesses,
+    dProcesses,
+    exactAutomationResidualCount: exactAutomationResidual.length,
+    exactAutomationResidual,
+    probeDirectoryExists: await exists(PROBE_ROOT),
+    portStates,
+  };
+}
+
+function matchingQaProcesses(records, projectPath, port = null) {
+  return records.filter((record) => {
+    if (!commandLineHasProject(record.commandLine, projectPath)) return false;
+    const watcher = /(?:^|[\\/])wxfilewatcher_x64\.exe(?:["\s]|$)/i.test(record.name || record.commandLine);
+    return watcher || (isAutoCommandLine(record.commandLine) && commandLineHasPort(record.commandLine, port));
+  });
+}
+
+async function findQaProcesses(projectPath, port = null) {
+  return matchingQaProcesses(await listWindowsProcesses(), projectPath, port);
+}
+
+async function probeTcpPort(port, timeoutMs = 500) {
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) return false;
+  return new Promise((resolve) => {
+    const socket = net.createConnection({ host: '127.0.0.1', port });
+    let settled = false;
+    const finish = (open) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(open);
+    };
+    socket.once('connect', () => finish(true));
+    socket.once('error', () => finish(false));
+    socket.setTimeout(timeoutMs, () => finish(false));
+  });
+}
+
+async function terminateExactQaProcesses(processes, events = []) {
+  const pids = [...new Set(processes.map((record) => record.processId).filter((pid) => Number.isInteger(pid) && pid > 0))];
+  const results = [];
+  if (process.platform !== 'win32') return results;
+  for (const pid of pids) {
+    let result;
+    try {
+      result = await runCapturedProcess('taskkill.exe', ['/PID', String(pid), '/T', '/F'], `terminate exact QA process tree ${pid}`);
+    } catch (error) {
+      result = { type: 'error', error: serializeError(error) };
+    }
+    const record = { pid, result };
+    results.push(record);
+    events.push({ at: isoNow(), kind: 'qa-process-termination', error: false, pid, result });
+  }
+  return results;
+}
+
+async function verifyQaCleanup({ projectPath = QA_ROOT, port = null, ports: requestedPorts = [], timeoutMs = SESSION_CLEANUP_TIMEOUT_MS } = {}) {
+  const ports = new Set([
+    ...(Array.isArray(requestedPorts) ? requestedPorts : []),
+    ...(Number.isInteger(port) ? [port] : []),
+  ].filter((candidate) => Number.isInteger(candidate) && candidate >= 1 && candidate <= 65_535));
+  const startedAt = isoNow();
+  let residualProcesses = [];
+  let portOpen = false;
+  let lastQueryError = null;
+  const deadline = Date.now() + timeoutMs;
+  do {
+    try {
+      residualProcesses = await findQaProcesses(projectPath, port);
+      for (const record of residualProcesses) {
+        for (const candidate of commandLinePorts(record.commandLine)) ports.add(candidate);
+      }
+      const portStates = await Promise.all([...ports].map(async (candidate) => [candidate, await probeTcpPort(candidate)]));
+      portOpen = portStates.some(([, open]) => open);
+      lastQueryError = null;
+      if (residualProcesses.length === 0 && !portOpen) {
+        return {
+          confirmed: true,
+          projectPath,
+          port: port ?? null,
+          residualProcesses,
+          ports: [...ports],
+          portOpen: false,
+          startedAt,
+          finishedAt: isoNow(),
+        };
+      }
+    } catch (error) {
+      lastQueryError = error;
+    }
+    if (Date.now() >= deadline) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  } while (Date.now() < deadline);
+  return {
+    confirmed: false,
+    projectPath,
+    port: port ?? null,
+    residualProcesses,
+    ports: [...ports],
+    portOpen,
+    error: lastQueryError ? serializeError(lastQueryError) : null,
+    startedAt,
+    finishedAt: isoNow(),
+  };
+}
+
+async function terminateAndVerifyQaCleanup({ projectPath = QA_ROOT, port = null, ports = [], events = [], timeoutMs = QA_CLEANUP_VERIFY_TIMEOUT_MS } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  let residual = [];
+  let termination = [];
+  let verification = null;
+  const knownPorts = new Set([
+    ...(Array.isArray(ports) ? ports : []),
+    ...(Number.isInteger(port) ? [port] : []),
+  ]);
+  while (Date.now() < deadline) {
+    residual = await findQaProcesses(projectPath, port);
+    for (const record of residual) {
+      for (const candidate of commandLinePorts(record.commandLine)) knownPorts.add(candidate);
+    }
+    if (residual.length) termination.push(...await terminateExactQaProcesses(residual, events));
+    const remainingMs = Math.max(1, Math.min(500, deadline - Date.now()));
+    verification = await verifyQaCleanup({ projectPath, port, ports: [...knownPorts], timeoutMs: remainingMs });
+    if (verification.confirmed) return { residual: [], termination, verification };
+    if (Date.now() >= deadline) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  return { residual: verification?.residualProcesses || residual, termination, verification: verification || { confirmed: false, projectPath, port, residualProcesses: residual, portOpen: false } };
+}
+
+async function clearStaleAutomationProject(projectPath, cliPath = null, events = []) {
+  let before = [];
+  try {
+    before = await findQaProcesses(projectPath);
+  } catch (error) {
+    throw new Error(`无法检查待清理的 QA 进程树 ${projectPath}: ${error.message}`, { cause: error });
+  }
+  let closeError = null;
+  if (before.length && cliPath) {
+    try {
+      await runCliCommand(cliPath, ['close', '--project', projectPath], `close stale QA project ${projectPath}`, SESSION_CLEANUP_TIMEOUT_MS);
+    } catch (error) {
+      closeError = error;
+      events.push({ at: isoNow(), kind: 'qa-project-close-error', error: true, message: error.message, stack: error.stack, projectPath });
+    }
+  }
+  const cleanup = await terminateAndVerifyQaCleanup({
+    projectPath,
+    ports: before.flatMap((record) => commandLinePorts(record.commandLine)),
+    events,
+  });
+  const result = { projectPath, before, termination: cleanup.termination, verification: cleanup.verification, closeError: closeError ? serializeError(closeError) : null };
+  if (closeError || !cleanup.verification.confirmed) {
+    throw new Error(`清理 QA 自动化进程未确认：${json(result)}`);
+  }
+  return result;
 }
 
 async function prepareIsolatedProject(cliPath) {
+  await clearStaleAutomationProject(QA_ROOT, cliPath);
+  await clearStaleAutomationProject(DIAGNOSTIC_ROOT, cliPath);
+  await fs.rm(DIAGNOSTIC_ROOT, { recursive: true, force: true });
   try {
     await fs.rm(QA_ROOT, { recursive: true, force: true });
   } catch (error) {
@@ -371,10 +725,163 @@ async function prepareIsolatedProject(cliPath) {
   return { projectPath: QA_ROOT, configPath };
 }
 
+async function prepareMinimalProbeProject(cliPath) {
+  await clearStaleAutomationProject(PROBE_ROOT, cliPath);
+  await fs.rm(PROBE_ROOT, { recursive: true, force: true });
+  await fs.mkdir(path.join(PROBE_ROOT, 'pages', 'index'), { recursive: true });
+  const files = new Map([
+    ['project.config.json', {
+      description: 'minimal screenshot diagnostic probe',
+      packOptions: { ignore: [], include: [] },
+      setting: {
+        compileType: 'miniprogram',
+        es6: true,
+        enhance: true,
+        postcss: true,
+        minified: false,
+        urlCheck: false,
+        compileHotReLoad: false,
+        minifyWXML: true,
+        minifyWXSS: true,
+      },
+      appid: QA_APP_ID,
+      compileType: 'miniprogram',
+      miniprogramRoot: './',
+      projectname: 'yongdu-screenshot-probe',
+      condition: {},
+    }],
+    ['app.json', { pages: ['pages/index/index'], window: { navigationBarTitleText: 'Screenshot probe' } }],
+    ['app.js', 'App({});'],
+    ['sitemap.json', { desc: 'minimal screenshot diagnostic probe', rules: [] }],
+    [path.join('pages', 'index', 'index.json'), {}],
+    [path.join('pages', 'index', 'index.js'), 'Page({});'],
+    [path.join('pages', 'index', 'index.wxml'), '<view></view>'],
+    [path.join('pages', 'index', 'index.wxss'), ''],
+  ]);
+  for (const [relative, content] of files) {
+    const target = path.join(PROBE_ROOT, relative);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await writeText(target, typeof content === 'string' ? content : JSON.stringify(content, null, 2));
+  }
+  const verified = JSON.parse(await fs.readFile(path.join(PROBE_ROOT, 'project.config.json'), 'utf8'));
+  assert.equal(verified.appid, QA_APP_ID, '最小探针必须使用 touristappid');
+  assert.equal(verified.miniprogramRoot, './', '最小探针不得引用当前项目 miniprogram 目录');
+  return { projectPath: PROBE_ROOT, appid: QA_APP_ID, pagePath: '/pages/index/index' };
+}
+
 function pngInfo(bytes) {
   assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', '截图必须是 PNG');
   assert.equal(bytes.readUInt32BE(12), 0x49484452, 'PNG 必须包含 IHDR');
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+}
+
+function diagnosticRequire(condition, message) {
+  if (!condition) throw new Error(`screenshot diagnostic result missing ${message}`);
+}
+
+function diagnosticTimestamp(value) {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function validateScreenshotDiagnosticResult(result) {
+  diagnosticRequire(result && typeof result === 'object', 'result object');
+  diagnosticRequire(result.schemaVersion === 1, 'schemaVersion');
+  diagnosticRequire(diagnosticTimestamp(result.startedAt), 'run start');
+  diagnosticRequire(diagnosticTimestamp(result.finishedAt), 'run finish');
+  diagnosticRequire(result.project?.kind === 'minimal', 'minimal project kind');
+  diagnosticRequire(result.project?.appid === QA_APP_ID, 'touristappid project');
+  diagnosticRequire(Array.isArray(result.nodeRuns) && result.nodeRuns.length > 0, 'node runs');
+
+  for (const [runIndex, run] of result.nodeRuns.entries()) {
+    diagnosticRequire(run?.node?.label, `node label for run ${runIndex + 1}`);
+    diagnosticRequire(run?.node?.version, `node version for run ${runIndex + 1}`);
+    diagnosticRequire(Array.isArray(run.sessions) && run.sessions.length >= 1 && run.sessions.length <= 2, `sessions for run ${runIndex + 1}`);
+    for (const [sessionIndex, session] of run.sessions.entries()) {
+      const label = `run ${runIndex + 1} session ${sessionIndex + 1}`;
+      diagnosticRequire(session.stage, `${label} stage`);
+      diagnosticRequire(Number.isInteger(session.port) && session.port >= 1 && session.port <= 65_535, `${label} port`);
+      diagnosticRequire(Array.isArray(session.stages), `${label} stage records`);
+      for (const requiredStage of DIAGNOSTIC_STAGE_NAMES) {
+        const stage = session.stages.find((candidate) => candidate?.name === requiredStage);
+        diagnosticRequire(stage, `${label} ${requiredStage} stage`);
+        diagnosticRequire(diagnosticTimestamp(stage.startedAt), `${label} ${requiredStage} start`);
+        diagnosticRequire(diagnosticTimestamp(stage.finishedAt), `${label} ${requiredStage} finish`);
+        diagnosticRequire(typeof stage.ok === 'boolean', `${label} ${requiredStage} result`);
+      }
+      diagnosticRequire(session.request && typeof session.request === 'object', `${label} request`);
+      diagnosticRequire(diagnosticTimestamp(session.request.startedAt), `${label} request start`);
+      diagnosticRequire(diagnosticTimestamp(session.request.finishedAt), `${label} request finish`);
+      diagnosticRequire(typeof session.request.ok === 'boolean', `${label} request result`);
+      diagnosticRequire(session.request.png && typeof session.request.png === 'object', `${label} PNG result`);
+      if (session.request.ok) {
+        diagnosticRequire(session.request.png.ok === true, `${label} successful PNG result`);
+        diagnosticRequire(typeof session.request.png.path === 'string' && session.request.png.path.length > 0, `${label} PNG path`);
+        diagnosticRequire(Number(session.request.png.width) > 0 && Number(session.request.png.height) > 0, `${label} PNG dimensions`);
+        diagnosticRequire(Number(session.request.png.byteLength) > 0, `${label} PNG byte length`);
+        diagnosticRequire(typeof session.request.png.sha256 === 'string' && session.request.png.sha256.length === 64, `${label} PNG hash`);
+      } else {
+        diagnosticRequire(session.request.png.ok === false, `${label} failed PNG result`);
+        diagnosticRequire(session.request.error && typeof session.request.error === 'object', `${label} screenshot error`);
+      }
+      diagnosticRequire(session.cleanup && typeof session.cleanup === 'object', `${label} cleanup`);
+      diagnosticRequire(typeof session.cleanup.confirmed === 'boolean', `${label} cleanup confirmed result`);
+      diagnosticRequire(typeof session.cleanup.cliCloseCompleted === 'boolean', `${label} CLI close result`);
+      diagnosticRequire(Array.isArray(session.cleanup.residualProcesses), `${label} cleanup residual process result`);
+      diagnosticRequire(typeof session.cleanup.portOpen === 'boolean', `${label} cleanup port result`);
+      diagnosticRequire(session.cleanup.verification && typeof session.cleanup.verification === 'object', `${label} cleanup verification`);
+      diagnosticRequire(typeof session.cleanup.verification.confirmed === 'boolean', `${label} cleanup verification confirmed result`);
+      diagnosticRequire(Array.isArray(session.cleanup.verification.residualProcesses), `${label} cleanup verification processes`);
+      diagnosticRequire(typeof session.cleanup.verification.portOpen === 'boolean', `${label} cleanup verification port`);
+    }
+  }
+  return true;
+}
+
+function minimalProbeSessionSucceeded(session) {
+  return Boolean(
+    session?.request?.ok === true
+    && session.request.png?.ok === true
+    && Number(session.request.png.width) > 0
+    && Number(session.request.png.height) > 0
+    && Number(session.request.png.byteLength) > 0
+    && session.cleanup?.confirmed === true
+    && session.cleanup?.cliCloseCompleted === true
+    && Array.isArray(session.cleanup?.residualProcesses)
+    && session.cleanup.residualProcesses.length === 0
+    && session.cleanup.portOpen === false
+    && session.cleanup.verification?.confirmed === true
+    && Array.isArray(session.cleanup.verification.residualProcesses)
+    && session.cleanup.verification.residualProcesses.length === 0
+    && session.cleanup.verification.portOpen === false
+  );
+}
+
+function decideScreenshotDiagnostic(matrix) {
+  const nodeRuns = Array.isArray(matrix?.nodeRuns) ? matrix.nodeRuns : [];
+  const stableRun = nodeRuns.find((run) => Array.isArray(run.sessions)
+    && run.sessions.length === 2
+    && run.sessions.every(minimalProbeSessionSucceeded));
+  const counts = nodeRuns.map((run) => ({
+    node: run?.node?.label || null,
+    sessions: Array.isArray(run.sessions) ? run.sessions.length : 0,
+    successful: Array.isArray(run.sessions) ? run.sessions.filter(minimalProbeSessionSucceeded).length : 0,
+  }));
+  if (stableRun) {
+    return {
+      continueCurrentProject: true,
+      canDeclareApplicationIssue: false,
+      selectedNode: stableRun.node.label,
+      conclusion: 'minimal-probe-stable',
+      counts,
+    };
+  }
+  return {
+    continueCurrentProject: false,
+    canDeclareApplicationIssue: false,
+    selectedNode: null,
+    conclusion: 'minimal-probe-not-stable',
+    counts,
+  };
 }
 
 function yuanFromCents(cents) {
@@ -397,6 +904,59 @@ function roundTrip(state) {
   assert.equal(restored.ok, true, 'fixture serializeBackup→restoreBackup 必须成功');
   assert.deepEqual(restored.data, state, 'fixture restoreBackup 必须逐字段等于原状态');
   return { raw, rawSha256: sha256Bytes(Buffer.from(raw, 'utf8')) };
+}
+
+function makeLedgerFixtureState(nowDate) {
+  const oldestDate = addDays(nowDate, -2);
+  const middleDate = addDays(nowDate, -1);
+  let state = fixtureBase({ nowDate, startDay: 1 });
+  state = addAssetAccount(state, {
+    id: 'qa-bank',
+    name: '隔离测试储蓄卡',
+    type: 'bank',
+    balanceYuan: '0',
+  });
+  state = recordEntry(state, {
+    amountYuan: '25.00',
+    date: oldestDate,
+    accountId: 'qa-cash',
+    categoryLevel1: '餐饮',
+    categoryLevel2: '晚餐',
+    note: '账本三日 fixture 最早支出',
+    includeControlledBudget: true,
+  });
+  const originalExpense = state.transactions[state.transactions.length - 1];
+  state = recordIncomeEntry(state, {
+    amountYuan: '200.00',
+    date: middleDate,
+    accountId: 'qa-cash',
+    categoryLevel2: '工资',
+    source: 'visual-ledger-fixture',
+  });
+  state = recordTransferEntry(state, {
+    amountYuan: '10.00',
+    date: middleDate,
+    fromAccountId: 'qa-cash',
+    toAccountId: 'qa-bank',
+    source: 'visual-ledger-fixture',
+  });
+  state = recordEntry(state, {
+    amountYuan: '50.00',
+    date: nowDate,
+    accountId: 'qa-cash',
+    categoryLevel1: '购物',
+    categoryLevel2: '日用品',
+    note: '账本三日 fixture 今日支出',
+    includeControlledBudget: true,
+  });
+  state = recordRefund(state, {
+    id: 'qa-ledger-refund',
+    date: middleDate,
+    originalTransactionId: originalExpense.id,
+    amountCents: 500,
+    source: 'visual-ledger-fixture',
+  });
+  return state;
 }
 
 function makeFixture(name, nowDate) {
@@ -435,11 +995,14 @@ function makeFixture(name, nowDate) {
       note: '隔离跨预算周期上一期账单', includeControlledBudget: true,
     });
     state = settleCurrentPeriod(state, nowDate, { positiveMode: 'carry', overspendMode: 'carry' });
+  } else if (name === 'ledger-overview' || name === 'ledger-expanded') {
+    state = makeLedgerFixtureState(nowDate);
   } else {
     throw new Error(`未知 fixture：${name}`);
   }
   const model = getHomeModel(state, nowDate);
   const bills = listRecentBills(state);
+  const transactions = listRecentTransactions(state);
   const { raw, rawSha256 } = roundTrip(state);
   const expected = {
     periodId: model.periodId,
@@ -450,6 +1013,8 @@ function makeFixture(name, nowDate) {
     fullSingleDayQuotaCents: model.fullSingleDayQuotaCents,
     netBudgetSpendCents: model.netBudgetSpendCents,
     billCount: bills.length,
+    ledgerTransactionCount: transactions.length,
+    ledgerDateCount: new Set(transactions.map((item) => item.date)).size,
   };
   if (name === 'prepaid-recovery') {
     assert.equal(expected.todayFreeCents, 0, '预支 fixture 今日可花必须为0');
@@ -463,7 +1028,22 @@ function makeFixture(name, nowDate) {
     assert.equal(state.budgetPeriods[1].status, 'open', '跨周期 fixture 的当前周期必须开放');
     assert.equal(expected.billCount, 1, '跨周期 fixture 必须保留上一周期账单');
   }
-  return { name, route: HOME_ROUTE, state, raw, rawSha256, expected };
+  if (name === 'ledger-overview' || name === 'ledger-expanded') {
+    assert.equal(expected.ledgerDateCount, 3, '账本 fixture 必须覆盖至少三天');
+    assert(transactions.some((item) => item.kind === 'controlled_expense'), '账本 fixture 必须包含支出');
+    assert(transactions.some((item) => item.kind === 'income'), '账本 fixture 必须包含收入');
+    assert(transactions.some((item) => item.kind === 'refund'), '账本 fixture 必须包含退款');
+    assert(transactions.some((item) => item.kind === 'transfer'), '账本 fixture 必须包含转账');
+  }
+  return {
+    name,
+    route: HOME_ROUTE,
+    captureMode: name === 'ledger-expanded' ? 'expanded' : 'overview',
+    state,
+    raw,
+    rawSha256,
+    expected,
+  };
 }
 
 function invalidFixture(kind, nowDate) {
@@ -630,6 +1210,166 @@ function cliOutputSnapshot(cliOutput) {
   };
 }
 
+function parseProtocolDebugLine(line) {
+  const raw = String(line ?? '');
+  const sendMarker = raw.match(/(?:^|\s)SEND\s*(?:►|->)/u);
+  const recvMarker = raw.match(/(?:◀\s*RECV|\bRECV\s*(?:◀|<-))/u);
+  let direction = null;
+  let markerIndex = -1;
+  if (sendMarker) {
+    direction = 'SEND';
+    markerIndex = sendMarker.index ?? -1;
+  } else if (recvMarker) {
+    direction = 'RECV';
+    markerIndex = recvMarker.index ?? -1;
+  }
+  if (!direction) return null;
+  const payloadStart = raw.indexOf('{', markerIndex);
+  if (payloadStart < 0) {
+    return {
+      direction,
+      raw,
+      payload: null,
+      parseError: { name: 'ProtocolPayloadMissing', message: 'protocol debug line has no JSON payload' },
+    };
+  }
+  const payloadText = raw.slice(payloadStart).trim();
+  try {
+    return { direction, raw, payload: JSON.parse(payloadText), parseError: null };
+  } catch (error) {
+    return {
+      direction,
+      raw,
+      payload: null,
+      parseError: { name: error.name || 'SyntaxError', message: error.message || String(error) },
+    };
+  }
+}
+
+function parseProtocolDebugOutput(output) {
+  const messages = [];
+  const parseErrors = [];
+  for (const line of String(output ?? '').split(/\r?\n/)) {
+    const parsed = parseProtocolDebugLine(line);
+    if (!parsed) continue;
+    messages.push(parsed);
+    if (parsed.parseError) parseErrors.push({ direction: parsed.direction, raw: parsed.raw, error: parsed.parseError });
+  }
+  return { messages, parseErrors };
+}
+
+function associateScreenshotProtocol(messages) {
+  const records = Array.isArray(messages) ? messages : [];
+  const screenshotSends = records.filter((record) => record?.direction === 'SEND' && record.payload?.method === 'App.captureScreenshot');
+  const screenshotSend = screenshotSends[0] || null;
+  const uuid = screenshotSend?.payload?.id || null;
+  const screenshotReplies = uuid == null
+    ? []
+    : records.filter((record) => record?.direction === 'RECV' && record.payload?.id === uuid);
+  return {
+    uuid,
+    screenshotSend,
+    screenshotReply: screenshotReplies[0] || null,
+    screenshotSendCount: screenshotSends.length,
+    screenshotReplyCount: screenshotReplies.length,
+    parseErrors: records.filter((record) => record?.parseError).map((record) => ({ direction: record.direction, raw: record.raw, error: record.parseError })),
+  };
+}
+
+function protocolStringLooksLikeBase64(value) {
+  const compact = value.replace(/[\r\n\t ]/g, '');
+  return compact.length >= 128 && /^[A-Za-z0-9+/]*={0,2}$/.test(compact) && compact.length % 4 === 0;
+}
+
+function protocolStringMustBeRedacted(key, value) {
+  const normalizedKey = String(key || '').toLowerCase();
+  const sensitiveKey = normalizedKey === 'body'
+    || normalizedKey.includes('base64')
+    || normalizedKey === 'data'
+    || normalizedKey.endsWith('bytes');
+  return (sensitiveKey && value.length >= 32) || protocolStringLooksLikeBase64(value);
+}
+
+function redactProtocolPayload(value, key = '') {
+  if (typeof value === 'string') {
+    if (!protocolStringMustBeRedacted(key, value)) return value;
+    return {
+      redacted: true,
+      originalType: 'string',
+      length: value.length,
+      sha256: sha256Bytes(Buffer.from(value, 'utf8')),
+    };
+  }
+  if (Array.isArray(value)) return value.map((nested) => redactProtocolPayload(nested, key));
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).map(([nestedKey, nestedValue]) => [
+    nestedKey,
+    redactProtocolPayload(nestedValue, nestedKey),
+  ]));
+}
+
+function redactProtocolDebugRaw(raw, payload) {
+  const text = String(raw ?? '');
+  const payloadStart = text.indexOf('{');
+  if (payloadStart < 0 || !payload || typeof payload !== 'object') return text;
+  return `${text.slice(0, payloadStart)}${JSON.stringify(redactProtocolPayload(payload))}`;
+}
+
+function sanitizeProtocolRecord(record) {
+  if (!record) return null;
+  return {
+    direction: record.direction || null,
+    raw: redactProtocolDebugRaw(record.raw, record.payload),
+    payload: record.payload == null ? null : redactProtocolPayload(record.payload),
+    parseError: record.parseError || null,
+  };
+}
+
+function classifyScreenshotProtocolTrace({
+  screenshotSend,
+  screenshotReply,
+  screenshotPostprocessOk = false,
+  cleanupConfirmed = false,
+  traceInconclusive = false,
+} = {}) {
+  if (traceInconclusive || !cleanupConfirmed) return 'trace-inconclusive';
+  if (!screenshotSend) return 'send-not-observed';
+  if (!screenshotReply) return 'sent-no-matching-reply';
+  if (screenshotReply.payload?.error) return 'explicit-protocol-error';
+  if (!screenshotPostprocessOk) return 'reply-success-postprocess-failure';
+  return 'screenshot-success';
+}
+
+function validateProtocolTraceResult(result) {
+  diagnosticRequire(result && typeof result === 'object', 'result object');
+  diagnosticRequire(!Object.hasOwn(result, 'ok'), 'top-level ok is forbidden');
+  diagnosticRequire(result.schemaVersion === 1, 'schemaVersion');
+  diagnosticRequire(result.stage === 'trace-screenshot-protocol', 'stage');
+  diagnosticRequire(diagnosticTimestamp(result.startedAt), 'run start');
+  diagnosticRequire(diagnosticTimestamp(result.finishedAt), 'run finish');
+  diagnosticRequire(typeof result.diagnosticCompleted === 'boolean', 'diagnosticCompleted');
+  diagnosticRequire(typeof result.screenshotSucceeded === 'boolean', 'screenshotSucceeded');
+  diagnosticRequire(PROTOCOL_TRACE_CLASSIFICATIONS.includes(result.classification), 'classification');
+  diagnosticRequire(result.project?.kind === 'minimal', 'minimal project kind');
+  diagnosticRequire(result.project?.appid === QA_APP_ID, 'touristappid project');
+  diagnosticRequire(result.project?.pagePath === '/pages/index/index', 'probe page path');
+  diagnosticRequire(result.screenshotRequestCount === 1, 'exactly one screenshot request');
+  diagnosticRequire(result.protocol && typeof result.protocol === 'object', 'protocol trace');
+  diagnosticRequire(result.cleanup && typeof result.cleanup === 'object', 'cleanup');
+  diagnosticRequire(typeof result.cleanup.confirmed === 'boolean', 'cleanup confirmed');
+  diagnosticRequire(typeof result.cleanup.probeRemoved === 'boolean', 'probe removal');
+  diagnosticRequire(result.cleanup.verification && typeof result.cleanup.verification === 'object', 'cleanup verification');
+  diagnosticRequire(typeof result.cleanup.verification.confirmed === 'boolean', 'cleanup verification confirmed');
+  diagnosticRequire(Array.isArray(result.cleanup.verification.residualProcesses), 'cleanup residual processes');
+  diagnosticRequire(typeof result.cleanup.verification.portOpen === 'boolean', 'cleanup port state');
+  if (result.screenshotSucceeded) {
+    diagnosticRequire(result.classification === 'screenshot-success', 'successful screenshot classification');
+    diagnosticRequire(result.protocol.screenshotSend?.payload?.id, 'screenshot SEND UUID');
+    diagnosticRequire(result.protocol.screenshotReply?.payload?.id === result.protocol.screenshotSend.payload.id, 'matching screenshot RECV UUID');
+  }
+  return true;
+}
+
 function observeCliExit(cliProcess, cliOutput) {
   return new Promise((resolve) => {
     let settled = false;
@@ -653,9 +1393,9 @@ function isSuccessfulCliDispatch(exitInfo) {
     && /\bauto\b/.test(`${exitInfo.stdout}\n${exitInfo.stderr}`);
 }
 
-async function launchQa(cliPath, events, { deadline = null } = {}) {
-  const port = await freeTcpPort();
-  const cliArguments = buildCliArguments({ projectPath: QA_ROOT, port });
+async function launchQa(cliPath, events, { deadline = null, projectPath = QA_ROOT, usedPorts = [] } = {}) {
+  const port = await freeTcpPort(usedPorts);
+  const cliArguments = buildCliArguments({ projectPath, port });
   const command = buildCliCommand(cliPath, cliArguments);
   const cliProcess = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', command], {
     cwd: ROOT,
@@ -710,7 +1450,7 @@ async function launchQa(cliPath, events, { deadline = null } = {}) {
     throw connectionError;
   }
   attachEventCapture(miniProgram, events);
-  return { miniProgram, cliProcess, port, cliArguments, cliExit: cliExitInfo, cliExitPromise: cliExit, cliOutput, events };
+  return { miniProgram, cliProcess, port, projectPath, cliArguments, cliExit: cliExitInfo, cliExitPromise: cliExit, cliOutput, events };
 }
 
 async function clearQaStorage(runtime, { retryableTimeouts = false, deadline = null } = {}) {
@@ -766,6 +1506,154 @@ async function switchToHomeTab(miniProgram, { retryableTimeouts = false, deadlin
   );
 }
 
+function normalizedScrollTop(value, label) {
+  const scalar = Array.isArray(value) ? value[0] : value;
+  const numeric = Number(scalar);
+  assert(Number.isFinite(numeric), `${label} 必须能读回为数字`);
+  return numeric;
+}
+
+async function evidenceStep(operation, label, timeoutMs = 15_000) {
+  try {
+    return await withTimeout(operation, label, timeoutMs);
+  } catch (error) {
+    if (/TIMEOUT/.test(error?.message || '')) {
+      error.retryable = true;
+      error.retryStage = label;
+    }
+    throw error;
+  }
+}
+
+async function readViewportScrollTop(miniProgram) {
+  if (!miniProgram || typeof miniProgram.evaluate !== 'function') return null;
+  const property = '__visualEvidenceViewportScrollTop';
+  await evidenceStep(
+    () => miniProgram.evaluate((key) => {
+      const app = getApp();
+      app[key] = null;
+      wx.createSelectorQuery()
+        .selectViewport()
+        .scrollOffset((offset) => {
+          app[key] = Number(offset?.scrollTop) || 0;
+        })
+        .exec();
+      return true;
+    }, property),
+    'request viewport scrollTop()',
+  );
+
+  const deadline = Date.now() + 15_000;
+  let value = null;
+  while (Date.now() < deadline) {
+    value = await evidenceStep(
+      () => miniProgram.evaluate((key) => getApp()[key], property),
+      'read viewport scrollTop()',
+      2_000,
+    );
+    if (value !== null && value !== undefined) break;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  await miniProgram.evaluate((key) => { delete getApp()[key]; }, property).catch(() => {});
+  if (value === null || value === undefined) throw new Error('viewport scrollTop() 未返回读回值');
+  return normalizedScrollTop(value, 'viewport scrollTop');
+}
+
+async function evaluateCurrentPageInstance(miniProgram, operation, selector = 'scroll-view') {
+  if (!miniProgram || typeof miniProgram.evaluate !== 'function') throw new Error('页面实例取证需要 miniProgram.evaluate');
+  const property = `__visualEvidencePageInstance_${crypto.randomUUID().replaceAll('-', '')}`;
+  await evidenceStep(
+    () => miniProgram.evaluate((key, action, selectorName) => {
+      const app = getApp();
+      app[key] = null;
+      const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [];
+      const page = pages[pages.length - 1];
+      if (!page) {
+        app[key] = { ok: false, error: '当前页面实例不存在' };
+        return false;
+      }
+      const describe = (error) => ({ name: error?.name || 'Error', message: String(error?.message || error), stack: error?.stack || null });
+      const readState = () => ({
+        path: page.route || page.__route__ || null,
+        ledgerMode: page.data?.ledgerMode ?? null,
+        stateLedgerScrollTop: Number(page.data?.ledgerScrollTop),
+      });
+      const finish = (state) => {
+        app[key] = {
+          ok: true,
+          path: state.path,
+          ledgerMode: state.ledgerMode,
+          ledgerScrollTop: state.stateLedgerScrollTop,
+          stateLedgerScrollTop: state.stateLedgerScrollTop,
+          selectorScrollTop: null,
+        };
+      };
+      try {
+        if (action === 'read') {
+          finish(readState());
+          return true;
+        }
+        if (action === 'expand') {
+          if (typeof page.enterLedger !== 'function') throw new Error('当前页面实例没有 enterLedger');
+          page.enterLedger();
+        }
+        if (typeof page.setData !== 'function') throw new Error('当前页面实例没有 setData');
+        page.setData({ ledgerScrollTop: 0 }, () => finish(readState()));
+      } catch (error) {
+        app[key] = { ok: false, error: describe(error) };
+      }
+      return true;
+    }, property, operation, selector),
+    `evaluate page instance ${operation}`,
+  );
+
+  let result = null;
+  try {
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+      result = await evidenceStep(
+        () => miniProgram.evaluate((key) => getApp()[key], property),
+        `read page instance ${operation}`,
+        2_000,
+      );
+      if (result !== null && result !== undefined) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  } finally {
+    await miniProgram.evaluate((key) => { delete getApp()[key]; }, property).catch(() => {});
+  }
+  if (!result) throw new Error(`页面实例 ${operation} 未返回读回值`);
+  if (!result.ok) throw new Error(`页面实例 ${operation} 失败：${json(result.error)}`);
+  assert(Number.isFinite(Number(result.ledgerScrollTop)), '账本 scrollTop 必须能读回为数字');
+  return result;
+}
+
+async function resetPageScrollForEvidence(miniProgram, selector = 'scroll-view', { resetLedger = true } = {}) {
+  if (!miniProgram || typeof miniProgram.pageScrollTo !== 'function') throw new Error('取证滚动归零需要 miniProgram.pageScrollTo');
+  await evidenceStep(() => miniProgram.pageScrollTo(0), 'pageScrollTo(0)');
+  const pageState = await evaluateCurrentPageInstance(miniProgram, resetLedger ? 'reset' : 'read', selector);
+  const pageScrollTop = normalizedScrollTop(await readViewportScrollTop(miniProgram), '页面 viewport scrollTop');
+  assert.equal(pageScrollTop, 0, '页面滚动归零后必须读回0');
+  const ledgerScrollTop = normalizedScrollTop(pageState.ledgerScrollTop, '账本 scrollTop');
+  if (resetLedger) assert.equal(ledgerScrollTop, 0, '账本滚动归零后必须读回0');
+  return {
+    path: pageState.path,
+    ledgerMode: pageState.ledgerMode,
+    pageScrollTop,
+    viewportScrollTop: pageScrollTop,
+    ledgerScrollTop,
+  };
+}
+
+async function enterExpandedLedgerForEvidence(miniProgram, selector = 'scroll-view') {
+  const pageState = await evaluateCurrentPageInstance(miniProgram, 'expand', selector);
+  const mode = pageState.ledgerMode;
+  assert.equal(mode, 'expanded', '账本全屏 fixture 必须由真实页面实例进入展开态');
+  const ledgerScrollTop = normalizedScrollTop(pageState.ledgerScrollTop, '展开态账本 scrollTop');
+  assert.equal(ledgerScrollTop, 0, '展开态首次进入必须位于列表顶部');
+  return { path: pageState.path, mode, ledgerScrollTop };
+}
+
 async function writeAndReadFixture(runtime, fixture, { retryableTimeouts = false, deadline = null } = {}) {
   await clearQaStorage(runtime, { retryableTimeouts, deadline });
   await withSessionTimeout(
@@ -800,12 +1688,30 @@ async function waitForCliExit(runtime) {
   return runtime?.cliExit || null;
 }
 
-async function abortQaSession(runtime, cliPath, events = runtime?.events || []) {
+async function cleanupQaRuntime(runtime, cliPath, {
+  mode = 'close',
+  projectPath = QA_ROOT,
+  events = runtime?.events || [],
+  closeProject = (stableCliPath, timeoutMs) => closeQaProject(stableCliPath, timeoutMs, projectPath),
+} = {}) {
   const cleanupErrors = [];
   let cliExit = runtime?.cliExit || null;
-  if (runtime) runtime.unusable = true;
+  if (runtime && mode === 'abort') runtime.unusable = true;
+  const port = runtime?.port ?? null;
+  let before = [];
+  try {
+    before = await findQaProcesses(projectPath, port);
+  } catch (error) {
+    cleanupErrors.push({ stage: 'inspect-before-cleanup', error });
+  }
 
-  if (typeof runtime?.miniProgram?.disconnect === 'function') {
+  if (mode === 'close') {
+    try {
+      await closeMiniProgram(runtime, events, SESSION_CLEANUP_TIMEOUT_MS);
+    } catch (error) {
+      cleanupErrors.push({ stage: 'close', error });
+    }
+  } else if (typeof runtime?.miniProgram?.disconnect === 'function') {
     try {
       runtime.miniProgram.disconnect();
       events.push({ at: isoNow(), kind: 'disconnect', error: false, reason: 'abort-session' });
@@ -822,74 +1728,79 @@ async function abortQaSession(runtime, cliPath, events = runtime?.events || []) 
     events.push({ at: isoNow(), kind: 'cli-termination-error', error: true, message: error.message, stack: error.stack });
   }
 
-  if (runtime?.cliExitPromise) {
-    try {
-      cliExit = await waitForCliExit(runtime);
-    } catch (error) {
-      cleanupErrors.push({ stage: 'wait-cli-exit', error });
-      events.push({ at: isoNow(), kind: 'cli-exit-timeout', error: true, message: error.message, stack: error.stack });
-    }
+  try {
+    cliExit = await waitForCliExit(runtime);
+  } catch (error) {
+    cleanupErrors.push({ stage: 'wait-cli-exit', error });
+    events.push({ at: isoNow(), kind: 'cli-exit-timeout', error: true, message: error.message, stack: error.stack });
   }
 
   if (!cliPath) {
-    cleanupErrors.push({ stage: 'close-qa-project', error: new Error('Stable CLI path unavailable while aborting QA session') });
+    cleanupErrors.push({ stage: 'close-qa-project', error: new Error(`Stable CLI path unavailable while ${mode === 'abort' ? 'aborting' : 'closing'} QA session`) });
   } else {
     try {
-      await closeQaProject(cliPath, SESSION_CLEANUP_TIMEOUT_MS);
-      events.push({ at: isoNow(), kind: 'qa-project-closed', error: false, port: runtime?.port ?? null });
+      await closeProject(cliPath, SESSION_CLEANUP_TIMEOUT_MS);
+      events.push({ at: isoNow(), kind: 'qa-project-closed', error: false, port });
     } catch (error) {
       cleanupErrors.push({ stage: 'close-qa-project', error });
       events.push({ at: isoNow(), kind: 'qa-project-close-error', error: true, message: error.message, stack: error.stack });
     }
   }
 
-  const failure = combineLifecycleErrors('QA session abort', cleanupErrors);
+  let residual = [];
+  let termination = [];
+  let verification;
+  try {
+    const cleanup = await terminateAndVerifyQaCleanup({ projectPath, port, events });
+    residual = cleanup.residual;
+    termination = cleanup.termination;
+    verification = cleanup.verification;
+  } catch (error) {
+    cleanupErrors.push({ stage: 'terminate-exact-qa-process-tree', error });
+  }
+  if (!verification) {
+    try {
+      verification = await verifyQaCleanup({ projectPath, port, timeoutMs: SESSION_CLEANUP_TIMEOUT_MS });
+    } catch (error) {
+      cleanupErrors.push({ stage: 'verify-qa-cleanup', error });
+      verification = { confirmed: false, projectPath, port, residualProcesses: residual, portOpen: true, error: serializeError(error) };
+    }
+  }
   const result = {
-    confirmed: !failure,
-    port: runtime?.port ?? null,
+    confirmed: cleanupErrors.length === 0 && verification.confirmed === true,
+    port,
     cliExit,
     errors: cleanupErrors.map(({ stage, error }) => ({ stage, error: serializeError(error) })),
+    processVerification: { before, residual, termination, verification },
   };
-  if (failure) {
-    failure.cleanup = result;
-    throw failure;
-  }
+  events.push({
+    at: isoNow(),
+    kind: 'qa-cleanup-verification',
+    error: !result.confirmed,
+    confirmed: result.confirmed,
+    projectPath,
+    port,
+    beforeProcessCount: before.length,
+    residualProcessCount: verification.residualProcesses?.length ?? residual.length,
+    portOpen: verification.portOpen ?? null,
+    verification,
+  });
   return result;
 }
 
-async function closeQaSession(runtime, cliPath, events = runtime?.events || []) {
-  const cleanupErrors = [];
-  let cliExit = runtime?.cliExit || null;
-  try {
-    await closeMiniProgram(runtime, events, SESSION_CLEANUP_TIMEOUT_MS);
-  } catch (error) {
-    cleanupErrors.push({ stage: 'close', error });
-  }
-  try {
-    cliExit = await waitForCliExit(runtime);
-  } catch (error) {
-    cleanupErrors.push({ stage: 'wait-cli-exit', error });
-  }
-  if (!cliPath) {
-    cleanupErrors.push({ stage: 'close-qa-project', error: new Error('Stable CLI path unavailable while closing QA session') });
-  } else {
-    try {
-      await closeQaProject(cliPath, SESSION_CLEANUP_TIMEOUT_MS);
-      events.push({ at: isoNow(), kind: 'qa-project-closed', error: false, port: runtime?.port ?? null });
-    } catch (error) {
-      cleanupErrors.push({ stage: 'close-qa-project', error });
-    }
-  }
-  const failure = combineLifecycleErrors('QA session close', cleanupErrors);
-  if (failure) throw failure;
-  return { confirmed: true, port: runtime?.port ?? null, cliExit, errors: [] };
+async function abortQaSession(runtime, cliPath, events = runtime?.events || [], options = {}) {
+  return cleanupQaRuntime(runtime, cliPath, { ...options, mode: 'abort', events });
 }
 
-async function createQaSession(cliPath, { deadline = null } = {}) {
+async function closeQaSession(runtime, cliPath, events = runtime?.events || [], options = {}) {
+  return cleanupQaRuntime(runtime, cliPath, { ...options, mode: 'close', events });
+}
+
+async function createQaSession(cliPath, { deadline = null, projectPath = QA_ROOT } = {}) {
   const events = [];
   let runtime = null;
   try {
-    runtime = await launchQa(cliPath, events, { deadline });
+    runtime = await launchQa(cliPath, events, { deadline, projectPath });
     runtime.events = events;
     runtime.runtimeErrorCapture = await installRuntimeErrorCapture(runtime, { retryableTimeouts: true, deadline });
     runtime.systemInfo = await readSystemInfo(runtime, { retryableTimeouts: true, deadline });
@@ -928,6 +1839,846 @@ async function createQaSession(cliPath, { deadline = null } = {}) {
   }
 }
 
+function diagnosticStageRecords(startedAt) {
+  return DIAGNOSTIC_STAGE_NAMES.map((name) => ({
+    name,
+    attempted: false,
+    startedAt,
+    finishedAt: startedAt,
+    ok: false,
+    error: { name: 'NotReached', message: `${name} stage not reached`, stack: null },
+  }));
+}
+
+async function runDiagnosticStage(stages, name, operation, { timeoutMs = AUTOMATOR_TIMEOUT_MS, summarize = (value) => value } = {}) {
+  const stage = stages.find((candidate) => candidate.name === name);
+  assert(stage, `diagnostic stage ${name} must be declared`);
+  stage.attempted = true;
+  stage.startedAt = isoNow();
+  stage.finishedAt = null;
+  stage.error = null;
+  try {
+    const value = await withTimeout(operation, `diagnostic ${name}`, timeoutMs);
+    stage.ok = true;
+    stage.result = summarize(value);
+    return value;
+  } catch (error) {
+    stage.ok = false;
+    stage.error = serializeError(error);
+    throw error;
+  } finally {
+    stage.finishedAt = isoNow();
+  }
+}
+
+function diagnosticCleanupRecord(cleanupResult, events) {
+  const verification = cleanupResult?.processVerification?.verification || {
+    confirmed: false,
+    residualProcesses: [],
+    portOpen: true,
+  };
+  const closeEvent = (events || []).find((event) => event.kind === 'qa-project-closed' && event.error === false);
+  return {
+    confirmed: cleanupResult?.confirmed === true,
+    cliCloseCompleted: Boolean(closeEvent),
+    residualProcesses: verification.residualProcesses || [],
+    portOpen: verification.portOpen ?? true,
+    verification: {
+      confirmed: verification.confirmed === true,
+      projectPath: verification.projectPath || PROBE_ROOT,
+      port: verification.port ?? null,
+      ports: verification.ports || [],
+      residualProcesses: verification.residualProcesses || [],
+      portOpen: verification.portOpen ?? true,
+      startedAt: verification.startedAt || null,
+      finishedAt: verification.finishedAt || null,
+    },
+    errors: cleanupResult?.errors || [],
+  };
+}
+
+async function runMinimalProbeSession({
+  cliPath,
+  nodeLabel,
+  sessionNumber,
+  outputRoot = EVIDENCE_ROOT,
+  outputPrefix = SCREENSHOT_DIAGNOSTIC_PREFIX,
+  usedPorts = [],
+}) {
+  const sessionStartedAt = isoNow();
+  const stages = diagnosticStageRecords(sessionStartedAt);
+  const events = [];
+  const outputPath = path.join(outputRoot, `${outputPrefix}${nodeLabel}-${sessionNumber}.png`);
+  let runtime = null;
+  let primaryError = null;
+  let port = null;
+  const request = {
+    startedAt: sessionStartedAt,
+    finishedAt: sessionStartedAt,
+    reached: false,
+    ok: false,
+    error: { name: 'NotReached', message: 'screenshot stage not reached', stack: null },
+    png: { ok: false, path: null, width: 0, height: 0, byteLength: 0, sha256: null },
+  };
+  let cleanup = {
+    confirmed: false,
+    cliCloseCompleted: false,
+    residualProcesses: [],
+    portOpen: false,
+    verification: { confirmed: false, projectPath: PROBE_ROOT, port: null, ports: [], residualProcesses: [], portOpen: false },
+    errors: [],
+  };
+
+  try {
+    runtime = await runDiagnosticStage(
+      stages,
+      'connect',
+      () => launchQa(cliPath, events, { projectPath: PROBE_ROOT, usedPorts }),
+      { summarize: (value) => ({ projectPath: value.projectPath, port: value.port, cliArguments: value.cliArguments }) },
+    );
+    port = runtime.port;
+    if (Number.isInteger(port) && !usedPorts.includes(port)) usedPorts.push(port);
+
+    const currentPage = await runDiagnosticStage(
+      stages,
+      'currentPage',
+      () => runtime.miniProgram.currentPage(),
+      { summarize: (value) => ({ id: value?.id ?? null, path: value?.path ?? null }) },
+    );
+    assert(currentPage, 'minimal probe currentPage must return a page');
+
+    const constant = await runDiagnosticStage(
+      stages,
+      'evaluate',
+      () => runtime.miniProgram.evaluate(() => 7),
+      { summarize: (value) => ({ value }) },
+    );
+    assert.equal(constant, 7, 'minimal probe evaluate constant must round-trip');
+
+    request.startedAt = isoNow();
+    request.reached = true;
+    try {
+      const screenshot = await runDiagnosticStage(
+        stages,
+        'screenshot',
+        async () => {
+          await fs.rm(outputPath, { force: true });
+          await runtime.miniProgram.screenshot({ path: outputPath });
+          const bytes = await fs.readFile(outputPath);
+          const dimensions = pngInfo(bytes);
+          assert(bytes.length > 0, 'minimal probe screenshot must not be empty');
+          return { ...dimensions, byteLength: bytes.length, sha256: sha256Bytes(bytes) };
+        },
+        { timeoutMs: SCREENSHOT_TIMEOUT_MS },
+      );
+      request.ok = true;
+      request.error = null;
+      request.png = { ok: true, path: relativePath(outputPath), ...screenshot };
+    } catch (error) {
+      request.error = serializeError(error);
+      request.png = { ok: false, path: null, width: 0, height: 0, byteLength: 0, sha256: null };
+      throw error;
+    } finally {
+      request.finishedAt = isoNow();
+    }
+  } catch (error) {
+    primaryError = error;
+    port = port ?? error?.port ?? null;
+  }
+
+  const partialRuntime = runtime || {
+    miniProgram: null,
+    cliProcess: primaryError?.cliProcess || null,
+    cliExitPromise: primaryError?.cliExitPromise || null,
+    cliExit: primaryError?.cliExit || null,
+    port,
+    projectPath: PROBE_ROOT,
+    cliArguments: primaryError?.cliArguments || null,
+    cliOutput: primaryError?.cliOutput || null,
+    events,
+  };
+  const cleanupStage = stages.find((stage) => stage.name === 'cleanup');
+  cleanupStage.attempted = true;
+  cleanupStage.startedAt = isoNow();
+  cleanupStage.finishedAt = null;
+  cleanupStage.error = null;
+  try {
+    const cleanupResult = primaryError
+      ? await abortQaSession(partialRuntime, cliPath, events, { projectPath: PROBE_ROOT })
+      : await closeQaSession(partialRuntime, cliPath, events, { projectPath: PROBE_ROOT });
+    cleanup = diagnosticCleanupRecord(cleanupResult, events);
+    cleanupStage.ok = cleanup.confirmed;
+    cleanupStage.result = {
+      confirmed: cleanup.confirmed,
+      cliCloseCompleted: cleanup.cliCloseCompleted,
+      residualProcessCount: cleanup.residualProcesses.length,
+      portOpen: cleanup.portOpen,
+    };
+  } catch (error) {
+    cleanupStage.ok = false;
+    cleanupStage.error = serializeError(error);
+    cleanup = {
+      ...cleanup,
+      errors: [{ stage: 'cleanup', error: serializeError(error) }],
+      verification: { ...cleanup.verification, port: port, portOpen: true },
+      portOpen: true,
+    };
+  } finally {
+    cleanupStage.finishedAt = isoNow();
+  }
+
+  const finishedAt = isoNow();
+  return {
+    session: sessionNumber,
+    stage: 'minimal-screenshot',
+    node: nodeLabel,
+    port,
+    startedAt: sessionStartedAt,
+    finishedAt,
+    ok: !primaryError && request.ok && cleanup.confirmed,
+    error: primaryError ? serializeError(primaryError) : null,
+    stages,
+    request,
+    cleanup,
+    events,
+    cliOutput: runtime?.cliOutput ? cliOutputSnapshot(runtime.cliOutput) : primaryError?.cliOutput ? cliOutputSnapshot(primaryError.cliOutput) : null,
+  };
+}
+
+async function runMinimalProbeSessions({ cliPath, nodeLabel, nodeExecutable }) {
+  const startedAt = isoNow();
+  const sessions = [];
+  for (let sessionNumber = 1; sessionNumber <= 2; sessionNumber += 1) {
+    sessions.push(await runMinimalProbeSession({ cliPath, nodeLabel, sessionNumber }));
+  }
+  return {
+    node: { label: nodeLabel, executable: nodeExecutable, version: process.version },
+    project: { kind: 'minimal', path: relativePath(PROBE_ROOT), appid: QA_APP_ID, pagePath: '/pages/index/index' },
+    startedAt,
+    finishedAt: isoNow(),
+    sessions,
+  };
+}
+
+function stableSingleInstanceCleanupConfirmed(session) {
+  const cleanup = session?.cleanup;
+  const verification = cleanup?.verification;
+  return Boolean(
+    cleanup?.confirmed === true
+    && verification?.confirmed === true
+    && Array.isArray(cleanup.residualProcesses)
+    && cleanup.residualProcesses.length === 0
+    && cleanup.portOpen === false
+    && Array.isArray(verification.residualProcesses)
+    && verification.residualProcesses.length === 0
+    && verification.portOpen === false
+  );
+}
+
+function canStartNextStableSingleInstanceSession(previousSession) {
+  return stableSingleInstanceCleanupConfirmed(previousSession);
+}
+
+function stableSingleInstanceSessionSucceeded(session) {
+  return session?.ok === true && stableSingleInstanceCleanupConfirmed(session);
+}
+
+function decideStableSingleInstance(sessions) {
+  const records = Array.isArray(sessions) ? sessions : [];
+  const successCount = records.filter(stableSingleInstanceSessionSucceeded).length;
+  const ports = records.map((session) => session?.port).filter((port) => Number.isInteger(port));
+  const distinctPorts = ports.length === records.length && new Set(ports).size === ports.length;
+  let decision = 'infrastructure-stop';
+  let classification = 'infrastructure-failure';
+
+  if (records.length === 2 && distinctPorts) {
+    if (successCount === 2) {
+      decision = 'stable-single-instance-2-of-2';
+      classification = 'important-candidate-variable';
+    } else if (successCount === 0) {
+      decision = 'stable-single-instance-0-of-2';
+      classification = 'd-coexistence-not-necessary';
+    } else {
+      decision = 'stable-single-instance-1-of-2';
+      classification = 'intermittent';
+    }
+  }
+
+  return {
+    sessionCount: records.length,
+    successCount,
+    ports,
+    distinctPorts,
+    decision,
+    classification,
+    continueCurrentProject: false,
+    canDeclareApplicationIssue: false,
+  };
+}
+
+async function runStableSingleInstanceSessions({ cliPath = C_STABLE_CLI_PATH, nodeExecutable = C_STABLE_NODE_PATH } = {}) {
+  const startedAt = isoNow();
+  const sessions = [];
+  const usedPorts = [];
+  for (let sessionNumber = 1; sessionNumber <= 2; sessionNumber += 1) {
+    const session = await runMinimalProbeSession({
+      cliPath,
+      nodeLabel: 'stable-single-instance',
+      sessionNumber,
+      outputRoot: SINGLE_INSTANCE_ROOT,
+      outputPrefix: 'stable-single-instance-',
+      usedPorts,
+    });
+    sessions.push(session);
+    if (sessionNumber < 2 && !canStartNextStableSingleInstanceSession(session)) break;
+  }
+  return {
+    schemaVersion: 1,
+    stage: 'stable-single-instance',
+    node: { label: 'stable-internal', executable: nodeExecutable, version: process.version },
+    project: { kind: 'minimal', path: relativePath(PROBE_ROOT), appid: QA_APP_ID, pagePath: '/pages/index/index' },
+    startedAt,
+    finishedAt: isoNow(),
+    sessions,
+    decision: decideStableSingleInstance(sessions),
+  };
+}
+
+async function runStableSingleInstanceWorker() {
+  // This worker intentionally assumes the parent already prepared .visual-probe;
+  // it never prepares or deletes the probe directory.
+  return runStableSingleInstanceSessions({ cliPath: C_STABLE_CLI_PATH, nodeExecutable: C_STABLE_NODE_PATH });
+}
+
+async function runStableSingleInstanceDiagnostic() {
+  const outputPaths = stableSingleInstanceOutputPaths();
+  const startedAt = isoNow();
+  const events = [];
+  await removePaths([
+    outputPaths.resultPath,
+    outputPaths.logPath,
+    outputPaths.pngPath(1),
+    outputPaths.pngPath(2),
+  ]);
+
+  let preparation = { attempted: false, projectPath: relativePath(PROBE_ROOT), appid: QA_APP_ID, verified: false };
+  let workerProcess = null;
+  let workerResult = { sessions: [], decision: decideStableSingleInstance([]) };
+  let primaryError = null;
+  let totalCleanup = {
+    attempted: false,
+    confirmed: false,
+    probeRemoved: false,
+    verification: null,
+    error: null,
+  };
+
+  try {
+    if (!(await exists(C_STABLE_CLI_PATH))) throw new Error(`C盘 Stable CLI 不存在：${C_STABLE_CLI_PATH}`);
+    if (!(await exists(C_STABLE_NODE_PATH))) throw new Error(`C盘 Stable 内置 Node 不存在：${C_STABLE_NODE_PATH}`);
+    preparation = { ...preparation, attempted: true };
+    const prepared = await prepareMinimalProbeProject(C_STABLE_CLI_PATH);
+    preparation = { ...preparation, projectPath: relativePath(prepared.projectPath), verified: true };
+
+    workerProcess = await runCapturedProcess(
+      C_STABLE_NODE_PATH,
+      [fileURLToPath(import.meta.url), '--stable-single-instance-worker'],
+      'C盘 Stable 内置 Node 严格两场探针',
+      180_000,
+    );
+    if (workerProcess.type !== 'exit' || workerProcess.code !== 0) throw formatCliExit(workerProcess, null);
+    const stdout = workerProcess.stdout.trim();
+    if (!stdout) throw new Error('严格两场 worker 未返回结果');
+    workerResult = JSON.parse(stdout);
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    const knownPorts = workerResult.sessions.map((session) => session.port).filter(Number.isInteger);
+    if (await exists(PROBE_ROOT)) {
+      totalCleanup.attempted = true;
+      try {
+        const cleared = await clearStaleAutomationProject(PROBE_ROOT, C_STABLE_CLI_PATH, events);
+        const verification = cleared.verification;
+        if (verification?.confirmed === true) await fs.rm(PROBE_ROOT, { recursive: true, force: true });
+        totalCleanup = {
+          attempted: true,
+          confirmed: verification?.confirmed === true,
+          probeRemoved: !(await exists(PROBE_ROOT)),
+          verification,
+          before: cleared.before,
+          termination: cleared.termination,
+          error: cleared.closeError,
+        };
+      } catch (error) {
+        let verification = null;
+        try {
+          verification = await verifyQaCleanup({ projectPath: PROBE_ROOT, ports: knownPorts, timeoutMs: SESSION_CLEANUP_TIMEOUT_MS });
+        } catch (verificationError) {
+          totalCleanup.error = { cleanup: serializeError(error), verification: serializeError(verificationError) };
+        }
+        totalCleanup = {
+          attempted: true,
+          confirmed: verification?.confirmed === true,
+          probeRemoved: !(await exists(PROBE_ROOT)),
+          verification,
+          error: totalCleanup.error || serializeError(error),
+        };
+      }
+    } else {
+      totalCleanup = { attempted: false, confirmed: true, probeRemoved: true, verification: null, error: null };
+    }
+  }
+
+  const finishedAt = isoNow();
+  const decision = workerResult.decision || decideStableSingleInstance(workerResult.sessions || []);
+  if (!primaryError && decision.decision === 'infrastructure-stop') {
+    primaryError = new Error(`严格两场实验因基础设施条件停止：${json(decision)}`);
+  }
+  if (!primaryError && (!totalCleanup.confirmed || !totalCleanup.probeRemoved)) {
+    primaryError = new Error(`严格两场实验总清理未确认：${json(totalCleanup)}`);
+  }
+
+  const result = {
+    schemaVersion: 1,
+    stage: 'stable-single-instance-diagnostic',
+    command: 'npm run evidence:visual -- --stable-single-instance-diagnostic',
+    startedAt,
+    finishedAt,
+    fixedRuntime: { cliPath: C_STABLE_CLI_PATH, nodeExecutable: C_STABLE_NODE_PATH },
+    project: { kind: 'minimal', path: relativePath(PROBE_ROOT), appid: QA_APP_ID, pagePath: '/pages/index/index' },
+    preparation,
+    workerProcess: workerProcess ? {
+      type: workerProcess.type,
+      code: workerProcess.code ?? null,
+      signal: workerProcess.signal ?? null,
+      stdout: workerProcess.stdout,
+      stderr: workerProcess.stderr,
+    } : null,
+    sessions: workerResult.sessions || [],
+    decision,
+    totalCleanup,
+    ok: !primaryError && totalCleanup.confirmed === true && totalCleanup.probeRemoved === true,
+    error: primaryError ? serializeError(primaryError) : null,
+  };
+  const log = {
+    schemaVersion: 1,
+    startedAt,
+    finishedAt,
+    events,
+    result,
+  };
+  await writeAtomicText(outputPaths.resultPath, json(result));
+  await writeAtomicText(outputPaths.logPath, json(log));
+  if (primaryError) throw primaryError;
+  return result;
+}
+
+const PROTOCOL_TRACE_STAGE_NAMES = ['connect', 'currentPage', 'evaluate', 'systemInfo', 'screenshot', 'cleanup'];
+
+function protocolTraceStageRecords(startedAt) {
+  return PROTOCOL_TRACE_STAGE_NAMES.map((name) => ({
+    name,
+    attempted: false,
+    startedAt,
+    finishedAt: startedAt,
+    ok: false,
+    error: { name: 'NotReached', message: `${name} stage not reached`, stack: null },
+  }));
+}
+
+async function runProtocolTraceStage(stages, name, operation, { timeoutMs = AUTOMATOR_TIMEOUT_MS, summarize = (value) => value } = {}) {
+  const stage = stages.find((candidate) => candidate.name === name);
+  assert(stage, `protocol trace stage ${name} must be declared`);
+  stage.attempted = true;
+  stage.startedAt = isoNow();
+  stage.finishedAt = null;
+  stage.error = null;
+  try {
+    const value = await withTimeout(operation, `protocol trace ${name}`, timeoutMs);
+    stage.ok = true;
+    stage.result = summarize(value);
+    return value;
+  } catch (error) {
+    stage.ok = false;
+    stage.error = serializeError(error);
+    throw error;
+  } finally {
+    stage.finishedAt = isoNow();
+  }
+}
+
+function rawOutputSummary(snapshot) {
+  if (!snapshot) return null;
+  return {
+    stdoutLength: Buffer.byteLength(snapshot.stdout || '', 'utf8'),
+    stderrLength: Buffer.byteLength(snapshot.stderr || '', 'utf8'),
+    stdoutSha256: sha256Bytes(Buffer.from(snapshot.stdout || '', 'utf8')),
+    stderrSha256: sha256Bytes(Buffer.from(snapshot.stderr || '', 'utf8')),
+  };
+}
+
+async function runProtocolTraceSession({ cliPath = C_STABLE_CLI_PATH } = {}) {
+  const startedAt = isoNow();
+  const stages = protocolTraceStageRecords(startedAt);
+  const events = [];
+  const outputPath = protocolTraceOutputPaths().screenshotPath;
+  let runtime = null;
+  let primaryError = null;
+  let port = null;
+  let screenshotRequestCount = 0;
+  let screenshotPostprocessOk = false;
+  let screenshot = {
+    ok: false,
+    path: null,
+    width: 0,
+    height: 0,
+    byteLength: 0,
+    sha256: null,
+    error: { name: 'NotReached', message: 'screenshot stage not reached', stack: null },
+  };
+
+  try {
+    runtime = await runProtocolTraceStage(
+      stages,
+      'connect',
+      () => launchQa(cliPath, events, { projectPath: PROBE_ROOT }),
+      { summarize: (value) => ({ projectPath: value.projectPath, port: value.port, cliArguments: value.cliArguments }) },
+    );
+    port = runtime.port;
+
+    const currentPage = await runProtocolTraceStage(
+      stages,
+      'currentPage',
+      () => runtime.miniProgram.currentPage(),
+      { summarize: (value) => ({ id: value?.id ?? null, path: value?.path ?? null }) },
+    );
+    assert(currentPage, 'minimal probe currentPage must return a page');
+
+    const constant = await runProtocolTraceStage(
+      stages,
+      'evaluate',
+      () => runtime.miniProgram.evaluate(() => 7),
+      { summarize: (value) => ({ value }) },
+    );
+    assert.equal(constant, 7, 'minimal probe evaluate constant must round-trip');
+
+    await runProtocolTraceStage(
+      stages,
+      'systemInfo',
+      () => readSystemInfo(runtime),
+      { summarize: (value) => ({ keys: value && typeof value === 'object' ? Object.keys(value) : [] }) },
+    );
+
+    screenshotRequestCount = 1;
+    try {
+      const captured = await runProtocolTraceStage(
+        stages,
+        'screenshot',
+        async () => {
+          await fs.rm(outputPath, { force: true });
+          await runtime.miniProgram.screenshot({ path: outputPath });
+          const bytes = await fs.readFile(outputPath);
+          const dimensions = pngInfo(bytes);
+          assert(bytes.length > 0, 'protocol trace screenshot must not be empty');
+          return { ...dimensions, byteLength: bytes.length, sha256: sha256Bytes(bytes) };
+        },
+        { timeoutMs: SCREENSHOT_TIMEOUT_MS },
+      );
+      screenshotPostprocessOk = true;
+      screenshot = { ok: true, path: relativePath(outputPath), ...captured, error: null };
+    } catch (error) {
+      screenshot = { ...screenshot, error: serializeError(error) };
+      throw error;
+    }
+  } catch (error) {
+    primaryError = error;
+    port = port ?? error?.port ?? null;
+  }
+
+  const partialRuntime = runtime || {
+    miniProgram: null,
+    cliProcess: primaryError?.cliProcess || null,
+    cliExitPromise: primaryError?.cliExitPromise || null,
+    cliExit: primaryError?.cliExit || null,
+    port,
+    projectPath: PROBE_ROOT,
+    cliArguments: primaryError?.cliArguments || null,
+    cliOutput: primaryError?.cliOutput || null,
+    events,
+  };
+  const cleanupStage = stages.find((stage) => stage.name === 'cleanup');
+  cleanupStage.attempted = true;
+  cleanupStage.startedAt = isoNow();
+  cleanupStage.finishedAt = null;
+  cleanupStage.error = null;
+  let cleanup = {
+    confirmed: false,
+    cliCloseCompleted: false,
+    residualProcesses: [],
+    portOpen: false,
+    verification: { confirmed: false, projectPath: PROBE_ROOT, port, ports: [], residualProcesses: [], portOpen: false },
+    errors: [],
+  };
+  try {
+    const cleanupResult = primaryError
+      ? await abortQaSession(partialRuntime, cliPath, events, { projectPath: PROBE_ROOT })
+      : await closeQaSession(partialRuntime, cliPath, events, { projectPath: PROBE_ROOT });
+    cleanup = diagnosticCleanupRecord(cleanupResult, events);
+    cleanupStage.ok = cleanup.confirmed;
+    cleanupStage.result = {
+      confirmed: cleanup.confirmed,
+      cliCloseCompleted: cleanup.cliCloseCompleted,
+      residualProcessCount: cleanup.residualProcesses.length,
+      portOpen: cleanup.portOpen,
+    };
+  } catch (error) {
+    cleanupStage.ok = false;
+    cleanupStage.error = serializeError(error);
+    cleanup = {
+      ...cleanup,
+      errors: [{ stage: 'cleanup', error: serializeError(error) }],
+      verification: { ...cleanup.verification, port, portOpen: true },
+      portOpen: true,
+    };
+  } finally {
+    cleanupStage.finishedAt = isoNow();
+  }
+
+  const cliOutputRaw = partialRuntime.cliOutput ? cliOutputSnapshot(partialRuntime.cliOutput) : null;
+  return {
+    schemaVersion: 1,
+    stage: 'trace-screenshot-protocol-session',
+    startedAt,
+    finishedAt: isoNow(),
+    node: { executable: process.execPath, version: process.version },
+    port,
+    stages,
+    screenshotRequestCount,
+    screenshotPostprocessOk,
+    screenshot,
+    cleanup,
+    protocol: { messages: [], parseErrors: [], screenshotSend: null, screenshotReply: null, uuid: null },
+    error: primaryError ? serializeError(primaryError) : null,
+    cliOutput: rawOutputSummary(cliOutputRaw),
+    cliOutputRaw,
+  };
+}
+
+async function runTraceScreenshotProtocolWorker() {
+  // The parent prepares .visual-probe exactly once; the worker never prepares or deletes it.
+  return runProtocolTraceSession({ cliPath: C_STABLE_CLI_PATH });
+}
+
+function parseProtocolTraceWorkerOutput(stdout) {
+  const lines = String(stdout || '').trim().split(/\r?\n/).filter(Boolean);
+  const raw = lines.at(-1);
+  if (!raw) throw new Error('协议定位 worker 未返回结构化结果');
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`协议定位 worker 输出不是 JSON：${raw}`, { cause: error });
+  }
+}
+
+function protocolTraceReport(result, processBefore, processAfter) {
+  const protocol = result.protocol || {};
+  const sendObserved = Boolean(protocol.screenshotSend);
+  const replyObserved = Boolean(protocol.screenshotReply);
+  const cleanup = result.cleanup || {};
+  const facts = [
+    `- classification: \`${result.classification}\``,
+    `- diagnosticCompleted: \`${result.diagnosticCompleted}\`; screenshotSucceeded: \`${result.screenshotSucceeded}\``,
+    `- screenshot request count recorded by the worker: \`${result.screenshotRequestCount}\``,
+    `- parsed protocol messages: \`${protocol.messageCount}\`; parse errors: \`${protocol.parseErrors?.length || 0}\``,
+    `- App.captureScreenshot SEND observed: \`${sendObserved}\`; matching RECV observed: \`${replyObserved}\`; UUID: \`${protocol.uuid || 'none'}\``,
+    `- cleanup confirmed: \`${cleanup.confirmed}\`; .visual-probe removed: \`${cleanup.probeRemoved}\`; exact residuals after run: \`${processAfter?.exactAutomationResidualCount ?? 'unknown'}\``,
+    `- C-drive tool processes before/after: \`${processBefore?.cToolProcessCount ?? 'unknown'} / ${processAfter?.cToolProcessCount ?? 'unknown'}\`; D-drive tool processes before/after: \`${processBefore?.dToolProcessCount ?? 'unknown'} / ${processAfter?.dToolProcessCount ?? 'unknown'}\``,
+  ];
+  const inferences = [
+    '- A SEND line is evidence that the client-side automator protocol logger emitted a request; it is not independent proof that DevTools received the request.',
+    replyObserved ? '- The matching UUID RECV line shows a client-observed protocol reply associated with the screenshot request.' : '- No matching UUID RECV line was observed for the screenshot request.',
+    result.screenshotSucceeded ? '- A valid PNG was read after the automator call, so the post-processing check succeeded.' : '- The PNG post-processing check did not establish screenshot success.',
+  ];
+  const unknowns = [
+    '- This trace does not identify a DevTools internal cause or change business/runtime code.',
+    '- It does not prove a GUI-visible screenshot was rendered unless the protocol and PNG checks both succeed.',
+  ];
+  return [
+    '# Screenshot protocol trace',
+    '',
+    '## Facts',
+    ...facts,
+    '',
+    '## Inferences',
+    ...inferences,
+    '',
+    '## Unknowns',
+    ...unknowns,
+    '',
+    '## Boundary',
+    '',
+    '本次只完成 App.captureScreenshot 协议层定位；没有修复、重试或修改业务代码。下一阶段应依据本分类另行决定，不把本次结果扩大解释为应用结论。',
+  ].join('\n');
+}
+
+async function runTraceScreenshotProtocol() {
+  const outputPaths = protocolTraceOutputPaths();
+  await fs.mkdir(PROTOCOL_TRACE_ROOT, { recursive: true });
+  await removePaths([outputPaths.rawProtocolPath, outputPaths.resultPath, outputPaths.processAfterPath, outputPaths.reportPath, outputPaths.screenshotPath]);
+  const startedAt = isoNow();
+  const processBefore = await captureProtocolTraceProcessSnapshot();
+  const events = [];
+  let workerProcess = null;
+  let workerResult = null;
+  let primaryError = null;
+  let totalCleanup = { attempted: false, confirmed: false, probeRemoved: false, verification: null, error: null };
+  let processAfter = null;
+
+  try {
+    if (processBefore.dToolProcessCount > 0) {
+      throw new Error(`D盘 DevTools 进程在协议实验前运行，按规则停止且不终止：${json(processBefore.dProcesses)}`);
+    }
+    if (!(await exists(C_STABLE_CLI_PATH))) throw new Error(`C盘 Stable CLI 不存在：${C_STABLE_CLI_PATH}`);
+    if (!(await exists(C_STABLE_NODE_PATH))) throw new Error(`C盘 Stable 内置 Node 不存在：${C_STABLE_NODE_PATH}`);
+    await prepareMinimalProbeProject(C_STABLE_CLI_PATH);
+    workerProcess = await runCapturedProcess(
+      C_STABLE_NODE_PATH,
+      [fileURLToPath(import.meta.url), '--trace-screenshot-protocol-worker'],
+      'C盘 Stable 内置 Node 单次 screenshot 协议定位',
+      180_000,
+      { env: { ...process.env, DEBUG: 'automator:protocol', DEBUG_COLORS: '0' } },
+    );
+    if (workerProcess.type !== 'exit' || workerProcess.code !== 0) throw formatCliExit(workerProcess, null);
+    workerResult = parseProtocolTraceWorkerOutput(workerProcess.stdout);
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    const knownPorts = workerResult?.port ? [workerResult.port] : [];
+    if (await exists(PROBE_ROOT)) {
+      totalCleanup.attempted = true;
+      try {
+        const cleared = await clearStaleAutomationProject(PROBE_ROOT, C_STABLE_CLI_PATH, events);
+        const verification = cleared.verification;
+        if (verification?.confirmed === true) await fs.rm(PROBE_ROOT, { recursive: true, force: true });
+        totalCleanup = {
+          attempted: true,
+          confirmed: verification?.confirmed === true,
+          probeRemoved: !(await exists(PROBE_ROOT)),
+          verification,
+          before: cleared.before,
+          termination: cleared.termination,
+          error: cleared.closeError,
+        };
+      } catch (error) {
+        totalCleanup = {
+          attempted: true,
+          confirmed: false,
+          probeRemoved: !(await exists(PROBE_ROOT)),
+          verification: null,
+          error: serializeError(error),
+        };
+      }
+    } else {
+      totalCleanup = { attempted: false, confirmed: true, probeRemoved: true, verification: null, error: null };
+    }
+    try {
+      processAfter = await captureProtocolTraceProcessSnapshot({ ports: knownPorts });
+    } catch (error) {
+      processAfter = { schemaVersion: 1, capturedAt: isoNow(), error: serializeError(error), exactAutomationResidualCount: null };
+    }
+  }
+
+  const rawWorkerStdout = workerProcess?.stdout || '';
+  const rawWorkerStderr = workerProcess?.stderr || '';
+  const parsedProtocol = parseProtocolDebugOutput(rawWorkerStderr);
+  const association = associateScreenshotProtocol(parsedProtocol.messages);
+  const traceInconclusive = parsedProtocol.messages.length === 0
+    || parsedProtocol.parseErrors.length > 0
+    || workerResult?.screenshotRequestCount !== 1
+    || processAfter?.exactAutomationResidualCount !== 0;
+  const cleanupConfirmed = totalCleanup.confirmed === true
+    && totalCleanup.probeRemoved === true
+    && processAfter?.exactAutomationResidualCount === 0;
+  const classification = classifyScreenshotProtocolTrace({
+    screenshotSend: association.screenshotSend,
+    screenshotReply: association.screenshotReply,
+    screenshotPostprocessOk: workerResult?.screenshotPostprocessOk === true,
+    cleanupConfirmed,
+    traceInconclusive,
+  });
+  const screenshotSucceeded = classification === 'screenshot-success';
+  const diagnosticCompleted = Boolean(
+    workerResult
+    && cleanupConfirmed
+    && classification !== 'trace-inconclusive'
+    && Array.isArray(workerResult.stages)
+    && workerResult.stages.some((stage) => stage.name === 'cleanup' && stage.ok === true),
+  );
+  const result = {
+    schemaVersion: 1,
+    stage: 'trace-screenshot-protocol',
+    command: 'npm run evidence:visual -- --trace-screenshot-protocol',
+    startedAt,
+    finishedAt: isoNow(),
+    fixedRuntime: { cliPath: C_STABLE_CLI_PATH, nodeExecutable: C_STABLE_NODE_PATH },
+    project: { kind: 'minimal', path: relativePath(PROBE_ROOT), appid: QA_APP_ID, pagePath: '/pages/index/index', copiedBusinessCode: false },
+    screenshotRequestCount: workerResult?.screenshotRequestCount || 0,
+    diagnosticCompleted,
+    screenshotSucceeded,
+    classification,
+    stages: workerResult?.stages || [],
+    screenshot: workerResult?.screenshot || { ok: false, path: null, width: 0, height: 0, byteLength: 0, sha256: null, error: primaryError ? serializeError(primaryError) : null },
+    protocol: {
+      messageCount: parsedProtocol.messages.length,
+      parseErrors: parsedProtocol.parseErrors.map((entry) => ({ direction: entry.direction, error: entry.error })),
+      messages: parsedProtocol.messages.map(sanitizeProtocolRecord),
+      uuid: association.uuid,
+      screenshotSendCount: association.screenshotSendCount,
+      screenshotReplyCount: association.screenshotReplyCount,
+      screenshotSend: sanitizeProtocolRecord(association.screenshotSend),
+      screenshotReply: sanitizeProtocolRecord(association.screenshotReply),
+    },
+    cleanup: totalCleanup,
+    workerProcess: workerProcess ? {
+      type: workerProcess.type,
+      code: workerProcess.code ?? null,
+      signal: workerProcess.signal ?? null,
+      stdoutLength: Buffer.byteLength(rawWorkerStdout, 'utf8'),
+      stderrLength: Buffer.byteLength(rawWorkerStderr, 'utf8'),
+      stdoutSha256: sha256Bytes(Buffer.from(rawWorkerStdout, 'utf8')),
+      stderrSha256: sha256Bytes(Buffer.from(rawWorkerStderr, 'utf8')),
+    } : null,
+    error: primaryError ? serializeError(primaryError) : workerResult?.error || null,
+    processBefore,
+    processAfter,
+  };
+  try {
+    validateProtocolTraceResult(result);
+    result.validation = { valid: true };
+  } catch (error) {
+    result.validation = { valid: false, error: serializeError(error) };
+  }
+  const rawCliOutput = workerResult?.cliOutputRaw || { stdout: '', stderr: '' };
+  const rawLog = [
+    '=== worker stdout (raw) ===',
+    rawWorkerStdout,
+    '=== worker stderr (raw; DEBUG=automator:protocol) ===',
+    rawWorkerStderr,
+    '=== worker CLI stdout (raw captured) ===',
+    rawCliOutput.stdout || '',
+    '=== worker CLI stderr (raw captured) ===',
+    rawCliOutput.stderr || '',
+    '=== parsed protocol messages (sanitized view) ===',
+    parsedProtocol.messages.map((message) => json(sanitizeProtocolRecord(message))).join('\n'),
+  ].join('\n');
+  await writeAtomicText(outputPaths.rawProtocolPath, rawLog);
+  await writeAtomicText(outputPaths.resultPath, json(result));
+  await writeAtomicText(outputPaths.processAfterPath, json(processAfter));
+  await writeAtomicText(outputPaths.reportPath, protocolTraceReport(result, processBefore, processAfter));
+  if (primaryError && !workerResult) throw primaryError;
+  return result;
+}
+
 async function captureFixtureOnce(session, fixture, {
   outputPath,
   attempt = 1,
@@ -938,24 +2689,31 @@ async function captureFixtureOnce(session, fixture, {
   const label = fixture.name;
   const startedAt = isoNow();
   const readback = await writeAndReadFixture(session, fixture, { retryableTimeouts: true, deadline });
-  if (route) {
-    await withSessionTimeout(
-      () => session.miniProgram.reLaunch(route),
-      `reLaunch ${label}`,
+  await withSessionTimeout(
+    () => new Promise((resolve) => setTimeout(resolve, 1_500)),
+    `wait stable ${label}`,
+    AUTOMATOR_TIMEOUT_MS,
+    { retryable: true, deadline },
+  );
+  const pageState = await withSessionTimeout(
+    () => evaluateCurrentPageInstance(session.miniProgram, 'read', 'scroll-view'),
+    `current page instance ${label}`,
+    AUTOMATOR_TIMEOUT_MS,
+    { retryable: true, deadline },
+  );
+  if (route) assert.equal(pageState.path, route.slice(1), `${label} 当前路由必须是 ${route}`);
+  let expandedState = null;
+  if (fixture.captureMode === 'expanded') {
+    expandedState = await withSessionTimeout(
+      () => enterExpandedLedgerForEvidence(session.miniProgram),
+      `expand ledger ${label}`,
       AUTOMATOR_TIMEOUT_MS,
       { retryable: true, deadline },
     );
   }
-  const page = await withSessionTimeout(
-    () => session.miniProgram.currentPage(),
-    `currentPage ${label}`,
-    AUTOMATOR_TIMEOUT_MS,
-    { retryable: true, deadline },
-  );
-  if (route) assert.equal(page?.path, route.slice(1), `${label} 当前路由必须是 ${route}`);
-  await withSessionTimeout(
-    () => page.waitFor(1_500),
-    `wait stable ${label}`,
+  const scrollReset = await withSessionTimeout(
+    () => resetPageScrollForEvidence(session.miniProgram, 'scroll-view', { resetLedger: fixture.captureMode === 'expanded' }),
+    `reset scroll ${label}`,
     AUTOMATOR_TIMEOUT_MS,
     { retryable: true, deadline },
   );
@@ -982,6 +2740,9 @@ async function captureFixtureOnce(session, fixture, {
     storageReadbackSha256: readback.readbackSha256,
     fixtureSha256: fixture.rawSha256,
     expected: fixture.expected,
+    captureMode: fixture.captureMode || 'overview',
+    expandedState,
+    scrollReset,
     runtimeErrors,
     runtimeErrorCapture: session.runtimeErrorCapture || null,
     systemInfo: session.systemInfo || null,
@@ -1027,7 +2788,11 @@ async function runFixtureWithFreshSession({
       const capture = await captureOnce(session, fixture, { attempt, deadline, outputPath });
       closeAttempted = true;
       const closeResult = await closeSession(session, { fixture, attempt, deadline });
-      if (closeResult?.confirmed === false) throw new Error(`${fixture.name} session close was not confirmed`);
+      if (closeResult?.confirmed === false) {
+        const cleanupFailure = new Error(`${fixture.name} session close was not confirmed`);
+        cleanupFailure.sessionCleanup = closeResult;
+        throw cleanupFailure;
+      }
       const record = {
         attempt,
         port: session?.port ?? null,
@@ -1125,6 +2890,173 @@ async function cleanCompatibilityOutputs(paths = compatibilityOutputPaths()) {
     `.${path.basename(paths.screenshotPath)}.tmp-`,
     `.${path.basename(paths.rawErrorPath)}.tmp-`,
   ]);
+}
+
+async function cleanScreenshotDiagnosticOutputs(paths = screenshotDiagnosticOutputPaths()) {
+  await fs.mkdir(path.dirname(paths.resultPath), { recursive: true });
+  await removePaths([paths.resultPath, paths.logPath]);
+  const entries = await fs.readdir(path.dirname(paths.resultPath), { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.startsWith(SCREENSHOT_DIAGNOSTIC_PREFIX) && entry.name.endsWith('.png')) {
+      await fs.rm(path.join(path.dirname(paths.resultPath), entry.name), { force: true });
+    }
+  }
+}
+
+function screenshotDiagnosticLogLines(result) {
+  const lines = [{
+    at: result.startedAt,
+    kind: 'diagnostic-run',
+    project: result.project,
+    decision: result.decision,
+  }];
+  for (const run of result.nodeRuns || []) {
+    lines.push({ at: run.startedAt, kind: 'node-run', node: run.node });
+    for (const session of run.sessions || []) {
+      lines.push({
+        at: session.startedAt,
+        kind: 'session',
+        node: run.node.label,
+        session: session.session,
+        port: session.port,
+        ok: session.ok,
+        error: session.error,
+      });
+      for (const stage of session.stages || []) {
+        lines.push({
+          at: stage.startedAt,
+          kind: 'stage',
+          node: run.node.label,
+          session: session.session,
+          stage: stage.name,
+          startedAt: stage.startedAt,
+          finishedAt: stage.finishedAt,
+          attempted: stage.attempted,
+          ok: stage.ok,
+          result: stage.result || null,
+          error: stage.error || null,
+        });
+      }
+      for (const event of session.events || []) lines.push({ kind: 'runtime-event', node: run.node.label, session: session.session, event });
+    }
+  }
+  lines.push({ kind: 'probe-project-cleanup', cleanup: result.probeProjectCleanup || null });
+  if (result.errors?.length) lines.push({ kind: 'diagnostic-errors', errors: result.errors });
+  return lines.map((line) => json(line)).join('\n');
+}
+
+function parseDiagnosticWorkerOutput(stdout, nodeLabel) {
+  const lines = String(stdout || '').trim().split(/\r?\n/).filter(Boolean);
+  const raw = lines.at(-1);
+  if (!raw) throw new Error(`Stable Node ${nodeLabel} 探针没有结构化输出`);
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`Stable Node ${nodeLabel} 探针输出不是 JSON：${raw}`, { cause: error });
+  }
+}
+
+async function runScreenshotDiagnosticWorker(nodeLabel = 'stable') {
+  const cliPath = await findStableCli();
+  return runMinimalProbeSessions({ cliPath, nodeLabel, nodeExecutable: process.execPath });
+}
+
+async function runScreenshotDiagnostic() {
+  const outputPaths = screenshotDiagnosticOutputPaths();
+  await cleanScreenshotDiagnosticOutputs(outputPaths);
+  const startedAt = isoNow();
+  const nodeRuns = [];
+  const errors = [];
+  let cliPath = null;
+  let projectPrepared = false;
+  let result;
+  try {
+    cliPath = await findStableCli();
+    await prepareMinimalProbeProject(cliPath);
+    projectPrepared = true;
+    nodeRuns.push(await runMinimalProbeSessions({
+      cliPath,
+      nodeLabel: 'system',
+      nodeExecutable: process.execPath,
+    }));
+
+    let decision = decideScreenshotDiagnostic({ nodeRuns });
+    if (!decision.continueCurrentProject) {
+      const stableNode = await findStableNode();
+      await prepareMinimalProbeProject(cliPath);
+      const child = await runCapturedProcess(
+        stableNode,
+        [fileURLToPath(import.meta.url), '--screenshot-diagnostic-worker', 'stable'],
+        'stable Node minimal screenshot probe',
+        180_000,
+      );
+      if (child.type !== 'exit' || child.code !== 0) {
+        throw formatCliExit(child, 0);
+      }
+      nodeRuns.push(parseDiagnosticWorkerOutput(child.stdout, 'stable'));
+      decision = decideScreenshotDiagnostic({ nodeRuns });
+    }
+    result = {
+      schemaVersion: 1,
+      startedAt,
+      finishedAt: null,
+      project: {
+        kind: 'minimal',
+        path: relativePath(PROBE_ROOT),
+        appid: QA_APP_ID,
+        pagePath: '/pages/index/index',
+        copiedBusinessCode: false,
+      },
+      cliPath,
+      nodeRuns,
+      decision,
+      errors,
+      probeProjectCleanup: null,
+    };
+  } catch (error) {
+    errors.push({ stage: 'diagnostic-run', error: serializeError(error) });
+    result = {
+      schemaVersion: 1,
+      startedAt,
+      finishedAt: null,
+      project: { kind: 'minimal', path: relativePath(PROBE_ROOT), appid: QA_APP_ID, pagePath: '/pages/index/index', copiedBusinessCode: false },
+      cliPath,
+      nodeRuns,
+      decision: decideScreenshotDiagnostic({ nodeRuns }),
+      errors,
+      probeProjectCleanup: null,
+    };
+  }
+
+  let probeProjectCleanup;
+  if (cliPath && (projectPrepared || await exists(PROBE_ROOT))) {
+    try {
+      probeProjectCleanup = await clearStaleAutomationProject(PROBE_ROOT, cliPath);
+      if (probeProjectCleanup.verification?.confirmed === true) {
+        await fs.rm(PROBE_ROOT, { recursive: true, force: true });
+        probeProjectCleanup.removed = true;
+      } else {
+        probeProjectCleanup.removed = false;
+      }
+    } catch (error) {
+      probeProjectCleanup = { removed: false, error: serializeError(error) };
+    }
+  } else {
+    probeProjectCleanup = { removed: false, error: { name: 'NotPrepared', message: 'minimal probe project was not prepared', stack: null } };
+  }
+
+  result.probeProjectCleanup = probeProjectCleanup;
+  result.finishedAt = isoNow();
+  try {
+    validateScreenshotDiagnosticResult(result);
+    result.validation = { ok: true };
+  } catch (error) {
+    result.validation = { ok: false, error: serializeError(error) };
+    result.errors.push({ stage: 'validate-diagnostic-result', error: serializeError(error) });
+  }
+  await writeAtomicText(outputPaths.resultPath, json(result));
+  await writeAtomicText(outputPaths.logPath, screenshotDiagnosticLogLines(result));
+  return result;
 }
 
 async function completeCompatibilityRun({ resultPath, screenshotPath, rawErrorPath, result, runtime, events, primaryError = null }) {
@@ -1452,6 +3384,31 @@ async function runVisualEvidence() {
 
 async function main() {
   const args = new Set(process.argv.slice(2));
+  if (args.has('--trace-screenshot-protocol-worker')) {
+    console.log(json(await runTraceScreenshotProtocolWorker()));
+    return;
+  }
+  if (args.has('--trace-screenshot-protocol')) {
+    console.log(json(await runTraceScreenshotProtocol()));
+    return;
+  }
+  if (args.has('--stable-single-instance-worker')) {
+    console.log(json(await runStableSingleInstanceWorker()));
+    return;
+  }
+  if (args.has('--stable-single-instance-diagnostic')) {
+    console.log(json(await runStableSingleInstanceDiagnostic()));
+    return;
+  }
+  if (args.has('--screenshot-diagnostic-worker')) {
+    const nodeLabel = process.argv[process.argv.indexOf('--screenshot-diagnostic-worker') + 1] || 'stable';
+    console.log(json(await runScreenshotDiagnosticWorker(nodeLabel)));
+    return;
+  }
+  if (args.has('--screenshot-diagnostic')) {
+    console.log(json(await runScreenshotDiagnostic()));
+    return;
+  }
   if (args.has('--hash-protected')) {
     const which = process.argv[process.argv.indexOf('--hash-protected') + 1];
     if (!['before', 'after'].includes(which)) throw new Error('--hash-protected 必须是 before 或 after');
@@ -1478,23 +3435,38 @@ async function main() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch(async (error) => {
+  main().then(() => {
+    process.exit(0);
+  }).catch(async (error) => {
     console.error(error.stack || error.message || String(error));
-    process.exitCode = 1;
+    process.exit(1);
   });
 }
 
 export {
+  C_STABLE_CLI_PATH,
+  C_STABLE_NODE_PATH,
+  DIAGNOSTIC_ROOT,
   FIXTURE_NAMES,
   HOME_ROUTE,
+  PROTOCOL_TRACE_ROOT,
+  PROBE_ROOT,
   QA_APP_ID,
   SCREENSHOT_TIMEOUT_MS,
   abortQaSession,
+  cleanupQaRuntime,
   classifyConsoleEvent,
+  classifyScreenshotProtocolTrace,
+  associateScreenshotProtocol,
   captureFixtureOnce,
+  canStartNextStableSingleInstanceSession,
+  decideScreenshotDiagnostic,
+  decideStableSingleInstance,
   invalidFixture,
   makeFixture,
   pngInfo,
+  parseProtocolDebugLine,
+  parseProtocolDebugOutput,
   protectedHashRecords,
   roundTrip,
   buildCliArguments,
@@ -1503,8 +3475,20 @@ export {
   completeCompatibilityRun,
   completeVisualEvidenceRun,
   formatCliExit,
+  enterExpandedLedgerForEvidence,
+  evaluateCurrentPageInstance,
+  runScreenshotDiagnostic,
+  runStableSingleInstanceDiagnostic,
+  stableSingleInstanceConfig,
+  stableSingleInstanceOutputPaths,
   runFixtureWithFreshSession,
   runFixturesWithFreshSessions,
+  resetPageScrollForEvidence,
+  redactProtocolPayload,
+  screenshotDiagnosticOutputPaths,
   switchToHomeTab,
+  validateScreenshotDiagnosticResult,
+  validateProtocolTraceResult,
+  verifyQaCleanup,
   writeAndReadFixture,
 };

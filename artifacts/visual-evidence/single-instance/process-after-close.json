@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "closedAt": "2026-08-06T20:37:57.8589598+08:00",
+  "dRoot": "D:\\微信\\微信web开发者工具",
+  "cliPath": "D:\\微信\\微信web开发者工具\\cli.bat",
+  "closeMainWindow": [],
+  "before": [
+    {
+      "ProcessId": 33024,
+      "ParentProcessId": 20316,
+      "Name": "cmd.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\cmd.exe",
+      "CommandLine": "C:\\WINDOWS\\system32\\cmd.exe /c \"\"D:\\微信\\微信web开发者工具\\cli.bat\" open --project C:\\Users\\Administrator\\Desktop\\记账小程序 --appid wx9567fb4ff6336d0b --lang zh\"",
+      "MainWindowHandle": 0,
+      "MainWindowTitle": ""
+    },
+    {
+      "ProcessId": 32716,
+      "ParentProcessId": 33024,
+      "Name": "微信开发者工具.exe",
+      "ExecutablePath": "D:\\微信\\微信web开发者工具\\微信开发者工具.exe",
+      "CommandLine": "\"D:\\微信\\微信web开发者工具\\微信开发者工具.exe\" -e \"const e=process.argv[1],a=process.argv.slice(2).filter(function(x){return x!=='--electron'});if(!process.env.cwd)process.env.cwd=process.cwd();process.argv=[process.execPath,'--ms-enable-electron-run-as-node',e,'--electron'].concat(a);require(e)\" \"D:\\微信\\微信web开发者工具\\resources\\app.asar.unpacked\\js\\common\\cli\\index.js\" open --project C:\\Users\\Administrator\\Desktop\\记账小程序 --appid wx9567fb4ff6336d0b --lang zh",
+      "MainWindowHandle": 0,
+      "MainWindowTitle": ""
+    }
+  ],
+  "terminations": [
+    {
+      "ProcessId": 33024,
+      "ParentProcessId": 20316,
+      "Name": "cmd.exe",
+      "ExecutablePath": "C:\\WINDOWS\\system32\\cmd.exe",
+      "TaskkillOutput": "SUCCESS: The process with PID 32716 (child process of PID 33024) has been terminated.\nSUCCESS: The process with PID 33024 (child process of PID 20316) has been terminated."
+    },
+    {
+      "ProcessId": 32716,
+      "ParentProcessId": 33024,
+      "Name": "微信开发者工具.exe",
+      "ExecutablePath": "D:\\微信\\微信web开发者工具\\微信开发者工具.exe",
+      "TaskkillOutput": "ERROR: The process \"32716\" not found."
+    }
+  ],
+  "verification": {
+    "capturedAt": "2026-08-06T20:38:27.5948452+08:00",
+    "consecutiveZero": true,
+    "snapshots": [
+      {
+        "at": "2026-08-06T20:38:22.7041603+08:00",
+        "dCount": 0,
+        "dProcesses": [],
+        "exactAutomationResidualCount": 0,
+        "exactAutomationResidual": [],
+        "cCliExists": true,
+        "cNodeExists": true,
+        "cToolExists": true
+      },
+      {
+        "at": "2026-08-06T20:38:25.1652672+08:00",
+        "dCount": 0,
+        "dProcesses": [],
+        "exactAutomationResidualCount": 0,
+        "exactAutomationResidual": [],
+        "cCliExists": true,
+        "cNodeExists": true,
+        "cToolExists": true
+      },
+      {
+        "at": "2026-08-06T20:38:27.5929674+08:00",
+        "dCount": 0,
+        "dProcesses": [],
+        "exactAutomationResidualCount": 0,
+        "exactAutomationResidual": [],
+        "cCliExists": true,
+        "cNodeExists": true,
+        "cToolExists": true
+      }
+    ]
+  }
+}

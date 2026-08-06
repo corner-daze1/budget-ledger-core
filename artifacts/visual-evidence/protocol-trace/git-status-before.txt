@@ -1,0 +1,37 @@
+## master
+ M BLOCKED.md
+ M PROGRESS.md
+ D artifacts/visual-evidence/compatibility/compatibility.json
+ D artifacts/visual-evidence/compatibility/sample.png
+ M artifacts/visual-evidence/console.jsonl
+ D artifacts/visual-evidence/cross-budget-period.png
+ D artifacts/visual-evidence/empty-bills.png
+ D artifacts/visual-evidence/four-states-green.txt
+ D artifacts/visual-evidence/manifest.json
+ D artifacts/visual-evidence/normal-accumulated.png
+ D artifacts/visual-evidence/prepaid-recovery.png
+ M artifacts/visual-evidence/protected-hashes-after.txt
+ M artifacts/visual-evidence/protected-hashes-before.txt
+ M artifacts/visual-evidence/protected-hashes-compare.txt
+ M docs/PHASE10_TDESIGN_UI_SPEC.md
+ M docs/VISUAL_EVIDENCE.md
+ M miniprogram/custom-tab-bar/index.js
+ M miniprogram/pages/entry/entry.js
+ M miniprogram/pages/home/home.js
+ M miniprogram/pages/home/home.wxml
+ M miniprogram/pages/home/home.wxss
+ M scripts/visual-evidence.mjs
+ M tests/phase10-navigation.test.js
+ M tests/phase9-home-visual-contract.test.js
+ M tests/visual-evidence.test.js
+?? artifacts/visual-evidence/compatibility-audit/
+?? artifacts/visual-evidence/compatibility/compatibility-error.txt
+?? artifacts/visual-evidence/phase11-ledger-sheet-green.txt
+?? artifacts/visual-evidence/phase11-ledger-sheet-red.txt
+?? artifacts/visual-evidence/phase11-runtime-cleanup-red.txt
+?? artifacts/visual-evidence/phase11-screenshot-diagnostic-red.txt
+?? artifacts/visual-evidence/phase11-visual-scroll-red.txt
+?? artifacts/visual-evidence/screenshot-diagnostic.json
+?? artifacts/visual-evidence/screenshot-diagnostic.log
+?? artifacts/visual-evidence/single-instance/
+?? tests/phase11-home-ledger-sheet.test.js

@@ -117,6 +117,7 @@ Page({
       }
       app.globalData.state = state;
       app.saveState();
+      app.globalData.homeResetRequested = true;
       wx.navigateBack({ delta: 1 });
     } catch (error) {
       this.setData({ error: error.message });

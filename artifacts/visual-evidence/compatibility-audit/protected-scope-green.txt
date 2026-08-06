@@ -1,1 +1,7 @@
+Command: npm run evidence:visual -- --compare-protected
+Exit code: 0
+
+> budget-ledger-core@0.1.0 evidence:visual
+> node scripts/visual-evidence.mjs --compare-protected
+
 {"beforeCount":112,"afterCount":112,"changed":[],"ok":true,"beforePath":"artifacts/visual-evidence/protected-hashes-before.txt","afterPath":"artifacts/visual-evidence/protected-hashes-after.txt"}

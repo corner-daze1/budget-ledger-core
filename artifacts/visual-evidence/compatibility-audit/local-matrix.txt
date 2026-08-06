@@ -1,0 +1,28 @@
+截图链路本机只读矩阵
+审计日期：2026-08-06（Asia/Shanghai）
+
+C盘注册安装：
+- Registry: HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\微信开发者工具
+- DisplayName=微信开发者工具 2.01.2510290；DisplayVersion=2.01.2510290；DisplayIcon=C:\Program Files (x86)\Tencent\微信web开发者工具\微信开发者工具.exe
+- cli.bat、cli.js、node.exe、node-18.exe、code\package.nw\js\common\cli\index.js 均存在。
+- 文件元数据：外壳文件版本1.03.0；node.exe 16.13.1；node-18.exe 18.20.8。
+
+D盘副本：
+- 根目录 D:\微信\微信web开发者工具；微信开发者工具.exe 文件版本2.02.0。
+- cli.bat、cli.js存在；cli.bat实际调用 %~dp0.\node.exe，但同目录 node.exe不存在，递归也未发现 node*.exe 或 CLI index.js。
+- 未发现D盘注册安装项；渠道/注册状态未知，未执行该CLI。
+
+进程快照：
+- capturedAt=2026-08-06T17:54:42.5015870+08:00
+- C盘工具族30个进程；D盘副本2个进程；两套同时存在。
+- PID仅为该时刻快照，不作为恒定事实。
+
+包源码：
+- node_modules/miniprogram-automator/package.json version=0.12.1。
+- out/MiniProgram.js 的 checkVersion()要求 SDKVersion至少2.7.3。
+- screenshot()直接 send("App.captureScreenshot")；收到data后，只有传path时才将base64写入文件。
+
+既有诊断产物复核：
+- schemaVersion=1；kind=minimal；appid=touristappid；copiedBusinessCode=false。
+- system 2场/0成功，stable 2场/0成功；四场connect/currentPage/evaluate成功，screenshot均TIMEOUT diagnostic screenshot after 30000ms。
+- 四场cleanup确认、CLI close完成、残留0、端口关闭；decision=minimal-probe-not-stable；continueCurrentProject=false；canDeclareApplicationIssue=false。

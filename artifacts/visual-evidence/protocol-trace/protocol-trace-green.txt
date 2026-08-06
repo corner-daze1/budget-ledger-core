@@ -1,0 +1,5 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 0
+Result: 33 tests, 33 passed, 0 failed, 0 skipped, 0 todo
+Duration: 1403.8035ms
+Evidence status: summary only. The original stdout/stderr was not preserved; the 33/33 result was independently reproduced during management acceptance, but this file itself is not raw command output.

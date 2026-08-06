@@ -1,0 +1,10 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 1
+Result: 33 tests, 28 passed, 5 failed, 0 skipped, 0 todo
+Evidence status: summary only. The original stdout/stderr was not preserved, so this file is not raw red-test evidence and must not be cited as such.
+Failures:
+- screenshot protocol parser extracts direction, UUID, method, and raw debug line: parseProtocolDebugLine is not yet exported
+- screenshot protocol trace associates only the matching UUID reply with App.captureScreenshot: associateScreenshotProtocol is not yet exported
+- screenshot protocol redaction retains metadata but never stores a base64 body: redactProtocolPayload is not yet exported
+- screenshot protocol classification separates missing send, missing reply, protocol error, postprocess failure, success, and inconclusive cleanup: classifyScreenshotProtocolTrace is not yet exported
+- screenshot protocol result rejects ambiguous top-level ok and requires separate completion fields: validateProtocolTraceResult is not yet exported

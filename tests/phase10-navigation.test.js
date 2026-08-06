@@ -14,6 +14,11 @@ function read(relativePath) {
 function loadTabBar(route) {
   let definition;
   const navigations = [];
+  const resetCalls = [];
+  const currentPage = {
+    route: route.replace(/^\//, ''),
+    resetHomeLedger() { resetCalls.push('resetHomeLedger'); },
+  };
   const moduleObject = { exports: {} };
   vm.runInNewContext(read('miniprogram/custom-tab-bar/index.js'), {
     module: moduleObject,
@@ -21,7 +26,7 @@ function loadTabBar(route) {
     Component(component) {
       definition = component;
     },
-    getCurrentPages: () => [{ route: route.replace(/^\//, '') }],
+    getCurrentPages: () => [currentPage],
     wx: {
       switchTab({ url, success }) {
         navigations.push(['switchTab', url]);
@@ -43,7 +48,7 @@ function loadTabBar(route) {
     },
   };
   Object.assign(instance, definition.methods);
-  return { definition, instance, navigations, exports: moduleObject.exports };
+  return { definition, instance, navigations, resetCalls, exports: moduleObject.exports };
 }
 
 function filesUnder(relativeDirectory) {
@@ -96,12 +101,12 @@ test('custom tab bar selected state follows the current route including neutral 
 });
 
 test('ledger and mine use switchTab while the central record action uses the ledger source stack', () => {
-  const { definition, instance, navigations } = loadTabBar('/pages/home/home');
+  const { definition, instance, navigations, resetCalls } = loadTabBar('/pages/home/home');
   definition.methods.onTabTap.call(instance, { currentTarget: { dataset: { index: '0' } } });
   definition.methods.onTabTap.call(instance, { currentTarget: { dataset: { index: '1' } } });
   definition.methods.onEntryTap.call(instance);
+  assert.deepEqual(resetCalls, ['resetHomeLedger']);
   assert.deepEqual(navigations, [
-    ['switchTab', '/pages/home/home'],
     ['switchTab', '/pages/settings/settings'],
     ['navigateTo', '/pages/entry/entry'],
   ]);
@@ -182,16 +187,18 @@ test('home keeps real budget states and removes duplicate normal record and mana
     'model.needsSettlement',
     'model.showPlanOverdueBanner',
     'model.planPendingItems',
-    'recentBills',
-    'item.category',
-    'item.date',
-    'item.account',
-    'item.amount',
+    'ledgerGroups',
+    'ledgerTransactionCount',
+    'item.transactions',
+    'transaction.category',
+    'transaction.date',
+    'transaction.accountFlow',
+    'transaction.amount',
   ]) assert.match(wxml, new RegExp(token.replace('.', '\\.')));
   assert.doesNotMatch(wxml, /bindtap="goEntry"|bindtap="goSettings"/);
   assert.doesNotMatch(wxml, /[＋+]\s*记一笔/);
   assert.doesNotMatch(wxml, /class="[^"]*manage-link/);
-  assert.match(wxml, /还没有账单，用底部“记一笔”记下第一笔/);
+  assert.match(wxml, /还没有流水，用底部“记一笔”记下第一笔/);
 });
 
 test('shipped Phase10 scope has no legacy retail starter reference', () => {

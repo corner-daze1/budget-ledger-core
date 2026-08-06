@@ -1,5 +1,12 @@
 const core = require('../../lib/application.js');
 
+const EXPENSE_KINDS = new Set([
+  'controlled_expense',
+  'fixed_expense',
+  'reward_payment',
+  'loan_interest_accrual',
+]);
+
 function hasPlanEvents(model) {
   if (!model) return false;
   // Generic plan summary only — overdue banner and pending lists render in their own regions.
@@ -23,6 +30,64 @@ function formatBillCategory(bill) {
     .map(normalizeCategoryPart)
     .filter(Boolean);
   return parts.length ? parts.join(' · ') : '未分类';
+}
+
+function formatCents(amountCents) {
+  const cents = Number(amountCents) || 0;
+  const sign = cents < 0 ? '-' : '';
+  const absolute = Math.abs(cents);
+  return `¥${sign}${Math.floor(absolute / 100)}.${String(absolute % 100).padStart(2, '0')}`;
+}
+
+function transactionImpact(item) {
+  const amountCents = Number(item && item.amountCents) || 0;
+  if (item && item.kind === 'income') return { expenseCents: 0, incomeCents: amountCents };
+  if (item && item.kind === 'refund') return { expenseCents: -amountCents, incomeCents: 0 };
+  if (item && EXPENSE_KINDS.has(item.kind)) return { expenseCents: amountCents, incomeCents: 0 };
+  return { expenseCents: 0, incomeCents: 0 };
+}
+
+function transactionTone(item) {
+  if (item.kind === 'income') return 'income';
+  if (item.kind === 'refund') return 'refund';
+  if (EXPENSE_KINDS.has(item.kind)) return 'expense';
+  return 'neutral';
+}
+
+function normalizeLedgerTransaction(item) {
+  const category = item && (item.categoryLevel1 || item.categoryLevel2)
+    ? formatBillCategory(item)
+    : (item?.category || item?.typeLabel || '未分类');
+  return {
+    ...item,
+    category,
+    accountFlow: item?.accountFlow || item?.account || '',
+    typeLabel: item?.typeLabel || item?.kind || '',
+    amount: item?.amount || formatCents(item?.amountCents),
+    note: item?.note || '',
+    amountTone: transactionTone(item || {}),
+  };
+}
+
+function buildLedgerGroups(transactions = []) {
+  const groups = [];
+  for (const original of transactions) {
+    const item = normalizeLedgerTransaction(original);
+    let group = groups[groups.length - 1];
+    if (!group || group.date !== item.date) {
+      group = { date: item.date, expenseCents: 0, incomeCents: 0, transactions: [] };
+      groups.push(group);
+    }
+    const impact = transactionImpact(item);
+    group.expenseCents += impact.expenseCents;
+    group.incomeCents += impact.incomeCents;
+    group.transactions.push(item);
+  }
+  return groups.map((group) => ({
+    ...group,
+    expenseText: formatCents(group.expenseCents),
+    incomeText: formatCents(group.incomeCents),
+  }));
 }
 
 function buildScale(model) {
@@ -66,10 +131,20 @@ function buildScale(model) {
   };
 }
 
+function touchY(event) {
+  const point = event?.changedTouches?.[0] || event?.touches?.[0];
+  return point ? (point.pageY ?? point.clientY ?? point.y) : null;
+}
+
 Page({
   data: {
     model: null,
-    recentBills: [],
+    ledgerGroups: [],
+    ledgerTransactionCount: 0,
+    ledgerMode: 'overview',
+    ledgerScrollEnabled: false,
+    ledgerScrollTop: 0,
+    ledgerTouchStartY: null,
     scale: null,
     hasPlanEvents: false,
     error: '',
@@ -92,15 +167,20 @@ Page({
       wx.switchTab({ url: '/pages/settings/settings' });
       return;
     }
+    if (app.globalData.homeResetRequested === true) {
+      app.globalData.homeResetRequested = false;
+      this.resetHomeLedger();
+    }
     try {
       const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);
-      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({
-        ...item,
-        category: formatBillCategory(item),
-      }));
+      const transactions = typeof core.listRecentTransactions === 'function'
+        ? core.listRecentTransactions(app.globalData.state)
+        : [];
+      const ledgerGroups = buildLedgerGroups(transactions);
       this.setData({
         model,
-        recentBills,
+        ledgerGroups,
+        ledgerTransactionCount: transactions.length,
         scale: buildScale(model),
         hasPlanEvents: hasPlanEvents(model),
         error: app.globalData.storageError || '',
@@ -110,8 +190,48 @@ Page({
         overspendModeLabel: '请选择',
       });
     } catch (error) {
-      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });
+      this.setData({ model: null, ledgerGroups: [], ledgerTransactionCount: 0, scale: null, hasPlanEvents: false, error: error.message });
     }
+  },
+
+  enterLedger() {
+    this.setData({ ledgerMode: 'expanded', ledgerScrollEnabled: true, ledgerScrollTop: 0, ledgerTouchStartY: null });
+  },
+
+  resetHomeLedger() {
+    this.setData({ ledgerMode: 'overview', ledgerScrollEnabled: false, ledgerScrollTop: 0, ledgerTouchStartY: null });
+  },
+
+  onLedgerTouchStart(event) {
+    const y = touchY(event);
+    if (y == null) return;
+    this.setData({ ledgerTouchStartY: y });
+  },
+
+  onLedgerTouchMove() {
+    // State changes are committed only at touchend.
+  },
+
+  onLedgerTouchEnd(event) {
+    const startY = this.data.ledgerTouchStartY;
+    const endY = touchY(event);
+    this.setData({ ledgerTouchStartY: null });
+    if (startY == null || endY == null) return;
+    const deltaY = endY - startY;
+    if (Math.abs(deltaY) < 48) return;
+    if (this.data.ledgerMode === 'overview' && deltaY < 0) {
+      this.enterLedger();
+    } else if (this.data.ledgerMode === 'expanded' && deltaY > 0 && Number(this.data.ledgerScrollTop) <= 0) {
+      this.resetHomeLedger();
+    }
+  },
+
+  onLedgerTouchCancel() {
+    this.setData({ ledgerTouchStartY: null });
+  },
+
+  onLedgerScroll(event) {
+    this.setData({ ledgerScrollTop: Number(event.detail.scrollTop) || 0 });
   },
 
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },
@@ -187,5 +307,8 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports.hasPlanEvents = hasPlanEvents;
   module.exports.formatBillCategory = formatBillCategory;
   module.exports.normalizeCategoryPart = normalizeCategoryPart;
+  module.exports.formatCents = formatCents;
+  module.exports.transactionImpact = transactionImpact;
+  module.exports.buildLedgerGroups = buildLedgerGroups;
   module.exports.buildScale = buildScale;
 }

@@ -342,6 +342,197 @@
   text-align: right;
 }
 
+.ledger-sheet {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 16rpx 0;
+  border: 1rpx solid #E5E7E2;
+  border-radius: 24rpx 24rpx 0 0;
+  background: #FFFFFF;
+  box-shadow: 0 8rpx 24rpx rgba(32, 37, 33, 0.05);
+}
+
+.ledger-sheet-overview {
+  height: calc(100vh - 620rpx);
+  min-height: 260rpx;
+  max-height: 620rpx;
+  overflow: hidden;
+}
+
+.ledger-sheet-expanded {
+  height: calc(100vh - 180rpx);
+  min-height: 420rpx;
+  margin-top: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ledger-overview-header,
+.ledger-expanded-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  box-sizing: border-box;
+  min-height: 88rpx;
+  padding: 16rpx 24rpx;
+  border-bottom: 1rpx solid #E5E7E2;
+}
+
+.ledger-expanded-header {
+  flex-shrink: 0;
+  min-height: 88rpx;
+  background: #FFFFFF;
+}
+
+.ledger-expanded-title {
+  color: #202521;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.ledger-analysis-link {
+  min-height: 88rpx;
+  margin: 0;
+  padding: 0 8rpx;
+  color: #3E725E;
+  font-size: 26rpx;
+  line-height: 88rpx;
+  background: transparent;
+}
+
+.ledger-scroll {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  padding: 0 24rpx;
+}
+
+.ledger-list {
+  padding-bottom: 20rpx;
+}
+
+.ledger-empty {
+  padding: 32rpx 0;
+  color: #5F665F;
+  font-size: 26rpx;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.ledger-day {
+  padding: 20rpx 0 8rpx;
+}
+
+.ledger-day + .ledger-day {
+  margin-top: 12rpx;
+  border-top: 1rpx solid #E5E7E2;
+}
+
+.ledger-day-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding-bottom: 8rpx;
+}
+
+.ledger-day-date {
+  color: #202521;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.ledger-day-summary {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12rpx;
+  color: #5F665F;
+  font-size: 24rpx;
+  line-height: 1.45;
+}
+
+.ledger-row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 16rpx 0;
+  overflow-wrap: anywhere;
+  border-bottom: 1rpx solid #E5E7E2;
+}
+
+.ledger-row:last-child {
+  border-bottom: 0;
+}
+
+.ledger-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.ledger-row-category {
+  margin-bottom: 4rpx;
+  color: #202521;
+  font-size: 28rpx;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ledger-row-note {
+  margin-top: 4rpx;
+}
+
+.ledger-amount {
+  flex-shrink: 0;
+  max-width: 42%;
+  color: #202521;
+  font-size: 28rpx;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.ledger-amount-income {
+  color: #3E725E;
+}
+
+.ledger-amount-refund {
+  color: #B85A4A;
+}
+
+.ledger-amount-neutral {
+  color: #5F665F;
+}
+
+@media (max-width: 320px) {
+  .ledger-day-header,
+  .ledger-day-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ledger-day-summary {
+    justify-content: flex-start;
+  }
+
+  .ledger-row {
+    gap: 8rpx;
+  }
+
+  .ledger-amount {
+    max-width: 46%;
+  }
+}
+
 @media (max-width: 320px) {
   .home-title {
     font-size: 38rpx;

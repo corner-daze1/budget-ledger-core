@@ -20,6 +20,12 @@ npm run evidence:visual
 
 视觉取证只使用 `.visual-qa` 隔离副本和 `touristappid`，不会读取测试 AppID 的账本。完整机制、产物和失败规则见 `docs/VISUAL_EVIDENCE.md`。
 
+## 当前验证状态（2026-08-06）
+
+领域与小程序静态门禁当前为全量测试 400/400、视觉基础设施测试 33/33、`npm run check` 403 项声明、`npm run check:mini` 通过。以上只证明代码和静态契约通过，不代表自动截图运行成功。
+
+C 盘 Stable 的空白 `touristappid` 探针已定位为 `App.captureScreenshot` 出现一次 SEND、没有同 UUID RECV，分类为 `sent-no-matching-reply`；截图仍未修复。Computer Use 对该 Stable NW.js 窗口也仍存在窗口归属矛盾，不能替代自动截图。唯一下一阶段建议是取得用户另行授权后，用同一空白探针对另一个已核实来源和版本号的 C 盘 Stable 做受控版本对照；不得据此访问真实 AppID 账本。
+
 ## 设计边界
 
 `src/domain/` 不接触微信运行时、DOM、网络、文件系统、进程环境或密钥。当前小程序界面只负责把表单输入转换成应用层参数、展示返回值和选择备份文件；金额、周期、结转、退款和账户余额仍由领域函数决定。云端若在后续版本接入，只能保存版本化 JSON、鉴权和处理同步冲突，不能直接覆盖本地流水或静默丢弃损坏数据。

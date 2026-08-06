@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-06T20:22:50.3985833+08:00",
+  "currentPid": 22044,
+  "cCount": 30,
+  "dCount": 2,
+  "exactAutomationResidualCount": 0,
+  "processes": [
+    {
+      "family": "D",
+      "pid": 33024,
+      "parentPid": 20316,
+      "name": "cmd.exe",
+      "executablePath": "C:\\WINDOWS\\system32\\cmd.exe",
+      "commandLine": "C:\\WINDOWS\\system32\\cmd.exe /c \"\"D:\\微信\\微信web开发者工具\\cli.bat\" open --project C:\\Users\\Administrator\\Desktop\\记账小程序 --appid wx9567fb4ff6336d0b --lang zh\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "D",
+      "pid": 32716,
+      "parentPid": 33024,
+      "name": "微信开发者工具.exe",
+      "executablePath": "D:\\微信\\微信web开发者工具\\微信开发者工具.exe",
+      "commandLine": "\"D:\\微信\\微信web开发者工具\\微信开发者工具.exe\"  -e \"const e=process.argv[1],a=process.argv.slice(2).filter(function(x){return x!=='--electron'});if(!process.env.cwd)process.env.cwd=process.cwd();process.argv=[process.execPath,'--ms-enable-electron-run-as-node',e,'--electron'].concat(a);require(e)\" \"D:\\微信\\微信web开发者工具\\resources\\app.asar.unpacked\\js\\common\\cli\\index.js\" open --project C:\\Users\\Administrator\\Desktop\\记账小程序 --appid wx9567fb4ff6336d0b --lang zh",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 22680,
+      "parentPid": 8980,
+      "name": "cmd.exe",
+      "executablePath": "C:\\WINDOWS\\system32\\cmd.exe",
+      "commandLine": "C:\\WINDOWS\\system32\\cmd.exe /c \"\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat\" islogin --lang zh\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 15956,
+      "parentPid": 22680,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\.\\node.exe\"  \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\.\\cli.js\" islogin --lang zh",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 14536,
+      "parentPid": 15956,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe\" \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\common\\cli\\index.js\" islogin --lang zh",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 10472,
+      "parentPid": 28832,
+      "name": "cmd.exe",
+      "executablePath": "C:\\WINDOWS\\system32\\cmd.exe",
+      "commandLine": "C:\\WINDOWS\\system32\\cmd.exe /c \"\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat\" islogin --lang zh\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 24448,
+      "parentPid": 10472,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\.\\node.exe\"  \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\.\\cli.js\" islogin --lang zh",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 19876,
+      "parentPid": 24448,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe\" \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\common\\cli\\index.js\" islogin --lang zh",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 37540,
+      "parentPid": 26316,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --package-dir=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --app-session-id=codex-recovery-20260805c",
+      "mainWindowHandle": 2887566
+    },
+    {
+      "family": "C",
+      "pid": 14328,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=crashpad-handler \"--user-data-dir=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" /prefetch:7 --monitor-self --monitor-self-argument=--type=crashpad-handler \"--monitor-self-argument=--user-data-dir=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --monitor-self-argument=/prefetch:7 --monitor-self-annotation=ptype=crashpad-handler \"--database=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\Crashpad\" \"--metrics-dir=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --annotation=plat=Win64 --annotation=prod=微信开发者工具 --annotation=ver=2.01.2510290 --initial-client-data=0x25c,0x260,0x264,0x238,0x268,0x7ffeacf170f8,0x7ffeacf17108,0x7ffeacf17118",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 20096,
+      "parentPid": 14328,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=crashpad-handler \"--user-data-dir=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" /prefetch:7 --no-periodic-tasks --monitor-self-annotation=ptype=crashpad-handler \"--database=C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\Crashpad\" --annotation=plat=Win64 --annotation=prod=微信开发者工具 --annotation=ver=2.01.2510290 --initial-client-data=0x1f8,0x1fc,0x200,0x1cc,0x208,0x7ff679ab70d0,0x7ff679ab70e0,0x7ff679ab70f0",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 29164,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=gpu-process --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --no-sandbox --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --start-stack-profiler --gpu-preferences=SAAAAAAAAADgAAAwAAAAAAAAAAAAAAAAAABgAAAAAAAoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAAAAAAAAHgAAAAAAAAAKAAAAAQAAAAgAAAAAAAAACgAAAAAAAAAMAAAAAAAAAA4AAAAAAAAABAAAAAAAAAAAAAAAAUAAAAQAAAAAAAAAAAAAAAGAAAAEAAAAAAAAAABAAAABQAAABAAAAAAAAAAAQAAAAYAAAAIAAAAAAAAAAgAAAAAAAAA --mojo-platform-channel-handle=2100 /prefetch:2",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 26884,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=utility --utility-sub-type=network.mojom.NetworkService --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --service-sandbox-type=network --no-sandbox --ignore-certificate-errors --enable-experimental-web-platform-features --disable-quic --ignore-certificate-errors --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --start-stack-profiler --mojo-platform-channel-handle=2388 /prefetch:8",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 37244,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=utility --utility-sub-type=storage.mojom.StorageService --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --service-sandbox-type=utility --no-sandbox --ignore-certificate-errors --enable-experimental-web-platform-features --disable-quic --ignore-certificate-errors --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --mojo-platform-channel-handle=2520 /prefetch:8",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 17492,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=renderer --no-sandbox --enable-experimental-web-platform-features --file-url-path-alias=\"/gen=C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\gen\" --no-zygote --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --nwjs --extension-process --allow-insecure-localhost --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=5 --mojo-platform-channel-handle=2976 /prefetch:1",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 39568,
+      "parentPid": 17492,
+      "name": "wxfilewatcher_x64.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe\" \"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\WeappLocalData\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 11064,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=renderer --no-sandbox --enable-experimental-web-platform-features --file-url-path-alias=\"/gen=C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\gen\" --no-zygote --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --nwjs --extension-process --allow-insecure-localhost --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=8 --mojo-platform-channel-handle=3232 /prefetch:1",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 35380,
+      "parentPid": 11064,
+      "name": "wxfilewatcher_x64.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe\" C:\\Users\\Administrator\\Desktop\\记账小程序",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 8720,
+      "parentPid": 11064,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe\" \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\src\\bootstrap-fork\" --type=ptyHost --logsPath \"c:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\Default\\Editor\\1.78\\user-data\\logs\\20260805T211509\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 25392,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=renderer --no-sandbox --enable-experimental-web-platform-features --file-url-path-alias=\"/gen=C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\gen\" --no-zygote --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --nwjs-guest --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --nwjs --allow-insecure-localhost --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=9 --mojo-platform-channel-handle=4348 /prefetch:1",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 35820,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=renderer --no-sandbox --enable-experimental-web-platform-features --file-url-path-alias=\"/gen=C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\gen\" --no-zygote --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --nwjs-guest --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --nwjs --allow-insecure-localhost --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=10 --mojo-platform-channel-handle=4384 /prefetch:1",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 37632,
+      "parentPid": 11064,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" --inspect-port=0 \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\src\\bootstrap-fork.js\" --skipWorkspaceStorageLock",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 21444,
+      "parentPid": 11064,
+      "name": "wxfilewatcher_x64.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wxfilewatcher_x64.exe\" \"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\WeappLocalData\"",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 38248,
+      "parentPid": 37632,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\extensions\\wechat-miniprogram-development\\skylineStyleServer.js\" --node-ipc --clientProcessId=37632",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 29280,
+      "parentPid": 37632,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\extensions\\wechat-miniprogram-development\\glassEaselTemplateServer.js\" --node-ipc --clientProcessId=37632",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 33116,
+      "parentPid": 37632,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\extensions\\json-language-features\\server\\dist\\node\\jsonServerMain\" --node-ipc --clientProcessId=37632",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 22952,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=renderer --no-sandbox --enable-experimental-web-platform-features --file-url-path-alias=\"/gen=C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\gen\" --no-zygote --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --nwjs-guest --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --nwjs --allow-insecure-localhost --device-scale-factor=1 --num-raster-threads=4 --enable-main-frame-before-activation --renderer-client-id=68 --mojo-platform-channel-handle=5956 /prefetch:1",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 14908,
+      "parentPid": 37540,
+      "name": "wechatdevtools.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\wechatdevtools.exe\" --type=utility --utility-sub-type=proxy_resolver.mojom.ProxyResolverFactory --field-trial-handle=2052,14004560685331273558,6837110483885795559,131072 --enable-features=AcceptCHFrame,CookieSameSiteConsidersRedirectChain,CriticalClientHint,CrossOriginEmbedderPolicyCredentialless,CrossOriginIsolated,CrossOriginOpenerPolicyAccessReporting,CrossOriginOpenerPolicyReporting,DocumentPolicyNegotiation,EnableNewCanvas2DAPI,ExperimentalContentSecurityPolicyFeatures,FeaturePolicyForClientHints,LangClientHintHeader,OriginIsolationHeader,OriginPolicy,SchemefulSameSite,UserAgentClientHint --disable-features=BlockInsecurePrivateNetworkRequests,CrossSiteDocumentBlockingAlways,CrossSiteDocumentBlockingIfIsolating --lang=zh-CN --service-sandbox-type=proxy_resolver --no-sandbox --ignore-certificate-errors --enable-experimental-web-platform-features --disable-quic --ignore-certificate-errors --user-data-dir=\"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\" --nwapp-path=\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\" --mojo-platform-channel-handle=5628 /prefetch:8",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 25000,
+      "parentPid": 37632,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" --max-old-space-size=3072 \"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\WeappForeignPkgs\\mptslib\\ts_4.1.2_5.2.2\\lib\\tsserver.js\" --serverMode partialSemantic --useInferredProjectPerProjectRoot --disableAutomaticTypingAcquisition --cancellationPipeName C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\vscode-typescript\\688ef37af7e86eec8487\\tscancellation-88c733f7c52d33abc5cf.tmp* --globalPlugins typescript-miniprogram-plugin --pluginProbeLocations \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\extensions\\wechat-miniprogram-development\" --locale en --noGetErrOnBackgroundUpdate --validateDefaultNpmLocation",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 20140,
+      "parentPid": 37632,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" --max-old-space-size=3072 \"C:\\Users\\Administrator\\AppData\\Local\\微信开发者工具\\User Data\\80d774828fc67c7dafc59cd74ce70db0\\WeappForeignPkgs\\mptslib\\ts_4.1.2_5.2.2\\lib\\tsserver.js\" --useInferredProjectPerProjectRoot --enableTelemetry --cancellationPipeName C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\vscode-typescript\\688ef37af7e86eec8487\\tscancellation-fbc79c8c06d8b7904aa3.tmp* --globalPlugins typescript-miniprogram-plugin --pluginProbeLocations \"c:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\libs\\vseditor\\extensions\\wechat-miniprogram-development\" --locale en --noGetErrOnBackgroundUpdate --validateDefaultNpmLocation",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 40256,
+      "parentPid": 20140,
+      "name": "node-18.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node-18.exe\" \"C:/Users/Administrator/AppData/Local/微信开发者工具/User Data/80d774828fc67c7dafc59cd74ce70db0/WeappForeignPkgs/mptslib/ts_4.1.2_5.2.2/lib/typingsInstaller.js\" --globalTypingsCacheLocation C:/Users/Administrator/AppData/Local/Microsoft/TypeScript/4.1 --enableTelemetry --typesMapLocation \"C:/Users/Administrator/AppData/Local/微信开发者工具/User Data/80d774828fc67c7dafc59cd74ce70db0/WeappForeignPkgs/mptslib/ts_4.1.2_5.2.2/lib/typesMap.json\" --validateDefaultNpmLocation",
+      "mainWindowHandle": 0
+    },
+    {
+      "family": "C",
+      "pid": 14184,
+      "parentPid": 11064,
+      "name": "node.exe",
+      "executablePath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe",
+      "commandLine": "\"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\node.exe\" \"C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\code\\package.nw\\js\\common\\miniprogram-builder\\modules\\corecompiler/summerEntryProcess.js\" --expose-gc",
+      "mainWindowHandle": 0
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+Command: npm run evidence:visual -- --compare-protected
+Exit code: 1
+
+> budget-ledger-core@0.1.0 evidence:visual
+> node scripts/visual-evidence.mjs --compare-protected
+
+Error: protected file hash mismatch: {"beforeCount":112,"afterCount":113,"changed":["docs/VISUAL_COMPATIBILITY_AUDIT.md"],"ok":false,"beforePath":"artifacts/visual-evidence/protected-hashes-before.txt","afterPath":"artifacts/visual-evidence/protected-hashes-after.txt"}
+    at compareProtectedHashes (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/scripts/visual-evidence.mjs:301:25)
+    at async main (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/scripts/visual-evidence.mjs:2531:22)

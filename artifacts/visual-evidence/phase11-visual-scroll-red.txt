@@ -1,0 +1,51 @@
+✔ visual evidence CLI arguments use the isolated project and never pass an automation account (1.2661ms)
+✔ visual evidence CLI argument builder rejects a non-absolute project path or invalid port (0.3274ms)
+✔ visual evidence reports an early CLI exit with exit code and raw stdout and stderr (0.1478ms)
+✔ visual evidence PNG validation reads a non-zero PNG IHDR size (0.1801ms)
+✔ visual evidence console classification keeps warnings visible and errors fatal (0.2654ms)
+✔ visual evidence fixtures include a real cross-budget-period state (2.3647ms)
+✔ home fixture route uses one switchTab assistant and never redirectTo (0.8613ms)
+✖ visual evidence resets page and ledger scroll positions to zero before capture (0.8304ms)
+✔ compatibility failure removes old success artifacts and records the current failure (26.0536ms)
+✔ compatibility close failure removes success artifacts and preserves CLI output (12.5249ms)
+✔ compatibility run and close failures preserve both original errors (6.1959ms)
+✔ successful compatibility close clears an old error and keeps a valid PNG with ok true (11.0798ms)
+✔ full evidence close failure kills CLI, retains close-error console evidence, and removes success outputs (13.6673ms)
+✔ fresh-session retry abandons a hung runtime and succeeds with a different runtime and port (0.6013ms)
+✔ three screenshot timeouts create three distinct sessions and never reuse a failed runtime (0.2695ms)
+✔ deterministic fixture or application errors close once and do not retry (0.2359ms)
+✔ failed session cleanup preserves the screenshot timeout and cleanup errors and never retries (0.248ms)
+✔ second fixture retry keeps the first fixture result and fixed fixture order (0.389ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 513.5463
+
+✖ failing tests:
+
+test at tests\visual-evidence.test.js:169:1
+✖ visual evidence resets page and ledger scroll positions to zero before capture (0.8304ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:170:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

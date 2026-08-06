@@ -1,0 +1,80 @@
+Command: node --test tests/visual-evidence.test.js
+Exit code: 1
+✔ visual evidence CLI arguments use the isolated project and never pass an automation account
+✔ visual evidence CLI argument builder rejects a non-absolute project path or invalid port
+✔ visual evidence reports an early CLI exit with exit code and raw stdout and stderr
+✔ visual evidence PNG validation reads a non-zero PNG IHDR size
+✔ visual evidence console classification keeps warnings visible and errors fatal
+✔ visual evidence fixtures include a real cross-budget-period state
+✔ ledger visual fixtures contain three dates and expense income refund transfer in both docked modes
+✔ home fixture route uses one switchTab assistant and never redirectTo
+✔ visual evidence resets page and ledger scroll positions to zero before capture
+✔ visual evidence uses the native viewport readback when page.scrollTop is unavailable
+✔ visual evidence uses evaluate page instances when page automation APIs are unavailable
+✔ cleanup verification rejects a live QA process and port after close reports success
+✔ compatibility failure removes old success artifacts and records the current failure
+✔ compatibility close failure removes success artifacts and preserves CLI output
+✔ compatibility run and close failures preserve both original errors
+✔ successful compatibility close clears an old error and keeps a valid PNG with ok true
+✔ full evidence close failure kills CLI, retains close-error console evidence, and removes success outputs
+✔ fresh-session retry abandons a hung runtime and succeeds with a different runtime and port
+✔ three screenshot timeouts create three distinct sessions and never reuse a failed runtime
+✔ deterministic fixture or application errors close once and do not retry
+✔ failed session cleanup preserves the screenshot timeout and cleanup errors and never retries
+✔ second fixture retry keeps the first fixture result and fixed fixture order
+✔ screenshot diagnostic rejects missing request stage port PNG or real cleanup evidence
+✔ screenshot diagnostic never continues current-project probing before a stable minimal 2-of-2
+✖ strict single-instance entry fixes the C-drive CLI and bundled Node for a minimal touristappid project
+✖ strict single-instance outputs use distinct session paths and never overwrite the old diagnostic result or log
+✖ strict single-instance starts a second session only after the first cleanup is confirmed
+✖ strict single-instance decision distinguishes 2-of-2, 0-of-2, and 1-of-2 outcomes
+ℹ tests 28
+ℹ suites 0
+ℹ pass 24
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2043.7381
+
+✖ failing tests:
+
+test at tests\\visual-evidence.test.js:818:1
+✖ strict single-instance entry fixes the C-drive CLI and bundled Node for a minimal touristappid project
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:819:10)
+
+test at tests\\visual-evidence.test.js:830:1
+✖ strict single-instance outputs use distinct session paths and never overwrite the old diagnostic result or log
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:831:10)
+
+test at tests\\visual-evidence.test.js:845:1
+✖ strict single-instance starts a second session only after the first cleanup is confirmed
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:846:10)
+
+test at tests\\visual-evidence.test.js:851:1
+✖ strict single-instance decision distinguishes 2-of-2, 0-of-2, and 1-of-2 outcomes
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/visual-evidence.test.js:852:10)

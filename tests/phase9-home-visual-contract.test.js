@@ -37,7 +37,7 @@ function firstColor(wxss, selectorSource, property) {
   return pm[1];
 }
 
-function loadHomePage(listRecentBillsImpl) {
+function loadHomePage(listRecentTransactionsImpl) {
   const navigations = [];
   const listCalls = [];
   const core = {
@@ -63,12 +63,14 @@ function loadHomePage(listRecentBillsImpl) {
       settlement: null,
       pendingStartDay: null,
     }),
-    listRecentBills: (state) => {
+    listRecentTransactions: (state) => {
       listCalls.push(state);
-      if (typeof listRecentBillsImpl === 'function') return listRecentBillsImpl(state);
+      if (typeof listRecentTransactionsImpl === 'function') return listRecentTransactionsImpl(state);
       return [
         {
           id: 't1',
+          kind: 'controlled_expense',
+          typeLabel: '可控支出',
           date: '2026-08-02',
           amount: '¥12.00',
           amountCents: 1200,
@@ -76,6 +78,7 @@ function loadHomePage(listRecentBillsImpl) {
           categoryLevel2: '早餐',
           category: '餐饮 · 早餐',
           account: '现金',
+          accountFlow: '现金',
           budgetType: '可控',
         },
       ];
@@ -143,10 +146,11 @@ test('home binds real free amount quota prepaid recovery and scale fields', () =
   assert.doesNotMatch(wxml, /月预算百分比|预算进度条百分比/);
 });
 
-test('home.js loads recent bills through core.listRecentBills capped at five', () => {
+test('home.js loads all ledger rows through core.listRecentTransactions without a five-row cap', () => {
   const js = read('miniprogram/pages/home/home.js');
-  assert.match(js, /listRecentBills/);
-  assert.match(js, /\.slice\s*\(\s*0\s*,\s*5\s*\)|slice\(0,\s*5\)/);
+  assert.match(js, /listRecentTransactions/);
+  assert.doesNotMatch(js, /listRecentBills/);
+  assert.doesNotMatch(js, /\.slice\s*\(\s*0\s*,\s*5\s*\)|slice\(0,\s*5\)/);
   const { definition, listCalls } = loadHomePage();
   definition.setData = function setData(patch) {
     this.data = { ...this.data, ...patch };
@@ -154,8 +158,8 @@ test('home.js loads recent bills through core.listRecentBills capped at five', (
   definition.data = definition.data || {};
   definition.onShow();
   assert.equal(listCalls.length, 1);
-  assert.ok(Array.isArray(definition.data.recentBills));
-  assert.ok(definition.data.recentBills.length <= 5);
+  assert.ok(Array.isArray(definition.data.ledgerGroups));
+  assert.equal(definition.data.ledgerTransactionCount, 1);
 });
 
 test('home covers settlement prepaid plan pending error and bills-empty states', () => {
@@ -166,8 +170,9 @@ test('home covers settlement prepaid plan pending error and bills-empty states',
   assert.match(wxml, /model\.planPendingItems\.length/);
   assert.match(wxml, /model\.planReminders|model\.planDueToday|model\.planExecutionResults/);
   assert.match(wxml, /wx:if="\{\{error\}\}"/);
-  assert.match(wxml, /还没有账单，用底部“记一笔”记下第一笔/);
-  assert.match(wxml, /recentBills\.length/);
+  assert.match(wxml, /还没有流水，用底部“记一笔”记下第一笔/);
+  assert.match(wxml, /ledgerGroups\.length/);
+  assert.match(wxml, /ledgerTransactionCount/);
   // plan block only when events exist — not a permanent empty-plan card
   assert.doesNotMatch(wxml, /class="[^"]*plan-card[^"]*"[\s\S]{0,40}暂无计划提醒/);
 });
@@ -204,7 +209,7 @@ test('home layout order is header budget bills then conditional alerts', () => {
   const wxml = read('miniprogram/pages/home/home.wxml');
   const header = wxml.indexOf('home-header');
   const budget = wxml.indexOf('budget-card');
-  const bills = wxml.indexOf('recent-bills');
+  const bills = wxml.indexOf('ledger-sheet');
   const plan = wxml.indexOf('plan-section');
   assert.ok(header >= 0 && budget > header);
   assert.ok(bills > budget);
@@ -276,12 +281,13 @@ test('design system documents warm sample structure and bans', () => {
 
 test('home bill rows bind real category date account amount fields', () => {
   const wxml = read('miniprogram/pages/home/home.wxml');
-  assert.match(wxml, /wx:for="\{\{recentBills\}\}"/);
-  assert.match(wxml, /item\.category/);
-  assert.match(wxml, /item\.date/);
-  assert.match(wxml, /item\.account/);
-  assert.match(wxml, /item\.amount/);
-  assert.match(wxml, /还没有账单，用底部“记一笔”记下第一笔/);
+  assert.match(wxml, /wx:for="\{\{ledgerGroups\}\}"/);
+  assert.match(wxml, /item\.transactions/);
+  assert.match(wxml, /transaction\.category/);
+  assert.match(wxml, /transaction\.date/);
+  assert.match(wxml, /transaction\.accountFlow/);
+  assert.match(wxml, /transaction\.amount/);
+  assert.match(wxml, /还没有流水，用底部“记一笔”记下第一笔/);
 });
 
 test('home scale is status expression not a fake month percent bar', () => {
@@ -402,6 +408,8 @@ test('home onShow uses formatBillCategory from categoryLevel1/2 not string repla
   const { definition } = loadHomePage(() => [
     {
       id: 'bad',
+      kind: 'fixed_expense',
+      typeLabel: '利息支付',
       date: '2026-08-01',
       amount: '¥1.00',
       amountCents: 100,
@@ -409,6 +417,7 @@ test('home onShow uses formatBillCategory from categoryLevel1/2 not string repla
       categoryLevel2: null,
       category: '利息 · null',
       account: '现金',
+      accountFlow: '现金',
       budgetType: '固定',
     },
   ]);
@@ -417,8 +426,8 @@ test('home onShow uses formatBillCategory from categoryLevel1/2 not string repla
   };
   definition.data = definition.data || {};
   definition.onShow();
-  assert.equal(definition.data.recentBills[0].category, '利息');
-  assert.doesNotMatch(definition.data.recentBills[0].category, /null|undefined/i);
+  assert.equal(definition.data.ledgerGroups[0].transactions[0].category, '利息');
+  assert.doesNotMatch(definition.data.ledgerGroups[0].transactions[0].category, /null|undefined/i);
 });
 
 test('320px keeps header row and bill row horizontal; bill list action ≥88rpx', () => {

@@ -1,0 +1,2178 @@
+✔ project config points the mini program root at miniprogram (19.8463ms)
+✔ app config preserves the required four page order alongside the ledger and mine tabs (1.4417ms)
+✔ initialized users start on ledger while first use switches to mine (1.0581ms)
+✔ mini program application bundle is generated from the application source (5.1681ms)
+✔ mini program build manifest records the application source hash (0.4812ms)
+✔ settings page contains the first-use budget form (0.6911ms)
+✔ home page binds the real today free amount model (0.492ms)
+✔ entry page contains account category note and budget switch controls (0.5678ms)
+✔ entry page contains the local previous similar bill panel (0.5108ms)
+✔ bills page contains controlled fixed date category account and amount fields (0.7886ms)
+✔ private developer config is ignored by the repository rules (0.4025ms)
+✔ app config exposes exactly two tab destinations and keeps bills and entry non-tab (6.0981ms)
+✔ custom tab bar entry is declared as a native component (0.7065ms)
+✔ custom tab bar selected state follows the current route including neutral entry mode (4.8637ms)
+✔ ledger and mine use switchTab while the central record action uses the ledger source stack (2.1425ms)
+✔ custom tab bar template exposes exactly ledger, record and mine (0.6943ms)
+✔ custom tab bar reserves safe area and at least 88rpx interaction height (0.9214ms)
+✔ missing-ledger bills and entry pages route to management with switchTab (0.7436ms)
+✔ home bills entry and settings route transitions preserve tab navigation types (1.9438ms)
+✖ home keeps real budget states and removes duplicate normal record and management CTAs (2.3641ms)
+✔ shipped Phase10 scope has no legacy retail starter reference (21.3171ms)
+✖ 首页契约只允许预算概览态和全屏账本态两个停靠状态 (3.8892ms)
+✖ 首页从真实 listRecentTransactions 读取全部流水而不是截断最近五笔 (0.6717ms)
+✖ 真实流水按日期倒序分组并保留同日现有倒序 (11.6484ms)
+✖ 日汇总分开计算支出和收入并排除转账还款借贷投资 (3.7183ms)
+✖ 账本分组展示长分类、长金额和每一笔流水详情 (1.9205ms)
+✖ 概览账单面板使用可用空间固定停靠高度而不按流水数量增长 (1.0272ms)
+✖ 同一账本列表连续用于概览和展开，不复制两套流水循环 (1.0459ms)
+✖ 概览上推切换全屏账本，短滑和取消不进入中间态 (1.4659ms)
+✖ 展开账本只有在列表顶部下拉才恢复概览态 (1.7519ms)
+✖ 展开态滚动只更新 scrollTop，不改变两个停靠状态 (1.1069ms)
+✖ 分析返回和切换我的再回来不误清理账本停靠状态 (1.4435ms)
+✖ 记账成功通过一次性首页重置信号回到概览态 (0.786ms)
+✖ 重复点击当前账本 Tab 调用首页公开重置而不是制造新的业务状态 (0.4047ms)
+✖ 展开态顶部固定账本和分析入口，底部导航仍由全局组件承担 (0.5703ms)
+✖ 首页账本保持提醒结算和空状态可达 (0.5158ms)
+✖ 首页账本在320px下允许长文本换行且不使用逐笔卡片 (0.5616ms)
+✔ home binds real free amount quota prepaid recovery and scale fields (1.9917ms)
+✖ home.js loads all ledger rows through core.listRecentTransactions without a five-row cap (1.8598ms)
+✖ home covers settlement prepaid plan pending error and bills-empty states (1.6566ms)
+✔ home keeps settlement pending overdue and bills navigation handlers (3.9756ms)
+✖ home layout order is header budget bills then conditional alerts (4.5011ms)
+✔ home styles freeze warm sample tokens tap size and 320 rules (1.256ms)
+✔ home body and primary colors meet WCAG contrast ≥4.5 on shipped hex (1.0608ms)
+✔ design system documents warm sample structure and bans (1.6245ms)
+✖ home bill rows bind real category date account amount fields (1.0824ms)
+✔ home scale is status expression not a fake month percent bar (0.7839ms)
+✔ home.wxml has no hidden empty-plan contract anchors or source tokens (0.4926ms)
+✔ hasPlanEvents is false for overdue-only or pending-only; true only for generic summary fields (0.8725ms)
+✔ formatBillCategory filters null/undefined and falls back to 未分类 (1.04ms)
+✖ home onShow uses formatBillCategory from categoryLevel1/2 not string replace theater (1.394ms)
+✔ 320px keeps header row and bill row horizontal; bill list action ≥88rpx (1.2684ms)
+✔ visual evidence CLI arguments use the isolated project and never pass an automation account (1.295ms)
+✔ visual evidence CLI argument builder rejects a non-absolute project path or invalid port (0.3634ms)
+✔ visual evidence reports an early CLI exit with exit code and raw stdout and stderr (0.1687ms)
+✔ visual evidence PNG validation reads a non-zero PNG IHDR size (0.1962ms)
+✔ visual evidence console classification keeps warnings visible and errors fatal (0.3018ms)
+✔ visual evidence fixtures include a real cross-budget-period state (2.5578ms)
+✔ home fixture route uses one switchTab assistant and never redirectTo (1.6993ms)
+✔ compatibility failure removes old success artifacts and records the current failure (23.838ms)
+✔ compatibility close failure removes success artifacts and preserves CLI output (15.6733ms)
+✔ compatibility run and close failures preserve both original errors (6.6462ms)
+✔ successful compatibility close clears an old error and keeps a valid PNG with ok true (12.9874ms)
+✔ full evidence close failure kills CLI, retains close-error console evidence, and removes success outputs (15.9798ms)
+✔ fresh-session retry abandons a hung runtime and succeeds with a different runtime and port (0.6335ms)
+✔ three screenshot timeouts create three distinct sessions and never reuse a failed runtime (0.2828ms)
+✔ deterministic fixture or application errors close once and do not retry (0.3551ms)
+✔ failed session cleanup preserves the screenshot timeout and cleanup errors and never retries (0.2767ms)
+✔ second fixture retry keeps the first fixture result and fixed fixture order (0.3938ms)
+ℹ tests 69
+ℹ suites 0
+ℹ pass 47
+ℹ fail 22
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 854.5529
+
+✖ failing tests:
+
+test at tests\phase10-navigation.test.js:175:1
+✖ home keeps real budget states and removes duplicate normal record and management CTAs (2.3641ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledgerGroups/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase10-navigation.test.js:192:13)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /ledgerGroups/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:109:1
+✖ 首页契约只允许预算概览态和全屏账本态两个停靠状态 (3.8892ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledgerMode/. Input:
+  
+  "const core = require('../../lib/application.js');\n" +
+    '\n' +
+    'function hasPlanEvents(model) {\n' +
+    '  if (!model) return false;\n' +
+    '  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n' +
+    '  return Boolean(\n' +
+    '    (model.planExecutionResults && model.planExecutionResults.length)\n' +
+    '    || (model.planReminders && model.planReminders.length)\n' +
+    '    || (model.planDueToday && model.planDueToday.length)\n' +
+    '    || model.planExecutionMessage,\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    'function normalizeCategoryPart(value) {\n' +
+    "  if (value == null) return '';\n" +
+    '  const text = String(value).trim();\n' +
+    "  if (!text || text === 'null' || text === 'undefined') return '';\n" +
+    '  return text;\n' +
+    '}\n' +
+    '\n' +
+    'function formatBillCategory(bill) {\n' +
+    '  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n' +
+    '    .map(normalizeCategoryPart)\n' +
+    '    .filter(Boolean);\n' +
+    "  return parts.length ? parts.join(' · ') : '未分类';\n" +
+    '}\n' +
+    '\n' +
+    'function buildScale(model) {\n' +
+    '  if (!model || model.needsSettlement) {\n' +
+    '    return {\n' +
+    "      mode: 'settlement',\n" +
+    '      fillPercent: 0,\n' +
+    "      surplusText: '',\n" +
+    "      dailyLabel: '',\n" +
+    '    };\n' +
+    '  }\n' +
+    '  const free = Number(model.todayFreeCents) || 0;\n' +
+    '  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n' +
+    '  if ((model.prepaidCents || 0) > 0) {\n' +
+    '    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n' +
+    '    return {\n' +
+    "      mode: 'prepaid',\n" +
+    '      fillPercent: Math.min(100, over),\n' +
+    "      surplusText: '',\n" +
+    '      dailyLabel: model.fullSingleDayQuota,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  const ratio = free / daily;\n' +
+    '  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n' +
+    '  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n' +
+    '  const surplusCents = free - daily;\n' +
+    "  let surplusText = '';\n" +
+    '  if (surplusCents > 0) {\n' +
+    '    const yuan = (surplusCents / 100).toFixed(2);\n' +
+    '    surplusText = `比今日基准多 ¥${yuan}`;\n' +
+    '  } else if (surplusCents === 0) {\n' +
+    "    surplusText = '刚好等于今日基准额度';\n" +
+    '  } else {\n' +
+    "    surplusText = '今日可用已低于单日基准';\n" +
+    '  }\n' +
+    '  return {\n' +
+    "    mode: 'normal',\n" +
+    '    fillPercent,\n' +
+    '    surplusText,\n' +
+    '    dailyLabel: model.fullSingleDayQuota,\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    'Page({\n' +
+    '  data: {\n' +
+    '    model: null,\n' +
+    '    recentBills: [],\n' +
+    '    scale: null,\n' +
+    '    hasPlanEvents: false,\n' +
+    "    error: '',\n" +
+    '    positiveModeIndex: 0,\n' +
+    '    positiveModeSelected: false,\n' +
+    "    positiveModeLabel: '请选择',\n" +
+    '    overspendModeIndex: 0,\n' +
+    '    overspendModeSelected: false,\n' +
+    "    overspendModeLabel: '请选择',\n" +
+    "    positiveModeLabels: ['带入下期', '转入奖励余额'],\n" +
+    "    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n" +
+    "    pendingAmountYuan: '',\n" +
+    "    pendingPrincipalYuan: '',\n" +
+    "    pendingInterestYuan: '',\n" +
+    '  },\n' +
+    '\n' +
+    '  onShow() {\n' +
+    '    const app = getApp();\n' +
+    '    if (!app.globalData.state) {\n' +
+    "      wx.switchTab({ url: '/pages/settings/settings' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n' +
+    '      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n' +
+    '        ...item,\n' +
+    '        category: formatBillCategory(item),\n' +
+    '      }));\n' +
+    '      this.setData({\n' +
+    '        model,\n' +
+    '        recentBills,\n' +
+    '        scale: buildScale(model),\n' +
+    '        hasPlanEvents: hasPlanEvents(model),\n' +
+    "        error: app.globalData.storageError || '',\n" +
+    '        positiveModeSelected: false,\n' +
+    "        positiveModeLabel: '请选择',\n" +
+    '        overspendModeSelected: false,\n' +
+    "        overspendModeLabel: '请选择',\n" +
+    '      });\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '\n' +
+    "  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n" +
+    '  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n' +
+    '  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n' +
+    '  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n' +
+    '  retryPendingPlan(event) {\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n' +
+    '        pendingId: event.currentTarget.dataset.id,\n' +
+    '        amountYuan: this.data.pendingAmountYuan,\n' +
+    '        principalYuan: this.data.pendingPrincipalYuan,\n' +
+    '        interestYuan: this.data.pendingInterestYuan,\n' +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      app.globalData.planRunSummary = {\n' +
+    '        date: core.todayIso(),\n' +
+    '        executed: [],\n' +
+    '        pending: [],\n' +
+    '        legacy: [],\n' +
+    "        message: '待处理计划已补记',\n" +
+    '      };\n' +
+    "      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n" +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '  dismissPlanOverdueBanner() {\n' +
+    '    const app = getApp();\n' +
+    '    app.globalData.state = core.dismissOverduePlanBanner(\n' +
+    '      app.globalData.state,\n' +
+    '      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n' +
+    '    );\n' +
+    '    app.saveState();\n' +
+    '    this.onShow();\n' +
+    '  },\n' +
+    '  onPositiveModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n' +
+    '  },\n' +
+    '  onOverspendModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n' +
+    '  },\n' +
+    '  settlePeriod() {\n' +
+    '    const settlement = this.data.model?.settlement;\n' +
+    '    if (!settlement) return;\n' +
+    '    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n' +
+    "      this.setData({ error: '请先选择结余处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n' +
+    "      this.setData({ error: '请先选择超支处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n' +
+    "        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n" +
+    "        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n" +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '});\n' +
+    '\n' +
+    "if (typeof module !== 'undefined' && module.exports) {\n" +
+    '  module.exports.hasPlanEvents = hasPlanEvents;\n' +
+    '  module.exports.formatBillCategory = formatBillCategory;\n' +
+    '  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n' +
+    '  module.exports.buildScale = buildScale;\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:112:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const core = require('../../lib/application.js');\n\nfunction hasPlanEvents(model) {\n  if (!model) return false;\n  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n  return Boolean(\n    (model.planExecutionResults && model.planExecutionResults.length)\n    || (model.planReminders && model.planReminders.length)\n    || (model.planDueToday && model.planDueToday.length)\n    || model.planExecutionMessage,\n  );\n}\n\nfunction normalizeCategoryPart(value) {\n  if (value == null) return '';\n  const text = String(value).trim();\n  if (!text || text === 'null' || text === 'undefined') return '';\n  return text;\n}\n\nfunction formatBillCategory(bill) {\n  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n    .map(normalizeCategoryPart)\n    .filter(Boolean);\n  return parts.length ? parts.join(' · ') : '未分类';\n}\n\nfunction buildScale(model) {\n  if (!model || model.needsSettlement) {\n    return {\n      mode: 'settlement',\n      fillPercent: 0,\n      surplusText: '',\n      dailyLabel: '',\n    };\n  }\n  const free = Number(model.todayFreeCents) || 0;\n  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n  if ((model.prepaidCents || 0) > 0) {\n    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n    return {\n      mode: 'prepaid',\n      fillPercent: Math.min(100, over),\n      surplusText: '',\n      dailyLabel: model.fullSingleDayQuota,\n    };\n  }\n  const ratio = free / daily;\n  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n  const surplusCents = free - daily;\n  let surplusText = '';\n  if (surplusCents > 0) {\n    const yuan = (surplusCents / 100).toFixed(2);\n    surplusText = `比今日基准多 ¥${yuan}`;\n  } else if (surplusCents === 0) {\n    surplusText = '刚好等于今日基准额度';\n  } else {\n    surplusText = '今日可用已低于单日基准';\n  }\n  return {\n    mode: 'normal',\n    fillPercent,\n    surplusText,\n    dailyLabel: model.fullSingleDayQuota,\n  };\n}\n\nPage({\n  data: {\n    model: null,\n    recentBills: [],\n    scale: null,\n    hasPlanEvents: false,\n    error: '',\n    positiveModeIndex: 0,\n    positiveModeSelected: false,\n    positiveModeLabel: '请选择',\n    overspendModeIndex: 0,\n    overspendModeSelected: false,\n    overspendModeLabel: '请选择',\n    positiveModeLabels: ['带入下期', '转入奖励余额'],\n    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n    pendingAmountYuan: '',\n    pendingPrincipalYuan: '',\n    pendingInterestYuan: '',\n  },\n\n  onShow() {\n    const app = getApp();\n    if (!app.globalData.state) {\n      wx.switchTab({ url: '/pages/settings/settings' });\n      return;\n    }\n    try {\n      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n        ...item,\n        category: formatBillCategory(item),\n      }));\n      this.setData({\n        model,\n        recentBills,\n        scale: buildScale(model),\n        hasPlanEvents: hasPlanEvents(model),\n        error: app.globalData.storageError || '',\n        positiveModeSelected: false,\n        positiveModeLabel: '请选择',\n        overspendModeSelected: false,\n        overspendModeLabel: '请选择',\n      });\n    } catch (error) {\n      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n    }\n  },\n\n  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n  retryPendingPlan(event) {\n    try {\n      const app = getApp();\n      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n        pendingId: event.currentTarget.dataset.id,\n        amountYuan: this.data.pendingAmountYuan,\n        principalYuan: this.data.pendingPrincipalYuan,\n        interestYuan: this.data.pendingInterestYuan,\n      });\n      app.saveState();\n      app.globalData.planRunSummary = {\n        date: core.todayIso(),\n        executed: [],\n        pending: [],\n        legacy: [],\n        message: '待处理计划已补记',\n      };\n      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n  dismissPlanOverdueBanner() {\n    const app = getApp();\n    app.globalData.state = core.dismissOverduePlanBanner(\n      app.globalData.state,\n      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n    );\n    app.saveState();\n    this.onShow();\n  },\n  onPositiveModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n  },\n  onOverspendModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n  },\n  settlePeriod() {\n    const settlement = this.data.model?.settlement;\n    if (!settlement) return;\n    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n      this.setData({ error: '请先选择结余处理方式' });\n      return;\n    }\n    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n      this.setData({ error: '请先选择超支处理方式' });\n      return;\n    }\n    try {\n      const app = getApp();\n      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n      });\n      app.saveState();\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n});\n\nif (typeof module !== 'undefined' && module.exports) {\n  module.exports.hasPlanEvents = hasPlanEvents;\n  module.exports.formatBillCategory = formatBillCategory;\n  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n  module.exports.buildScale = buildScale;\n}\n",
+    expected: /ledgerMode/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:121:1
+✖ 首页从真实 listRecentTransactions 读取全部流水而不是截断最近五笔 (0.6717ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /listRecentTransactions/. Input:
+  
+  "const core = require('../../lib/application.js');\n" +
+    '\n' +
+    'function hasPlanEvents(model) {\n' +
+    '  if (!model) return false;\n' +
+    '  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n' +
+    '  return Boolean(\n' +
+    '    (model.planExecutionResults && model.planExecutionResults.length)\n' +
+    '    || (model.planReminders && model.planReminders.length)\n' +
+    '    || (model.planDueToday && model.planDueToday.length)\n' +
+    '    || model.planExecutionMessage,\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    'function normalizeCategoryPart(value) {\n' +
+    "  if (value == null) return '';\n" +
+    '  const text = String(value).trim();\n' +
+    "  if (!text || text === 'null' || text === 'undefined') return '';\n" +
+    '  return text;\n' +
+    '}\n' +
+    '\n' +
+    'function formatBillCategory(bill) {\n' +
+    '  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n' +
+    '    .map(normalizeCategoryPart)\n' +
+    '    .filter(Boolean);\n' +
+    "  return parts.length ? parts.join(' · ') : '未分类';\n" +
+    '}\n' +
+    '\n' +
+    'function buildScale(model) {\n' +
+    '  if (!model || model.needsSettlement) {\n' +
+    '    return {\n' +
+    "      mode: 'settlement',\n" +
+    '      fillPercent: 0,\n' +
+    "      surplusText: '',\n" +
+    "      dailyLabel: '',\n" +
+    '    };\n' +
+    '  }\n' +
+    '  const free = Number(model.todayFreeCents) || 0;\n' +
+    '  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n' +
+    '  if ((model.prepaidCents || 0) > 0) {\n' +
+    '    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n' +
+    '    return {\n' +
+    "      mode: 'prepaid',\n" +
+    '      fillPercent: Math.min(100, over),\n' +
+    "      surplusText: '',\n" +
+    '      dailyLabel: model.fullSingleDayQuota,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  const ratio = free / daily;\n' +
+    '  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n' +
+    '  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n' +
+    '  const surplusCents = free - daily;\n' +
+    "  let surplusText = '';\n" +
+    '  if (surplusCents > 0) {\n' +
+    '    const yuan = (surplusCents / 100).toFixed(2);\n' +
+    '    surplusText = `比今日基准多 ¥${yuan}`;\n' +
+    '  } else if (surplusCents === 0) {\n' +
+    "    surplusText = '刚好等于今日基准额度';\n" +
+    '  } else {\n' +
+    "    surplusText = '今日可用已低于单日基准';\n" +
+    '  }\n' +
+    '  return {\n' +
+    "    mode: 'normal',\n" +
+    '    fillPercent,\n' +
+    '    surplusText,\n' +
+    '    dailyLabel: model.fullSingleDayQuota,\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    'Page({\n' +
+    '  data: {\n' +
+    '    model: null,\n' +
+    '    recentBills: [],\n' +
+    '    scale: null,\n' +
+    '    hasPlanEvents: false,\n' +
+    "    error: '',\n" +
+    '    positiveModeIndex: 0,\n' +
+    '    positiveModeSelected: false,\n' +
+    "    positiveModeLabel: '请选择',\n" +
+    '    overspendModeIndex: 0,\n' +
+    '    overspendModeSelected: false,\n' +
+    "    overspendModeLabel: '请选择',\n" +
+    "    positiveModeLabels: ['带入下期', '转入奖励余额'],\n" +
+    "    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n" +
+    "    pendingAmountYuan: '',\n" +
+    "    pendingPrincipalYuan: '',\n" +
+    "    pendingInterestYuan: '',\n" +
+    '  },\n' +
+    '\n' +
+    '  onShow() {\n' +
+    '    const app = getApp();\n' +
+    '    if (!app.globalData.state) {\n' +
+    "      wx.switchTab({ url: '/pages/settings/settings' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n' +
+    '      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n' +
+    '        ...item,\n' +
+    '        category: formatBillCategory(item),\n' +
+    '      }));\n' +
+    '      this.setData({\n' +
+    '        model,\n' +
+    '        recentBills,\n' +
+    '        scale: buildScale(model),\n' +
+    '        hasPlanEvents: hasPlanEvents(model),\n' +
+    "        error: app.globalData.storageError || '',\n" +
+    '        positiveModeSelected: false,\n' +
+    "        positiveModeLabel: '请选择',\n" +
+    '        overspendModeSelected: false,\n' +
+    "        overspendModeLabel: '请选择',\n" +
+    '      });\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '\n' +
+    "  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n" +
+    '  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n' +
+    '  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n' +
+    '  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n' +
+    '  retryPendingPlan(event) {\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n' +
+    '        pendingId: event.currentTarget.dataset.id,\n' +
+    '        amountYuan: this.data.pendingAmountYuan,\n' +
+    '        principalYuan: this.data.pendingPrincipalYuan,\n' +
+    '        interestYuan: this.data.pendingInterestYuan,\n' +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      app.globalData.planRunSummary = {\n' +
+    '        date: core.todayIso(),\n' +
+    '        executed: [],\n' +
+    '        pending: [],\n' +
+    '        legacy: [],\n' +
+    "        message: '待处理计划已补记',\n" +
+    '      };\n' +
+    "      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n" +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '  dismissPlanOverdueBanner() {\n' +
+    '    const app = getApp();\n' +
+    '    app.globalData.state = core.dismissOverduePlanBanner(\n' +
+    '      app.globalData.state,\n' +
+    '      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n' +
+    '    );\n' +
+    '    app.saveState();\n' +
+    '    this.onShow();\n' +
+    '  },\n' +
+    '  onPositiveModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n' +
+    '  },\n' +
+    '  onOverspendModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n' +
+    '  },\n' +
+    '  settlePeriod() {\n' +
+    '    const settlement = this.data.model?.settlement;\n' +
+    '    if (!settlement) return;\n' +
+    '    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n' +
+    "      this.setData({ error: '请先选择结余处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n' +
+    "      this.setData({ error: '请先选择超支处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n' +
+    "        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n" +
+    "        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n" +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '});\n' +
+    '\n' +
+    "if (typeof module !== 'undefined' && module.exports) {\n" +
+    '  module.exports.hasPlanEvents = hasPlanEvents;\n' +
+    '  module.exports.formatBillCategory = formatBillCategory;\n' +
+    '  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n' +
+    '  module.exports.buildScale = buildScale;\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:123:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const core = require('../../lib/application.js');\n\nfunction hasPlanEvents(model) {\n  if (!model) return false;\n  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n  return Boolean(\n    (model.planExecutionResults && model.planExecutionResults.length)\n    || (model.planReminders && model.planReminders.length)\n    || (model.planDueToday && model.planDueToday.length)\n    || model.planExecutionMessage,\n  );\n}\n\nfunction normalizeCategoryPart(value) {\n  if (value == null) return '';\n  const text = String(value).trim();\n  if (!text || text === 'null' || text === 'undefined') return '';\n  return text;\n}\n\nfunction formatBillCategory(bill) {\n  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n    .map(normalizeCategoryPart)\n    .filter(Boolean);\n  return parts.length ? parts.join(' · ') : '未分类';\n}\n\nfunction buildScale(model) {\n  if (!model || model.needsSettlement) {\n    return {\n      mode: 'settlement',\n      fillPercent: 0,\n      surplusText: '',\n      dailyLabel: '',\n    };\n  }\n  const free = Number(model.todayFreeCents) || 0;\n  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n  if ((model.prepaidCents || 0) > 0) {\n    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n    return {\n      mode: 'prepaid',\n      fillPercent: Math.min(100, over),\n      surplusText: '',\n      dailyLabel: model.fullSingleDayQuota,\n    };\n  }\n  const ratio = free / daily;\n  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n  const surplusCents = free - daily;\n  let surplusText = '';\n  if (surplusCents > 0) {\n    const yuan = (surplusCents / 100).toFixed(2);\n    surplusText = `比今日基准多 ¥${yuan}`;\n  } else if (surplusCents === 0) {\n    surplusText = '刚好等于今日基准额度';\n  } else {\n    surplusText = '今日可用已低于单日基准';\n  }\n  return {\n    mode: 'normal',\n    fillPercent,\n    surplusText,\n    dailyLabel: model.fullSingleDayQuota,\n  };\n}\n\nPage({\n  data: {\n    model: null,\n    recentBills: [],\n    scale: null,\n    hasPlanEvents: false,\n    error: '',\n    positiveModeIndex: 0,\n    positiveModeSelected: false,\n    positiveModeLabel: '请选择',\n    overspendModeIndex: 0,\n    overspendModeSelected: false,\n    overspendModeLabel: '请选择',\n    positiveModeLabels: ['带入下期', '转入奖励余额'],\n    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n    pendingAmountYuan: '',\n    pendingPrincipalYuan: '',\n    pendingInterestYuan: '',\n  },\n\n  onShow() {\n    const app = getApp();\n    if (!app.globalData.state) {\n      wx.switchTab({ url: '/pages/settings/settings' });\n      return;\n    }\n    try {\n      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n        ...item,\n        category: formatBillCategory(item),\n      }));\n      this.setData({\n        model,\n        recentBills,\n        scale: buildScale(model),\n        hasPlanEvents: hasPlanEvents(model),\n        error: app.globalData.storageError || '',\n        positiveModeSelected: false,\n        positiveModeLabel: '请选择',\n        overspendModeSelected: false,\n        overspendModeLabel: '请选择',\n      });\n    } catch (error) {\n      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n    }\n  },\n\n  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n  retryPendingPlan(event) {\n    try {\n      const app = getApp();\n      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n        pendingId: event.currentTarget.dataset.id,\n        amountYuan: this.data.pendingAmountYuan,\n        principalYuan: this.data.pendingPrincipalYuan,\n        interestYuan: this.data.pendingInterestYuan,\n      });\n      app.saveState();\n      app.globalData.planRunSummary = {\n        date: core.todayIso(),\n        executed: [],\n        pending: [],\n        legacy: [],\n        message: '待处理计划已补记',\n      };\n      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n  dismissPlanOverdueBanner() {\n    const app = getApp();\n    app.globalData.state = core.dismissOverduePlanBanner(\n      app.globalData.state,\n      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n    );\n    app.saveState();\n    this.onShow();\n  },\n  onPositiveModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n  },\n  onOverspendModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n  },\n  settlePeriod() {\n    const settlement = this.data.model?.settlement;\n    if (!settlement) return;\n    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n      this.setData({ error: '请先选择结余处理方式' });\n      return;\n    }\n    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n      this.setData({ error: '请先选择超支处理方式' });\n      return;\n    }\n    try {\n      const app = getApp();\n      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n      });\n      app.saveState();\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n});\n\nif (typeof module !== 'undefined' && module.exports) {\n  module.exports.hasPlanEvents = hasPlanEvents;\n  module.exports.formatBillCategory = formatBillCategory;\n  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n  module.exports.buildScale = buildScale;\n}\n",
+    expected: /listRecentTransactions/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:130:1
+✖ 真实流水按日期倒序分组并保留同日现有倒序 (11.6484ms)
+  TypeError: helpers.buildLedgerGroups is not a function
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:133:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:142:1
+✖ 日汇总分开计算支出和收入并排除转账还款借贷投资 (3.7183ms)
+  TypeError: impact is not a function
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:145:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:160:1
+✖ 账本分组展示长分类、长金额和每一笔流水详情 (1.9205ms)
+  TypeError: helpers.buildLedgerGroups is not a function
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:162:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:171:1
+✖ 概览账单面板使用可用空间固定停靠高度而不按流水数量增长 (1.0272ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledger-sheet-overview/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:174:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /ledger-sheet-overview/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:181:1
+✖ 同一账本列表连续用于概览和展开，不复制两套流水循环 (1.0459ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:183:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:189:1
+✖ 概览上推切换全屏账本，短滑和取消不进入中间态 (1.4659ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 'overview'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:191:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'overview',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:204:1
+✖ 展开账本只有在列表顶部下拉才恢复概览态 (1.7519ms)
+  TypeError: Cannot read properties of undefined (reading 'call')
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:206:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:218:1
+✖ 展开态滚动只更新 scrollTop，不改变两个停靠状态 (1.1069ms)
+  TypeError: Cannot read properties of undefined (reading 'call')
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:220:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:226:1
+✖ 分析返回和切换我的再回来不误清理账本停靠状态 (1.4435ms)
+  TypeError: Cannot read properties of undefined (reading 'call')
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:228:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
+
+test at tests\phase11-home-ledger-sheet.test.js:236:1
+✖ 记账成功通过一次性首页重置信号回到概览态 (0.786ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /globalData\.homeResetRequested\s*=\s*true/. Input:
+  
+  "const core = require('../../lib/application.js');\n" +
+    '\n' +
+    'Page({\n' +
+    '  data: {\n' +
+    "    modes: ['支出', '收入', '转账'],\n" +
+    '    modeIndex: 0,\n' +
+    "    amountYuan: '',\n" +
+    "    date: '',\n" +
+    '    accounts: [],\n' +
+    '    accountIndex: 0,\n' +
+    '    toAccounts: [],\n' +
+    '    toAccountIndex: 0,\n' +
+    '    categories: [],\n' +
+    '    level1Index: 0,\n' +
+    '    level2Index: 0,\n' +
+    '    level2Options: [],\n' +
+    "    note: '',\n" +
+    '    includeControlledBudget: true,\n' +
+    '    previous: null,\n' +
+    "    error: '',\n" +
+    '  },\n' +
+    '\n' +
+    '  onShow() {\n' +
+    '    const app = getApp();\n' +
+    '    if (!app.globalData.state) {\n' +
+    "      wx.switchTab({ url: '/pages/settings/settings' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    const categories = core.categoryOptions();\n' +
+    '    this.setData({\n' +
+    '      date: core.todayIso(),\n' +
+    '      categories,\n' +
+    '      level2Options: categories[0].level2,\n' +
+    "      error: app.globalData.storageError || '',\n" +
+    '    });\n' +
+    '    this.refreshAccountOptions(this.data.modeIndex);\n' +
+    '    this.refreshPrevious(categories[0].level1, categories[0].level2[0]);\n' +
+    '  },\n' +
+    '\n' +
+    '  refreshAccountOptions(modeIndex) {\n' +
+    '    const all = getApp().globalData.state.accounts;\n' +
+    '    let accounts;\n' +
+    "    if (modeIndex === 0) accounts = all.filter((item) => ['cash', 'bank', 'wallet', 'credit_card'].includes(item.type));\n" +
+    "    else if (modeIndex === 1) accounts = all.filter((item) => !['credit_card', 'loan'].includes(item.type));\n" +
+    "    else accounts = all.filter((item) => ['cash', 'bank', 'wallet'].includes(item.type));\n" +
+    '    this.setData({\n' +
+    '      accounts,\n' +
+    '      accountIndex: 0,\n' +
+    '      toAccounts: modeIndex === 2 ? accounts : [],\n' +
+    '      toAccountIndex: accounts.length > 1 ? 1 : 0,\n' +
+    '    });\n' +
+    '  },\n' +
+    '\n' +
+    '  onModeChange(event) {\n' +
+    '    const modeIndex = Number(event.currentTarget.dataset.index);\n' +
+    "    this.setData({ modeIndex, error: '', previous: modeIndex === 0 ? this.data.previous : null });\n" +
+    '    this.refreshAccountOptions(modeIndex);\n' +
+    '    if (modeIndex === 0) {\n' +
+    '      const category = this.data.categories[this.data.level1Index];\n' +
+    '      this.refreshPrevious(category.level1, this.data.level2Options[this.data.level2Index]);\n' +
+    '    }\n' +
+    '  },\n' +
+    '  onAmountInput(event) { this.setData({ amountYuan: event.detail.value }); },\n' +
+    '  onDateChange(event) { this.setData({ date: event.detail.value }); },\n' +
+    '  onNoteInput(event) { this.setData({ note: event.detail.value }); },\n' +
+    '  onAccountChange(event) { this.setData({ accountIndex: Number(event.detail.value) }); },\n' +
+    '  onToAccountChange(event) { this.setData({ toAccountIndex: Number(event.detail.value) }); },\n' +
+    '  onControlledChange(event) { this.setData({ includeControlledBudget: event.detail.value }); },\n' +
+    '  onLevel1Change(event) {\n' +
+    '    const level1Index = Number(event.detail.value);\n' +
+    '    const level2Options = this.data.categories[level1Index].level2;\n' +
+    '    this.setData({ level1Index, level2Index: 0, level2Options });\n' +
+    '    this.refreshPrevious(this.data.categories[level1Index].level1, level2Options[0]);\n' +
+    '  },\n' +
+    '  onLevel2Change(event) {\n' +
+    '    const level2Index = Number(event.detail.value);\n' +
+    '    this.setData({ level2Index });\n' +
+    '    this.refreshPrevious(this.data.categories[this.data.level1Index].level1, this.data.level2Options[level2Index]);\n' +
+    '  },\n' +
+    '  refreshPrevious(level1, level2) {\n' +
+    '    const previous = core.findPreviousSimilar(getApp().globalData.state, { categoryLevel1: level1, categoryLevel2: level2 });\n' +
+    '    this.setData({ previous });\n' +
+    '  },\n' +
+    '  submit() {\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      const from = this.data.accounts[this.data.accountIndex];\n' +
+    "      if (!from) throw new Error('请先在资产中心创建可用账户');\n" +
+    '      let state;\n' +
+    '      if (this.data.modeIndex === 0) {\n' +
+    '        const category = this.data.categories[this.data.level1Index];\n' +
+    '        state = core.recordEntry(app.globalData.state, {\n' +
+    '          amountYuan: this.data.amountYuan,\n' +
+    '          date: this.data.date,\n' +
+    '          accountId: from.id,\n' +
+    '          categoryLevel1: category.level1,\n' +
+    '          categoryLevel2: this.data.level2Options[this.data.level2Index],\n' +
+    '          note: this.data.note,\n' +
+    '          includeControlledBudget: this.data.includeControlledBudget,\n' +
+    '        });\n' +
+    '      } else if (this.data.modeIndex === 1) {\n' +
+    '        state = core.recordIncomeEntry(app.globalData.state, {\n' +
+    '          amountYuan: this.data.amountYuan,\n' +
+    '          date: this.data.date,\n' +
+    '          accountId: from.id,\n' +
+    "          categoryLevel2: this.data.note || '其他收入',\n" +
+    '        });\n' +
+    '      } else {\n' +
+    '        const to = this.data.toAccounts[this.data.toAccountIndex];\n' +
+    "        if (!to) throw new Error('请选择转入账户');\n" +
+    '        state = core.recordTransferEntry(app.globalData.state, {\n' +
+    '          amountYuan: this.data.amountYuan,\n' +
+    '          date: this.data.date,\n' +
+    '          fromAccountId: from.id,\n' +
+    '          toAccountId: to.id,\n' +
+    '        });\n' +
+    '      }\n' +
+    '      app.globalData.state = state;\n' +
+    '      app.saveState();\n' +
+    '      wx.navigateBack({ delta: 1 });\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '});\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:239:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const core = require('../../lib/application.js');\n\nPage({\n  data: {\n    modes: ['支出', '收入', '转账'],\n    modeIndex: 0,\n    amountYuan: '',\n    date: '',\n    accounts: [],\n    accountIndex: 0,\n    toAccounts: [],\n    toAccountIndex: 0,\n    categories: [],\n    level1Index: 0,\n    level2Index: 0,\n    level2Options: [],\n    note: '',\n    includeControlledBudget: true,\n    previous: null,\n    error: '',\n  },\n\n  onShow() {\n    const app = getApp();\n    if (!app.globalData.state) {\n      wx.switchTab({ url: '/pages/settings/settings' });\n      return;\n    }\n    const categories = core.categoryOptions();\n    this.setData({\n      date: core.todayIso(),\n      categories,\n      level2Options: categories[0].level2,\n      error: app.globalData.storageError || '',\n    });\n    this.refreshAccountOptions(this.data.modeIndex);\n    this.refreshPrevious(categories[0].level1, categories[0].level2[0]);\n  },\n\n  refreshAccountOptions(modeIndex) {\n    const all = getApp().globalData.state.accounts;\n    let accounts;\n    if (modeIndex === 0) accounts = all.filter((item) => ['cash', 'bank', 'wallet', 'credit_card'].includes(item.type));\n    else if (modeIndex === 1) accounts = all.filter((item) => !['credit_card', 'loan'].includes(item.type));\n    else accounts = all.filter((item) => ['cash', 'bank', 'wallet'].includes(item.type));\n    this.setData({\n      accounts,\n      accountIndex: 0,\n      toAccounts: modeIndex === 2 ? accounts : [],\n      toAccountIndex: accounts.length > 1 ? 1 : 0,\n    });\n  },\n\n  onModeChange(event) {\n    const modeIndex = Number(event.currentTarget.dataset.index);\n    this.setData({ modeIndex, error: '', previous: modeIndex === 0 ? this.data.previous : null });\n    this.refreshAccountOptions(modeIndex);\n    if (modeIndex === 0) {\n      const category = this.data.categories[this.data.level1Index];\n      this.refreshPrevious(category.level1, this.data.level2Options[this.data.level2Index]);\n    }\n  },\n  onAmountInput(event) { this.setData({ amountYuan: event.detail.value }); },\n  onDateChange(event) { this.setData({ date: event.detail.value }); },\n  onNoteInput(event) { this.setData({ note: event.detail.value }); },\n  onAccountChange(event) { this.setData({ accountIndex: Number(event.detail.value) }); },\n  onToAccountChange(event) { this.setData({ toAccountIndex: Number(event.detail.value) }); },\n  onControlledChange(event) { this.setData({ includeControlledBudget: event.detail.value }); },\n  onLevel1Change(event) {\n    const level1Index = Number(event.detail.value);\n    const level2Options = this.data.categories[level1Index].level2;\n    this.setData({ level1Index, level2Index: 0, level2Options });\n    this.refreshPrevious(this.data.categories[level1Index].level1, level2Options[0]);\n  },\n  onLevel2Change(event) {\n    const level2Index = Number(event.detail.value);\n    this.setData({ level2Index });\n    this.refreshPrevious(this.data.categories[this.data.level1Index].level1, this.data.level2Options[level2Index]);\n  },\n  refreshPrevious(level1, level2) {\n    const previous = core.findPreviousSimilar(getApp().globalData.state, { categoryLevel1: level1, categoryLevel2: level2 });\n    this.setData({ previous });\n  },\n  submit() {\n    try {\n      const app = getApp();\n      const from = this.data.accounts[this.data.accountIndex];\n      if (!from) throw new Error('请先在资产中心创建可用账户');\n      let state;\n      if (this.data.modeIndex === 0) {\n        const category = this.data.categories[this.data.level1Index];\n        state = core.recordEntry(app.globalData.state, {\n          amountYuan: this.data.amountYuan,\n          date: this.data.date,\n          accountId: from.id,\n          categoryLevel1: category.level1,\n          categoryLevel2: this.data.level2Options[this.data.level2Index],\n          note: this.data.note,\n          includeControlledBudget: this.data.includeControlledBudget,\n        });\n      } else if (this.data.modeIndex === 1) {\n        state = core.recordIncomeEntry(app.globalData.state, {\n          amountYuan: this.data.amountYuan,\n          date: this.data.date,\n          accountId: from.id,\n          categoryLevel2: this.data.note || '其他收入',\n        });\n      } else {\n        const to = this.data.toAccounts[this.data.toAccountIndex];\n        if (!to) throw new Error('请选择转入账户');\n        state = core.recordTransferEntry(app.globalData.state, {\n          amountYuan: this.data.amountYuan,\n          date: this.data.date,\n          fromAccountId: from.id,\n          toAccountId: to.id,\n        });\n      }\n      app.globalData.state = state;\n      app.saveState();\n      wx.navigateBack({ delta: 1 });\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n});\n",
+    expected: /globalData\.homeResetRequested\s*=\s*true/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:244:1
+✖ 重复点击当前账本 Tab 调用首页公开重置而不是制造新的业务状态 (0.4047ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /resetHomeLedger/. Input:
+  
+  'const TAB_ITEMS = [\n' +
+    "  { key: 'home', label: '账本', path: '/pages/home/home', icon: 'ledger' },\n" +
+    "  { key: 'settings', label: '我的', path: '/pages/settings/settings', icon: 'profile' },\n" +
+    '];\n' +
+    '\n' +
+    "const HOME_PATH = '/pages/home/home';\n" +
+    "const ENTRY_PATH = '/pages/entry/entry';\n" +
+    '\n' +
+    'function currentPagePath() {\n' +
+    '  const pages = getCurrentPages();\n' +
+    '  const current = pages[pages.length - 1];\n' +
+    "  return current?.route ? `/${current.route.replace(/^\\//, '')}` : '';\n" +
+    '}\n' +
+    '\n' +
+    'Component({\n' +
+    '  data: {\n' +
+    '    items: TAB_ITEMS,\n' +
+    "    selected: 'home',\n" +
+    '  },\n' +
+    '\n' +
+    '  lifetimes: {\n' +
+    '    attached() {\n' +
+    '      this.syncSelected();\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  pageLifetimes: {\n' +
+    '    show() {\n' +
+    '      this.syncSelected();\n' +
+    '    },\n' +
+    '  },\n' +
+    '\n' +
+    '  methods: {\n' +
+    '    syncSelected() {\n' +
+    '      const path = currentPagePath();\n' +
+    '      const active = this.data.items.find((item) => item.path === path);\n' +
+    "      const selected = active ? active.key : '';\n" +
+    '      if (selected !== this.data.selected) this.setData({ selected });\n' +
+    '    },\n' +
+    '\n' +
+    '    onTabTap(event) {\n' +
+    '      const item = this.data.items[Number(event.currentTarget.dataset.index)];\n' +
+    '      if (!item) return;\n' +
+    '      // Do not optimistically change selected: the current route is the source of truth.\n' +
+    '      this.syncSelected();\n' +
+    '      wx.switchTab({ url: item.path });\n' +
+    '    },\n' +
+    '\n' +
+    '    onEntryTap() {\n' +
+    '      if (currentPagePath() === HOME_PATH) {\n' +
+    '        wx.navigateTo({ url: ENTRY_PATH });\n' +
+    '        return;\n' +
+    '      }\n' +
+    '      wx.switchTab({\n' +
+    '        url: HOME_PATH,\n' +
+    '        success: () => wx.navigateTo({ url: ENTRY_PATH }),\n' +
+    '      });\n' +
+    '    },\n' +
+    '  },\n' +
+    '});\n' +
+    '\n' +
+    "if (typeof module !== 'undefined' && module.exports) {\n" +
+    '  module.exports.TAB_ITEMS = TAB_ITEMS;\n' +
+    '  module.exports.currentPagePath = currentPagePath;\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:246:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const TAB_ITEMS = [\n  { key: 'home', label: '账本', path: '/pages/home/home', icon: 'ledger' },\n  { key: 'settings', label: '我的', path: '/pages/settings/settings', icon: 'profile' },\n];\n\nconst HOME_PATH = '/pages/home/home';\nconst ENTRY_PATH = '/pages/entry/entry';\n\nfunction currentPagePath() {\n  const pages = getCurrentPages();\n  const current = pages[pages.length - 1];\n  return current?.route ? `/${current.route.replace(/^\\//, '')}` : '';\n}\n\nComponent({\n  data: {\n    items: TAB_ITEMS,\n    selected: 'home',\n  },\n\n  lifetimes: {\n    attached() {\n      this.syncSelected();\n    },\n  },\n\n  pageLifetimes: {\n    show() {\n      this.syncSelected();\n    },\n  },\n\n  methods: {\n    syncSelected() {\n      const path = currentPagePath();\n      const active = this.data.items.find((item) => item.path === path);\n      const selected = active ? active.key : '';\n      if (selected !== this.data.selected) this.setData({ selected });\n    },\n\n    onTabTap(event) {\n      const item = this.data.items[Number(event.currentTarget.dataset.index)];\n      if (!item) return;\n      // Do not optimistically change selected: the current route is the source of truth.\n      this.syncSelected();\n      wx.switchTab({ url: item.path });\n    },\n\n    onEntryTap() {\n      if (currentPagePath() === HOME_PATH) {\n        wx.navigateTo({ url: ENTRY_PATH });\n        return;\n      }\n      wx.switchTab({\n        url: HOME_PATH,\n        success: () => wx.navigateTo({ url: ENTRY_PATH }),\n      });\n    },\n  },\n});\n\nif (typeof module !== 'undefined' && module.exports) {\n  module.exports.TAB_ITEMS = TAB_ITEMS;\n  module.exports.currentPagePath = currentPagePath;\n}\n",
+    expected: /resetHomeLedger/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:250:1
+✖ 展开态顶部固定账本和分析入口，底部导航仍由全局组件承担 (0.5703ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledger-expanded-header/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:253:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /ledger-expanded-header/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:261:1
+✖ 首页账本保持提醒结算和空状态可达 (0.5158ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledger-empty/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:264:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /ledger-empty/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase11-home-ledger-sheet.test.js:268:1
+✖ 首页账本在320px下允许长文本换行且不使用逐笔卡片 (0.5616ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /\.ledger-row\s*\{[^}]*overflow-wrap:\s*anywhere/s. Input:
+  
+  '.home-page {\n' +
+    '  min-height: 100vh;\n' +
+    '  box-sizing: border-box;\n' +
+    '  color: #202521;\n' +
+    '  background: #F6F5F0;\n' +
+    '}\n' +
+    '\n' +
+    '.home-header {\n' +
+    '  margin-bottom: 24rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.home-title {\n' +
+    '  margin: 0;\n' +
+    '  font-size: 44rpx;\n' +
+    '  font-weight: 600;\n' +
+    '  line-height: 1.3;\n' +
+    '  letter-spacing: 1rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.home-subtitle {\n' +
+    '  margin-top: 8rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.home-secondary-text {\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 24rpx;\n' +
+    '  line-height: 1.55;\n' +
+    '}\n' +
+    '\n' +
+    '.home-error {\n' +
+    '  margin-bottom: 16rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.budget-card,\n' +
+    '.settlement-card,\n' +
+    '.recent-bills,\n' +
+    '.plan-card {\n' +
+    '  box-sizing: border-box;\n' +
+    '  margin: 16rpx 0;\n' +
+    '  padding: 28rpx;\n' +
+    '  border: 1rpx solid #E5E7E2;\n' +
+    '  border-radius: 24rpx;\n' +
+    '  background: #FFFFFF;\n' +
+    '  box-shadow: 0 8rpx 24rpx rgba(32, 37, 33, 0.05);\n' +
+    '}\n' +
+    '\n' +
+    '.card-kicker {\n' +
+    '  margin-bottom: 8rpx;\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 24rpx;\n' +
+    '  letter-spacing: 1rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.card-title {\n' +
+    '  margin-bottom: 12rpx;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 32rpx;\n' +
+    '  font-weight: 600;\n' +
+    '}\n' +
+    '\n' +
+    '.hero-number {\n' +
+    '  margin: 8rpx 0 20rpx;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 72rpx;\n' +
+    '  font-weight: 600;\n' +
+    '  line-height: 1.12;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-track {\n' +
+    '  position: relative;\n' +
+    '  height: 16rpx;\n' +
+    '  overflow: hidden;\n' +
+    '  border-radius: 999rpx;\n' +
+    '  background: #E8F0EB;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-fill {\n' +
+    '  height: 100%;\n' +
+    '  max-width: 100%;\n' +
+    '  border-radius: 999rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-fill-normal {\n' +
+    '  background: #3E725E;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-fill-prepaid {\n' +
+    '  background: #B85A4A;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-fill-settlement {\n' +
+    '  background: #E5E7E2;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-mark {\n' +
+    '  position: absolute;\n' +
+    '  top: -4rpx;\n' +
+    '  left: 40%;\n' +
+    '  width: 4rpx;\n' +
+    '  height: 24rpx;\n' +
+    '  background: #202521;\n' +
+    '  opacity: 0.3;\n' +
+    '}\n' +
+    '\n' +
+    '.scale-legend {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: row;\n' +
+    '  flex-wrap: wrap;\n' +
+    '  justify-content: space-between;\n' +
+    '  gap: 12rpx;\n' +
+    '  margin-top: 12rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.status-normal,\n' +
+    '.status-prepaid {\n' +
+    '  font-size: 24rpx;\n' +
+    '  line-height: 1.55;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.status-normal {\n' +
+    '  color: #3E725E;\n' +
+    '}\n' +
+    '\n' +
+    '.status-prepaid {\n' +
+    '  margin-top: 8rpx;\n' +
+    '  color: #B85A4A;\n' +
+    '}\n' +
+    '\n' +
+    '.prepaid-block {\n' +
+    '  margin-top: 12rpx;\n' +
+    '  padding-top: 12rpx;\n' +
+    '  border-top: 1rpx solid #E5E7E2;\n' +
+    '}\n' +
+    '\n' +
+    '.period-line {\n' +
+    '  margin-top: 12rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.settlement-line {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: row;\n' +
+    '  justify-content: space-between;\n' +
+    '  gap: 16rpx;\n' +
+    '  margin: 14rpx 0;\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 26rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.settlement-value {\n' +
+    '  color: #202521;\n' +
+    '  font-weight: 600;\n' +
+    '  text-align: right;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.settlement-field {\n' +
+    '  margin-top: 8rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.home-primary-cta {\n' +
+    '  min-height: 88rpx;\n' +
+    '  margin: 20rpx 0 0;\n' +
+    '  color: #FFFFFF;\n' +
+    '  font-size: 28rpx;\n' +
+    '  border: 0;\n' +
+    '  border-radius: 16rpx;\n' +
+    '  background: #3E725E;\n' +
+    '}\n' +
+    '\n' +
+    '.recent-bills-head {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: row;\n' +
+    '  align-items: center;\n' +
+    '  justify-content: space-between;\n' +
+    '  margin-bottom: 8rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.section-title {\n' +
+    '  color: #202521;\n' +
+    '  font-size: 28rpx;\n' +
+    '  font-weight: 600;\n' +
+    '}\n' +
+    '\n' +
+    '.all-link {\n' +
+    '  min-height: 88rpx;\n' +
+    '  margin: 0;\n' +
+    '  padding: 0 8rpx;\n' +
+    '  color: #3E725E;\n' +
+    '  font-size: 26rpx;\n' +
+    '  line-height: 88rpx;\n' +
+    '  background: transparent;\n' +
+    '}\n' +
+    '\n' +
+    '.bills-empty {\n' +
+    '  padding: 28rpx 0 12rpx;\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 26rpx;\n' +
+    '  line-height: 1.5;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.bill-row {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: row;\n' +
+    '  align-items: flex-start;\n' +
+    '  justify-content: space-between;\n' +
+    '  gap: 16rpx;\n' +
+    '  padding: 18rpx 0;\n' +
+    '  border-top: 1rpx solid #E5E7E2;\n' +
+    '}\n' +
+    '\n' +
+    '.bill-row:first-of-type {\n' +
+    '  border-top: 0;\n' +
+    '}\n' +
+    '\n' +
+    '.bill-main {\n' +
+    '  flex: 1;\n' +
+    '  min-width: 0;\n' +
+    '}\n' +
+    '\n' +
+    '.bill-category {\n' +
+    '  margin-bottom: 4rpx;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 28rpx;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.bill-amount {\n' +
+    '  flex-shrink: 0;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 28rpx;\n' +
+    '  font-weight: 600;\n' +
+    '  text-align: right;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-section {\n' +
+    '  margin-top: 8rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-alert {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: column;\n' +
+    '  align-items: flex-start;\n' +
+    '  gap: 12rpx;\n' +
+    '  margin: 16rpx 0;\n' +
+    '  padding: 22rpx 26rpx;\n' +
+    '  color: #B85A4A;\n' +
+    '  border: 1rpx solid #F0D1C9;\n' +
+    '  border-radius: 18rpx;\n' +
+    '  background: #F9E9E5;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-alert-text,\n' +
+    '.plan-line,\n' +
+    '.notice {\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-alert-text {\n' +
+    '  font-size: 26rpx;\n' +
+    '  line-height: 1.55;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-line {\n' +
+    '  display: flex;\n' +
+    '  flex-direction: row;\n' +
+    '  justify-content: space-between;\n' +
+    '  gap: 16rpx;\n' +
+    '  padding: 14rpx 0;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 26rpx;\n' +
+    '  line-height: 1.45;\n' +
+    '  border-bottom: 1rpx solid #E5E7E2;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-line:last-child {\n' +
+    '  border-bottom: 0;\n' +
+    '}\n' +
+    '\n' +
+    '.plan-line-value {\n' +
+    '  color: #B85A4A;\n' +
+    '  text-align: right;\n' +
+    '  overflow-wrap: anywhere;\n' +
+    '}\n' +
+    '\n' +
+    '.notice {\n' +
+    '  margin-bottom: 8rpx;\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 24rpx;\n' +
+    '  line-height: 1.5;\n' +
+    '}\n' +
+    '\n' +
+    '.pending-plan {\n' +
+    '  margin-top: 12rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.pending-input {\n' +
+    '  box-sizing: border-box;\n' +
+    '  width: 100%;\n' +
+    '  min-height: 88rpx;\n' +
+    '  margin: 12rpx 0;\n' +
+    '  padding: 0 20rpx;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 28rpx;\n' +
+    '  text-align: left;\n' +
+    '  border: 1rpx solid #E5E7E2;\n' +
+    '  border-radius: 16rpx;\n' +
+    '  background: #FFFFFF;\n' +
+    '}\n' +
+    '\n' +
+    '.secondary-button {\n' +
+    '  min-height: 88rpx;\n' +
+    '  margin: 12rpx 0;\n' +
+    '  color: #3E725E;\n' +
+    '  font-size: 28rpx;\n' +
+    '  border: 0;\n' +
+    '  border-radius: 16rpx;\n' +
+    '  background: #E8F0EB;\n' +
+    '}\n' +
+    '\n' +
+    '.field {\n' +
+    '  display: flex;\n' +
+    '  align-items: center;\n' +
+    '  min-height: 86rpx;\n' +
+    '  border-bottom: 1rpx solid #E5E7E2;\n' +
+    '}\n' +
+    '\n' +
+    '.field-label {\n' +
+    '  width: 190rpx;\n' +
+    '  color: #5F665F;\n' +
+    '  font-size: 26rpx;\n' +
+    '}\n' +
+    '\n' +
+    '.field-input,\n' +
+    '.picker-value {\n' +
+    '  flex: 1;\n' +
+    '  color: #202521;\n' +
+    '  font-size: 26rpx;\n' +
+    '  text-align: right;\n' +
+    '}\n' +
+    '\n' +
+    '@media (max-width: 320px) {\n' +
+    '  .home-title {\n' +
+    '    font-size: 38rpx;\n' +
+    '  }\n' +
+    '\n' +
+    '  .hero-number {\n' +
+    '    font-size: 56rpx;\n' +
+    '  }\n' +
+    '\n' +
+    '  .settlement-line,\n' +
+    '  .plan-line,\n' +
+    '  .scale-legend {\n' +
+    '    flex-direction: column;\n' +
+    '    align-items: stretch;\n' +
+    '  }\n' +
+    '\n' +
+    '  .settlement-value,\n' +
+    '  .plan-line-value,\n' +
+    '  .picker-value,\n' +
+    '  .field-input {\n' +
+    '    text-align: left;\n' +
+    '  }\n' +
+    '\n' +
+    '  .bill-row {\n' +
+    '    flex-direction: row;\n' +
+    '  }\n' +
+    '\n' +
+    '  .bill-amount {\n' +
+    '    text-align: right;\n' +
+    '  }\n' +
+    '\n' +
+    '  .field {\n' +
+    '    flex-direction: column;\n' +
+    '    align-items: stretch;\n' +
+    '    gap: 8rpx;\n' +
+    '    padding: 12rpx 0;\n' +
+    '  }\n' +
+    '\n' +
+    '  .field-label {\n' +
+    '    width: auto;\n' +
+    '  }\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase11-home-ledger-sheet.test.js:271:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '.home-page {\n  min-height: 100vh;\n  box-sizing: border-box;\n  color: #202521;\n  background: #F6F5F0;\n}\n\n.home-header {\n  margin-bottom: 24rpx;\n}\n\n.home-title {\n  margin: 0;\n  font-size: 44rpx;\n  font-weight: 600;\n  line-height: 1.3;\n  letter-spacing: 1rpx;\n}\n\n.home-subtitle {\n  margin-top: 8rpx;\n}\n\n.home-secondary-text {\n  color: #5F665F;\n  font-size: 24rpx;\n  line-height: 1.55;\n}\n\n.home-error {\n  margin-bottom: 16rpx;\n}\n\n.budget-card,\n.settlement-card,\n.recent-bills,\n.plan-card {\n  box-sizing: border-box;\n  margin: 16rpx 0;\n  padding: 28rpx;\n  border: 1rpx solid #E5E7E2;\n  border-radius: 24rpx;\n  background: #FFFFFF;\n  box-shadow: 0 8rpx 24rpx rgba(32, 37, 33, 0.05);\n}\n\n.card-kicker {\n  margin-bottom: 8rpx;\n  color: #5F665F;\n  font-size: 24rpx;\n  letter-spacing: 1rpx;\n}\n\n.card-title {\n  margin-bottom: 12rpx;\n  color: #202521;\n  font-size: 32rpx;\n  font-weight: 600;\n}\n\n.hero-number {\n  margin: 8rpx 0 20rpx;\n  color: #202521;\n  font-size: 72rpx;\n  font-weight: 600;\n  line-height: 1.12;\n  overflow-wrap: anywhere;\n}\n\n.scale-track {\n  position: relative;\n  height: 16rpx;\n  overflow: hidden;\n  border-radius: 999rpx;\n  background: #E8F0EB;\n}\n\n.scale-fill {\n  height: 100%;\n  max-width: 100%;\n  border-radius: 999rpx;\n}\n\n.scale-fill-normal {\n  background: #3E725E;\n}\n\n.scale-fill-prepaid {\n  background: #B85A4A;\n}\n\n.scale-fill-settlement {\n  background: #E5E7E2;\n}\n\n.scale-mark {\n  position: absolute;\n  top: -4rpx;\n  left: 40%;\n  width: 4rpx;\n  height: 24rpx;\n  background: #202521;\n  opacity: 0.3;\n}\n\n.scale-legend {\n  display: flex;\n  flex-direction: row;\n  flex-wrap: wrap;\n  justify-content: space-between;\n  gap: 12rpx;\n  margin-top: 12rpx;\n}\n\n.status-normal,\n.status-prepaid {\n  font-size: 24rpx;\n  line-height: 1.55;\n  overflow-wrap: anywhere;\n}\n\n.status-normal {\n  color: #3E725E;\n}\n\n.status-prepaid {\n  margin-top: 8rpx;\n  color: #B85A4A;\n}\n\n.prepaid-block {\n  margin-top: 12rpx;\n  padding-top: 12rpx;\n  border-top: 1rpx solid #E5E7E2;\n}\n\n.period-line {\n  margin-top: 12rpx;\n}\n\n.settlement-line {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  gap: 16rpx;\n  margin: 14rpx 0;\n  color: #5F665F;\n  font-size: 26rpx;\n}\n\n.settlement-value {\n  color: #202521;\n  font-weight: 600;\n  text-align: right;\n  overflow-wrap: anywhere;\n}\n\n.settlement-field {\n  margin-top: 8rpx;\n}\n\n.home-primary-cta {\n  min-height: 88rpx;\n  margin: 20rpx 0 0;\n  color: #FFFFFF;\n  font-size: 28rpx;\n  border: 0;\n  border-radius: 16rpx;\n  background: #3E725E;\n}\n\n.recent-bills-head {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: 8rpx;\n}\n\n.section-title {\n  color: #202521;\n  font-size: 28rpx;\n  font-weight: 600;\n}\n\n.all-link {\n  min-height: 88rpx;\n  margin: 0;\n  padding: 0 8rpx;\n  color: #3E725E;\n  font-size: 26rpx;\n  line-height: 88rpx;\n  background: transparent;\n}\n\n.bills-empty {\n  padding: 28rpx 0 12rpx;\n  color: #5F665F;\n  font-size: 26rpx;\n  line-height: 1.5;\n  overflow-wrap: anywhere;\n}\n\n.bill-row {\n  display: flex;\n  flex-direction: row;\n  align-items: flex-start;\n  justify-content: space-between;\n  gap: 16rpx;\n  padding: 18rpx 0;\n  border-top: 1rpx solid #E5E7E2;\n}\n\n.bill-row:first-of-type {\n  border-top: 0;\n}\n\n.bill-main {\n  flex: 1;\n  min-width: 0;\n}\n\n.bill-category {\n  margin-bottom: 4rpx;\n  color: #202521;\n  font-size: 28rpx;\n  overflow-wrap: anywhere;\n}\n\n.bill-amount {\n  flex-shrink: 0;\n  color: #202521;\n  font-size: 28rpx;\n  font-weight: 600;\n  text-align: right;\n  overflow-wrap: anywhere;\n}\n\n.plan-section {\n  margin-top: 8rpx;\n}\n\n.plan-alert {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 12rpx;\n  margin: 16rpx 0;\n  padding: 22rpx 26rpx;\n  color: #B85A4A;\n  border: 1rpx solid #F0D1C9;\n  border-radius: 18rpx;\n  background: #F9E9E5;\n}\n\n.plan-alert-text,\n.plan-line,\n.notice {\n  overflow-wrap: anywhere;\n}\n\n.plan-alert-text {\n  font-size: 26rpx;\n  line-height: 1.55;\n}\n\n.plan-line {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  gap: 16rpx;\n  padding: 14rpx 0;\n  color: #202521;\n  font-size: 26rpx;\n  line-height: 1.45;\n  border-bottom: 1rpx solid #E5E7E2;\n}\n\n.plan-line:last-child {\n  border-bottom: 0;\n}\n\n.plan-line-value {\n  color: #B85A4A;\n  text-align: right;\n  overflow-wrap: anywhere;\n}\n\n.notice {\n  margin-bottom: 8rpx;\n  color: #5F665F;\n  font-size: 24rpx;\n  line-height: 1.5;\n}\n\n.pending-plan {\n  margin-top: 12rpx;\n}\n\n.pending-input {\n  box-sizing: border-box;\n  width: 100%;\n  min-height: 88rpx;\n  margin: 12rpx 0;\n  padding: 0 20rpx;\n  color: #202521;\n  font-size: 28rpx;\n  text-align: left;\n  border: 1rpx solid #E5E7E2;\n  border-radius: 16rpx;\n  background: #FFFFFF;\n}\n\n.secondary-button {\n  min-height: 88rpx;\n  margin: 12rpx 0;\n  color: #3E725E;\n  font-size: 28rpx;\n  border: 0;\n  border-radius: 16rpx;\n  background: #E8F0EB;\n}\n\n.field {\n  display: flex;\n  align-items: center;\n  min-height: 86rpx;\n  border-bottom: 1rpx solid #E5E7E2;\n}\n\n.field-label {\n  width: 190rpx;\n  color: #5F665F;\n  font-size: 26rpx;\n}\n\n.field-input,\n.picker-value {\n  flex: 1;\n  color: #202521;\n  font-size: 26rpx;\n  text-align: right;\n}\n\n@media (max-width: 320px) {\n  .home-title {\n    font-size: 38rpx;\n  }\n\n  .hero-number {\n    font-size: 56rpx;\n  }\n\n  .settlement-line,\n  .plan-line,\n  .scale-legend {\n    flex-direction: column;\n    align-items: stretch;\n  }\n\n  .settlement-value,\n  .plan-line-value,\n  .picker-value,\n  .field-input {\n    text-align: left;\n  }\n\n  .bill-row {\n    flex-direction: row;\n  }\n\n  .bill-amount {\n    text-align: right;\n  }\n\n  .field {\n    flex-direction: column;\n    align-items: stretch;\n    gap: 8rpx;\n    padding: 12rpx 0;\n  }\n\n  .field-label {\n    width: auto;\n  }\n}\n',
+    expected: /\.ledger-row\s*\{[^}]*overflow-wrap:\s*anywhere/s,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase9-home-visual-contract.test.js:149:1
+✖ home.js loads all ledger rows through core.listRecentTransactions without a five-row cap (1.8598ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /listRecentTransactions/. Input:
+  
+  "const core = require('../../lib/application.js');\n" +
+    '\n' +
+    'function hasPlanEvents(model) {\n' +
+    '  if (!model) return false;\n' +
+    '  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n' +
+    '  return Boolean(\n' +
+    '    (model.planExecutionResults && model.planExecutionResults.length)\n' +
+    '    || (model.planReminders && model.planReminders.length)\n' +
+    '    || (model.planDueToday && model.planDueToday.length)\n' +
+    '    || model.planExecutionMessage,\n' +
+    '  );\n' +
+    '}\n' +
+    '\n' +
+    'function normalizeCategoryPart(value) {\n' +
+    "  if (value == null) return '';\n" +
+    '  const text = String(value).trim();\n' +
+    "  if (!text || text === 'null' || text === 'undefined') return '';\n" +
+    '  return text;\n' +
+    '}\n' +
+    '\n' +
+    'function formatBillCategory(bill) {\n' +
+    '  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n' +
+    '    .map(normalizeCategoryPart)\n' +
+    '    .filter(Boolean);\n' +
+    "  return parts.length ? parts.join(' · ') : '未分类';\n" +
+    '}\n' +
+    '\n' +
+    'function buildScale(model) {\n' +
+    '  if (!model || model.needsSettlement) {\n' +
+    '    return {\n' +
+    "      mode: 'settlement',\n" +
+    '      fillPercent: 0,\n' +
+    "      surplusText: '',\n" +
+    "      dailyLabel: '',\n" +
+    '    };\n' +
+    '  }\n' +
+    '  const free = Number(model.todayFreeCents) || 0;\n' +
+    '  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n' +
+    '  if ((model.prepaidCents || 0) > 0) {\n' +
+    '    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n' +
+    '    return {\n' +
+    "      mode: 'prepaid',\n" +
+    '      fillPercent: Math.min(100, over),\n' +
+    "      surplusText: '',\n" +
+    '      dailyLabel: model.fullSingleDayQuota,\n' +
+    '    };\n' +
+    '  }\n' +
+    '  const ratio = free / daily;\n' +
+    '  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n' +
+    '  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n' +
+    '  const surplusCents = free - daily;\n' +
+    "  let surplusText = '';\n" +
+    '  if (surplusCents > 0) {\n' +
+    '    const yuan = (surplusCents / 100).toFixed(2);\n' +
+    '    surplusText = `比今日基准多 ¥${yuan}`;\n' +
+    '  } else if (surplusCents === 0) {\n' +
+    "    surplusText = '刚好等于今日基准额度';\n" +
+    '  } else {\n' +
+    "    surplusText = '今日可用已低于单日基准';\n" +
+    '  }\n' +
+    '  return {\n' +
+    "    mode: 'normal',\n" +
+    '    fillPercent,\n' +
+    '    surplusText,\n' +
+    '    dailyLabel: model.fullSingleDayQuota,\n' +
+    '  };\n' +
+    '}\n' +
+    '\n' +
+    'Page({\n' +
+    '  data: {\n' +
+    '    model: null,\n' +
+    '    recentBills: [],\n' +
+    '    scale: null,\n' +
+    '    hasPlanEvents: false,\n' +
+    "    error: '',\n" +
+    '    positiveModeIndex: 0,\n' +
+    '    positiveModeSelected: false,\n' +
+    "    positiveModeLabel: '请选择',\n" +
+    '    overspendModeIndex: 0,\n' +
+    '    overspendModeSelected: false,\n' +
+    "    overspendModeLabel: '请选择',\n" +
+    "    positiveModeLabels: ['带入下期', '转入奖励余额'],\n" +
+    "    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n" +
+    "    pendingAmountYuan: '',\n" +
+    "    pendingPrincipalYuan: '',\n" +
+    "    pendingInterestYuan: '',\n" +
+    '  },\n' +
+    '\n' +
+    '  onShow() {\n' +
+    '    const app = getApp();\n' +
+    '    if (!app.globalData.state) {\n' +
+    "      wx.switchTab({ url: '/pages/settings/settings' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n' +
+    '      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n' +
+    '        ...item,\n' +
+    '        category: formatBillCategory(item),\n' +
+    '      }));\n' +
+    '      this.setData({\n' +
+    '        model,\n' +
+    '        recentBills,\n' +
+    '        scale: buildScale(model),\n' +
+    '        hasPlanEvents: hasPlanEvents(model),\n' +
+    "        error: app.globalData.storageError || '',\n" +
+    '        positiveModeSelected: false,\n' +
+    "        positiveModeLabel: '请选择',\n" +
+    '        overspendModeSelected: false,\n' +
+    "        overspendModeLabel: '请选择',\n" +
+    '      });\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '\n' +
+    "  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n" +
+    '  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n' +
+    '  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n' +
+    '  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n' +
+    '  retryPendingPlan(event) {\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n' +
+    '        pendingId: event.currentTarget.dataset.id,\n' +
+    '        amountYuan: this.data.pendingAmountYuan,\n' +
+    '        principalYuan: this.data.pendingPrincipalYuan,\n' +
+    '        interestYuan: this.data.pendingInterestYuan,\n' +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      app.globalData.planRunSummary = {\n' +
+    '        date: core.todayIso(),\n' +
+    '        executed: [],\n' +
+    '        pending: [],\n' +
+    '        legacy: [],\n' +
+    "        message: '待处理计划已补记',\n" +
+    '      };\n' +
+    "      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n" +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '  dismissPlanOverdueBanner() {\n' +
+    '    const app = getApp();\n' +
+    '    app.globalData.state = core.dismissOverduePlanBanner(\n' +
+    '      app.globalData.state,\n' +
+    '      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n' +
+    '    );\n' +
+    '    app.saveState();\n' +
+    '    this.onShow();\n' +
+    '  },\n' +
+    '  onPositiveModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n' +
+    '  },\n' +
+    '  onOverspendModeChange(event) {\n' +
+    '    const index = Number(event.detail.value);\n' +
+    '    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n' +
+    '  },\n' +
+    '  settlePeriod() {\n' +
+    '    const settlement = this.data.model?.settlement;\n' +
+    '    if (!settlement) return;\n' +
+    '    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n' +
+    "      this.setData({ error: '请先选择结余处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n' +
+    "      this.setData({ error: '请先选择超支处理方式' });\n" +
+    '      return;\n' +
+    '    }\n' +
+    '    try {\n' +
+    '      const app = getApp();\n' +
+    '      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n' +
+    "        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n" +
+    "        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n" +
+    '      });\n' +
+    '      app.saveState();\n' +
+    '      this.onShow();\n' +
+    '    } catch (error) {\n' +
+    '      this.setData({ error: error.message });\n' +
+    '    }\n' +
+    '  },\n' +
+    '});\n' +
+    '\n' +
+    "if (typeof module !== 'undefined' && module.exports) {\n" +
+    '  module.exports.hasPlanEvents = hasPlanEvents;\n' +
+    '  module.exports.formatBillCategory = formatBillCategory;\n' +
+    '  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n' +
+    '  module.exports.buildScale = buildScale;\n' +
+    '}\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase9-home-visual-contract.test.js:151:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "const core = require('../../lib/application.js');\n\nfunction hasPlanEvents(model) {\n  if (!model) return false;\n  // Generic plan summary only — overdue banner and pending lists render in their own regions.\n  return Boolean(\n    (model.planExecutionResults && model.planExecutionResults.length)\n    || (model.planReminders && model.planReminders.length)\n    || (model.planDueToday && model.planDueToday.length)\n    || model.planExecutionMessage,\n  );\n}\n\nfunction normalizeCategoryPart(value) {\n  if (value == null) return '';\n  const text = String(value).trim();\n  if (!text || text === 'null' || text === 'undefined') return '';\n  return text;\n}\n\nfunction formatBillCategory(bill) {\n  const parts = [bill && bill.categoryLevel1, bill && bill.categoryLevel2]\n    .map(normalizeCategoryPart)\n    .filter(Boolean);\n  return parts.length ? parts.join(' · ') : '未分类';\n}\n\nfunction buildScale(model) {\n  if (!model || model.needsSettlement) {\n    return {\n      mode: 'settlement',\n      fillPercent: 0,\n      surplusText: '',\n      dailyLabel: '',\n    };\n  }\n  const free = Number(model.todayFreeCents) || 0;\n  const daily = Math.max(1, Number(model.fullSingleDayQuotaCents) || 1);\n  if ((model.prepaidCents || 0) > 0) {\n    const over = Math.min(100, Math.round((model.prepaidCents / daily) * 40) + 60);\n    return {\n      mode: 'prepaid',\n      fillPercent: Math.min(100, over),\n      surplusText: '',\n      dailyLabel: model.fullSingleDayQuota,\n    };\n  }\n  const ratio = free / daily;\n  // Scale expresses saved-vs-daily feel; saturate when free >> daily. Not a month budget %.\n  const fillPercent = Math.max(8, Math.min(100, Math.round(Math.min(ratio, 2.5) / 2.5 * 100)));\n  const surplusCents = free - daily;\n  let surplusText = '';\n  if (surplusCents > 0) {\n    const yuan = (surplusCents / 100).toFixed(2);\n    surplusText = `比今日基准多 ¥${yuan}`;\n  } else if (surplusCents === 0) {\n    surplusText = '刚好等于今日基准额度';\n  } else {\n    surplusText = '今日可用已低于单日基准';\n  }\n  return {\n    mode: 'normal',\n    fillPercent,\n    surplusText,\n    dailyLabel: model.fullSingleDayQuota,\n  };\n}\n\nPage({\n  data: {\n    model: null,\n    recentBills: [],\n    scale: null,\n    hasPlanEvents: false,\n    error: '',\n    positiveModeIndex: 0,\n    positiveModeSelected: false,\n    positiveModeLabel: '请选择',\n    overspendModeIndex: 0,\n    overspendModeSelected: false,\n    overspendModeLabel: '请选择',\n    positiveModeLabels: ['带入下期', '转入奖励余额'],\n    overspendModeLabels: ['带入下期', '用奖励余额抵扣'],\n    pendingAmountYuan: '',\n    pendingPrincipalYuan: '',\n    pendingInterestYuan: '',\n  },\n\n  onShow() {\n    const app = getApp();\n    if (!app.globalData.state) {\n      wx.switchTab({ url: '/pages/settings/settings' });\n      return;\n    }\n    try {\n      const model = core.getHomeModel(app.globalData.state, core.todayIso(), app.globalData.planRunSummary);\n      const recentBills = core.listRecentBills(app.globalData.state).slice(0, 5).map((item) => ({\n        ...item,\n        category: formatBillCategory(item),\n      }));\n      this.setData({\n        model,\n        recentBills,\n        scale: buildScale(model),\n        hasPlanEvents: hasPlanEvents(model),\n        error: app.globalData.storageError || '',\n        positiveModeSelected: false,\n        positiveModeLabel: '请选择',\n        overspendModeSelected: false,\n        overspendModeLabel: '请选择',\n      });\n    } catch (error) {\n      this.setData({ model: null, recentBills: [], scale: null, hasPlanEvents: false, error: error.message });\n    }\n  },\n\n  goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },\n  onPendingAmountInput(event) { this.setData({ pendingAmountYuan: event.detail.value }); },\n  onPendingPrincipalInput(event) { this.setData({ pendingPrincipalYuan: event.detail.value }); },\n  onPendingInterestInput(event) { this.setData({ pendingInterestYuan: event.detail.value }); },\n  retryPendingPlan(event) {\n    try {\n      const app = getApp();\n      app.globalData.state = core.retryPendingPlan(app.globalData.state, {\n        pendingId: event.currentTarget.dataset.id,\n        amountYuan: this.data.pendingAmountYuan,\n        principalYuan: this.data.pendingPrincipalYuan,\n        interestYuan: this.data.pendingInterestYuan,\n      });\n      app.saveState();\n      app.globalData.planRunSummary = {\n        date: core.todayIso(),\n        executed: [],\n        pending: [],\n        legacy: [],\n        message: '待处理计划已补记',\n      };\n      this.setData({ pendingAmountYuan: '', pendingPrincipalYuan: '', pendingInterestYuan: '' });\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n  dismissPlanOverdueBanner() {\n    const app = getApp();\n    app.globalData.state = core.dismissOverduePlanBanner(\n      app.globalData.state,\n      this.data.model.planOverdueItems.map((item) => item.occurrenceKey),\n    );\n    app.saveState();\n    this.onShow();\n  },\n  onPositiveModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ positiveModeIndex: index, positiveModeSelected: true, positiveModeLabel: this.data.positiveModeLabels[index] });\n  },\n  onOverspendModeChange(event) {\n    const index = Number(event.detail.value);\n    this.setData({ overspendModeIndex: index, overspendModeSelected: true, overspendModeLabel: this.data.overspendModeLabels[index] });\n  },\n  settlePeriod() {\n    const settlement = this.data.model?.settlement;\n    if (!settlement) return;\n    if (settlement.positiveChoiceRequired && !this.data.positiveModeSelected) {\n      this.setData({ error: '请先选择结余处理方式' });\n      return;\n    }\n    if (settlement.overspendChoiceRequired && !this.data.overspendModeSelected) {\n      this.setData({ error: '请先选择超支处理方式' });\n      return;\n    }\n    try {\n      const app = getApp();\n      app.globalData.state = core.settleCurrentPeriod(app.globalData.state, core.todayIso(), {\n        positiveMode: settlement.positiveChoiceRequired ? ['carry', 'reward'][this.data.positiveModeIndex] : null,\n        overspendMode: settlement.overspendChoiceRequired ? ['carry', 'reward'][this.data.overspendModeIndex] : null,\n      });\n      app.saveState();\n      this.onShow();\n    } catch (error) {\n      this.setData({ error: error.message });\n    }\n  },\n});\n\nif (typeof module !== 'undefined' && module.exports) {\n  module.exports.hasPlanEvents = hasPlanEvents;\n  module.exports.formatBillCategory = formatBillCategory;\n  module.exports.normalizeCategoryPart = normalizeCategoryPart;\n  module.exports.buildScale = buildScale;\n}\n",
+    expected: /listRecentTransactions/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase9-home-visual-contract.test.js:165:1
+✖ home covers settlement prepaid plan pending error and bills-empty states (1.6566ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /ledgerGroups\.length/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase9-home-visual-contract.test.js:174:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /ledgerGroups\.length/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase9-home-visual-contract.test.js:208:1
+✖ home layout order is header budget bills then conditional alerts (4.5011ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(bills > budget)
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase9-home-visual-contract.test.js:215:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\phase9-home-visual-contract.test.js:282:1
+✖ home bill rows bind real category date account amount fields (1.0824ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /wx:for="\{\{ledgerGroups\}\}"/. Input:
+  
+  '<view class="page home-page" wx:if="{{model}}">\n' +
+    '  <view class="home-header">\n' +
+    '    <view class="home-title">用度</view>\n' +
+    '    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n' +
+    '    <view class="card-kicker">本期已结束</view>\n' +
+    '    <view class="card-title">先结算，再看今天能花多少</view>\n' +
+    '    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n' +
+    '    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n' +
+    '    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n' +
+    '    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n' +
+    '      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n' +
+    '      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n' +
+    '      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n' +
+    '    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:else class="budget-card">\n' +
+    '    <view class="card-kicker">今日可自由花</view>\n' +
+    '    <view class="hero-number">{{model.todayFree}}</view>\n' +
+    '    <view class="scale-track" aria-hidden="true">\n' +
+    '      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n' +
+    '      <view class="scale-mark"></view>\n' +
+    '    </view>\n' +
+    '    <view class="scale-legend">\n' +
+    '      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n' +
+    `      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n` +
+    '    </view>\n' +
+    '    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n' +
+    '      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n' +
+    '      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n' +
+    '    </view>\n' +
+    '    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n' +
+    '    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view class="recent-bills">\n' +
+    '    <view class="recent-bills-head">\n' +
+    '      <view class="section-title">最近账单</view>\n' +
+    '      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n' +
+    '    </view>\n' +
+    '    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n' +
+    '    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n' +
+    '      <view class="bill-main">\n' +
+    '        <view class="bill-category">{{item.category}}</view>\n' +
+    '        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n' +
+    '      </view>\n' +
+    '      <view class="bill-amount">{{item.amount}}</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n' +
+    '    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n' +
+    '    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n' +
+    '    <view class="section-title">计划与提醒</view>\n' +
+    '    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n' +
+    '    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n' +
+    '      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n' +
+    '    </view>\n' +
+    '    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n' +
+    '      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '\n' +
+    '  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n' +
+    '    <view class="section-title">待处理计划</view>\n' +
+    '    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n' +
+    `      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n` +
+    `      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n` +
+    `        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n` +
+    '        <block wx:else>\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n' +
+    '          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n' +
+    '        </block>\n' +
+    '        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n' +
+    '      </block>\n' +
+    '      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n' +
+    '    </view>\n' +
+    '  </view>\n' +
+    '</view>\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase9-home-visual-contract.test.js:284:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: `<view class="page home-page" wx:if="{{model}}">\n  <view class="home-header">\n    <view class="home-title">用度</view>\n    <view class="home-secondary-text home-subtitle">把今天的额度，留给真正重要的事</view>\n  </view>\n\n  <view wx:if="{{error}}" class="error home-error">{{error}}</view>\n\n  <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">\n    <view class="card-kicker">本期已结束</view>\n    <view class="card-title">先结算，再看今天能花多少</view>\n    <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>\n    <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>\n    <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>\n    <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>\n      <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">\n      <text class="field-label">超支 {{model.settlement.grossDebt}}</text>\n      <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>\n    </view>\n    <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>\n    <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>\n  </view>\n\n  <view wx:else class="budget-card">\n    <view class="card-kicker">今日可自由花</view>\n    <view class="hero-number">{{model.todayFree}}</view>\n    <view class="scale-track" aria-hidden="true">\n      <view class="scale-fill scale-fill-{{scale.mode}}" style="width: {{scale.fillPercent}}%;"></view>\n      <view class="scale-mark"></view>\n    </view>\n    <view class="scale-legend">\n      <text class="home-secondary-text">单日基准 {{model.fullSingleDayQuota}}</text>\n      <text wx:if="{{scale.mode === 'normal'}}" class="status-normal">{{scale.surplusText}}</text>\n    </view>\n    <view wx:if="{{model.prepaidCents > 0}}" class="prepaid-block">\n      <view class="status-prepaid">已预支未来额度 {{model.prepaid}}</view>\n      <view class="status-prepaid">预计{{model.earliestRecoveryDate}}恢复至每日 {{model.fullSingleDayQuota}}</view>\n    </view>\n    <view wx:else class="home-secondary-text period-line">当前周期 {{model.periodStartDate}} 至 {{model.periodEndDate}}</view>\n    <view wx:if="{{model.pendingStartDay}}" class="home-secondary-text">起始日待变更为每月 {{model.pendingStartDay}} 日，旧周期和旧账不移动</view>\n  </view>\n\n  <view class="recent-bills">\n    <view class="recent-bills-head">\n      <view class="section-title">最近账单</view>\n      <button class="link-button all-link" bindtap="goBills" aria-label="账单分析全部">全部</button>\n    </view>\n    <view wx:if="{{!recentBills.length}}" class="bills-empty">还没有账单，用底部“记一笔”记下第一笔</view>\n    <view wx:for="{{recentBills}}" wx:key="id" class="bill-row">\n      <view class="bill-main">\n        <view class="bill-category">{{item.category}}</view>\n        <view class="home-secondary-text">{{item.date}} · {{item.account}}</view>\n      </view>\n      <view class="bill-amount">{{item.amount}}</view>\n    </view>\n  </view>\n\n  <view wx:if="{{model.showPlanOverdueBanner}}" class="plan-alert plan-section">\n    <view class="plan-alert-text">有 {{model.planOverdueItems.length}} 项计划逾期待处理，账面未产生半笔记录。</view>\n    <button class="link-button" bindtap="dismissPlanOverdueBanner">关闭逾期提醒</button>\n  </view>\n\n  <view wx:if="{{hasPlanEvents}}" class="plan-section plan-card">\n    <view class="section-title">计划与提醒</view>\n    <view wx:if="{{model.planExecutionMessage}}" class="notice">{{model.planExecutionMessage}}</view>\n    <view wx:for="{{model.planExecutionResults}}" wx:key="occurrenceKey" class="plan-line">\n      <text>{{item.planName}} · {{item.dueDate}}</text><text class="plan-line-value">已自动记账</text>\n    </view>\n    <view wx:for="{{model.planReminders}}" wx:key="planId" class="plan-line">\n      <text>{{item.planName}}</text><text class="plan-line-value">{{item.message}}</text>\n    </view>\n    <view wx:for="{{model.planDueToday}}" wx:key="planId" class="plan-line due">\n      <text>{{item.planName}}</text><text class="plan-line-value">今天到期</text>\n    </view>\n  </view>\n\n  <view wx:if="{{model.planPendingItems.length}}" class="plan-section plan-card home-pending">\n    <view class="section-title">待处理计划</view>\n    <view wx:for="{{model.planPendingItems}}" wx:key="id" class="pending-plan">\n      <view class="plan-line"><text>{{item.planName}} · {{item.dueDate || '待补充日期'}}</text><text class="plan-line-value">{{item.reasonText}}</text></view>\n      <block wx:if="{{item.reason !== 'plan_info_required'}}">\n        <input wx:if="{{item.type !== 'loan_repayment'}}" class="field-input pending-input" type="digit" value="{{pendingAmountYuan}}" bindinput="onPendingAmountInput" placeholder="补充/确认金额" />\n        <block wx:else>\n          <input class="field-input pending-input" type="digit" value="{{pendingPrincipalYuan}}" bindinput="onPendingPrincipalInput" placeholder="确认本金" />\n          <input class="field-input pending-input" type="digit" value="{{pendingInterestYuan}}" bindinput="onPendingInterestInput" placeholder="确认利息" />\n        </block>\n        <button class="secondary-button" data-id="{{item.id}}" bindtap="retryPendingPlan">重试入账</button>\n      </block>\n      <view wx:else class="home-secondary-text">请到设置页编辑计划并补充周期与到期日。</view>\n    </view>\n  </view>\n</view>\n`,
+    expected: /wx:for="\{\{ledgerGroups\}\}"/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\phase9-home-visual-contract.test.js:401:1
+✖ home onShow uses formatBillCategory from categoryLevel1/2 not string replace theater (1.394ms)
+  TypeError: Cannot read properties of undefined (reading '0')
+      at TestContext.<anonymous> (file:///C:/Users/Administrator/Desktop/%E8%AE%B0%E8%B4%A6%E5%B0%8F%E7%A8%8B%E5%BA%8F/tests/phase9-home-visual-contract.test.js:429:44)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)
