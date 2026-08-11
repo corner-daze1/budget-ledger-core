@@ -552,8 +552,8 @@ function clearLocalLedger(storage, { phrase, confirmed } = {}) {
   } catch {
     return { ok: false, error: '清除失败：无法读取现有本地数据，未执行删除' };
   }
-  const hadMain = oldMain !== undefined && oldMain !== null;
-  const hadTemp = oldTemp !== undefined && oldTemp !== null;
+  const hadMain = !isMissingStorageValue(oldMain);
+  const hadTemp = !isMissingStorageValue(oldTemp);
   let deletionAttempted = false;
   try {
     deletionAttempted = true;

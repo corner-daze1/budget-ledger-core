@@ -611,6 +611,42 @@ test('stable clear reaches a temporary deletion failure and restores both origin
   assert.doesNotMatch(result.error, /原数据回滚失败/);
 });
 
+test('stable clear rollback keeps a missing main key absent when the temporary key deletion fails', () => {
+  const storage = stableStorageWith({ [RESTORE_TEMP_KEY]: 'temp', unrelated: 'keep' });
+  const normalRemove = storage.remove.bind(storage);
+  storage.remove = (key) => {
+    if (key === RESTORE_TEMP_KEY) throw new Error('temporary remove failed');
+    normalRemove(key);
+  };
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, false);
+  assert.equal(storage.values.has(STORAGE_KEY), false);
+  assert.equal(storage.values.has(RESTORE_TEMP_KEY), true);
+  assert.equal(storage.values.get(RESTORE_TEMP_KEY), 'temp');
+  assert.equal(storage.values.get('unrelated'), 'keep');
+  assert.doesNotMatch(result.error, /原数据回滚失败/);
+});
+
+test('stable clear rollback keeps a missing temporary key absent when its deletion fails', () => {
+  const storage = stableStorageWith({ [STORAGE_KEY]: 'main', unrelated: 'keep' });
+  const normalRemove = storage.remove.bind(storage);
+  let failed = false;
+  storage.remove = (key) => {
+    if (key === RESTORE_TEMP_KEY && !failed) {
+      failed = true;
+      throw new Error('temporary remove failed');
+    }
+    normalRemove(key);
+  };
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, false);
+  assert.equal(storage.values.has(STORAGE_KEY), true);
+  assert.equal(storage.values.get(STORAGE_KEY), 'main');
+  assert.equal(storage.values.has(RESTORE_TEMP_KEY), false);
+  assert.equal(storage.values.get('unrelated'), 'keep');
+  assert.doesNotMatch(result.error, /原数据回滚失败/);
+});
+
 test('restore rollback keeps a stable missing main key absent without reporting a false rollback failure', () => {
   const storage = stableStorageWith({ unrelated: 'keep' });
   const normalGet = storage.get.bind(storage);

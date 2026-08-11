@@ -15,11 +15,21 @@
 ## 当前验证基线
 
 - `npm run build:mini`：退出 0，生成 5 个小程序文件；生成的 `application.js` 已纳入本轮交付。
-- `npm test -- --test-reporter=tap`：475/475，fail/cancelled/skip/todo 均为 0。
-- `npm run check`：477 test declarations，退出 0。
+- `npm test -- --test-reporter=tap`：477/477，fail/cancelled/skip/todo 均为 0。
+- `npm run check`：479 test declarations，退出 0。
 - `npm run check:mini`：退出 0，五页、详情页、生成包和源码边界通过。
 - `git diff --check`：退出 0；仅有工作区换行符转换提示。
 - 自动视觉取证已在本环境恢复复测；本环境结论、历史失败和发布边界见 `docs/VISUAL_EVIDENCE.md`。
+
+## 阶段十九清除缺失值回滚修复（2026-08-11）
+
+- 新增两条对称回归：主键缺失/临时键存在，以及主键存在/临时键缺失；均覆盖临时键删除失败、精确恢复、无关键保留和不误报“原数据回滚失败”。
+- 旧实现红灯：`node --test --test-reporter=tap tests/phase7-data-safety.test.js` 退出 1；63 tests、61 pass、2 fail、0 cancelled、0 skipped、0 todo；失败正是两条新增对称回归。红灯时 `git diff -- src miniprogram` 为空。
+- 最小修复：`clearLocalLedger` 的 `hadMain`、`hadTemp` 改为复用既有 `isMissingStorageValue`；未增加 helper、导出、错误文案或其他流程改动。
+- 定向绿灯：同一命令退出 0；63 tests、63 pass、0 fail、0 cancelled、0 skipped、0 todo。
+- `npm run build:mini` 退出 0；仅更新 `miniprogram/lib/application.js` 与 `miniprogram/lib/build-manifest.json`，`budget.js`、`ledger.js`、`storage.js` 与 `649306e` 字节一致；Stable 证据文件未改动。
+- 全量收口：`npm test -- --test-reporter=tap` 退出 0，477 tests、477 pass、0 fail、0 cancelled、0 skipped、0 todo；`npm run check` 退出 0，479 test declarations；`npm run check:mini` 退出 0；`git diff --check` 退出 0。
+- 反向证据：`git diff --exit-code 649306e -- artifacts/phase7/local-clear-stable.txt` 退出 0；本阶段未改 Stable 证据，未修改三份 domain 生成文件。
 
 ## 当前功能缺陷
 
@@ -68,8 +78,8 @@
 - `npm run check`：退出 0；477 test declarations、必需规格章节和 domain 边界通过。
 - `npm run check:mini`：退出 0；五页、详情页、生成包和源码边界通过。
 - `git diff --check`：退出 0；仅有 LF→CRLF 转换提示。
-- 当前未提交变更仅为本轮授权范围内的 `BLOCKED.md`、`PROGRESS.md`、`README.md`、自动生成的 `miniprogram/lib/build-manifest.json` 和 `artifacts/phase7/local-clear-stable.txt`。
-- 475 tests / 477 declarations 是任务1新增回归测试后的当前数量，不是任务0基线异常。
+- 阶段十八收口时记录的未提交变更仅为当时授权范围内的文档、生成清单和 Stable 证据文件；本阶段现行变更见阶段十九记录。
+- 475 tests / 477 declarations 是阶段十八任务1新增回归测试后的历史数量；阶段十九新增两条回归后当前数量为 477 tests / 479 declarations。
 
 ## 下一步优先级
 

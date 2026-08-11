@@ -9,8 +9,8 @@
 - `npm test -- --test-reporter=tap`：退出 0；475 tests、475 pass、0 fail、0 cancelled、0 skipped、0 todo。
 - `npm run check`：退出 0；477 test declarations，通过。
 - `npm run check:mini`：退出 0；五页、详情页、生成包和源码边界通过。
-- `git status --short --branch`：`## agent/publish-current-progress...origin/agent/publish-current-progress`，当前差异为 `BLOCKED.md`、`PROGRESS.md`、`README.md`、自动生成的 `miniprogram/lib/build-manifest.json` 和新证据文件。
-- 475 tests / 477 declarations 是任务1新增回归测试后的正常当前数量，不是任务0基线异常。
+- 当时 `git status --short --branch` 的任务0复核工作区干净；阶段十九当前变更及验证见下方记录。
+- 475 tests / 477 declarations 是阶段十八任务1新增回归测试后的历史数量；阶段十九新增两条回归后当前数量为 477 tests / 479 declarations。
 
 ## P0：本地清除功能缺陷（已解除，2026-08-11）
 
@@ -48,6 +48,11 @@
 - 详情页已接入普通点击与左滑快捷入口，且保持唯一非 Tab 页。
 - 版本 0 和版本 1 的恢复与迁移路径已删除；当前恢复只接受 schema v2。
 - 阶段十八生成清单与白名单冲突已解除：本轮补充授权仅允许 `npm run build:mini` 自动生成 `miniprogram/lib/build-manifest.json`，未手工编辑；随后 `npm run check:mini` 已通过。
+
+## 阶段十九清除回滚修复（已完成，2026-08-11）
+
+- 本任务无新增待裁决项；只修复稳定存储缺失值在清除回滚中的误判，未扩展第二阶段或修改 Stable 证据。
+- 生产修复仅改 `src/application/app-core.js` 的 `hadMain`、`hadTemp` 缺失值判定；定向 63/63，全量 477/477，`npm run check` 为 479 declarations，`npm run check:mini` 与 `git diff --check` 均通过。
 
 ## 阶段十八 Stable 清除证据（已完成，2026-08-11）
 
