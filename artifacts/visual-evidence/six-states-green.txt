@@ -1,0 +1,1 @@
+{"ok":true,"pngCount":6,"manifest":"manifest.json"}
