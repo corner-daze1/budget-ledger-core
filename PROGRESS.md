@@ -14,17 +14,17 @@
 
 ## 当前验证基线
 
-- `npm run build:mini`：退出 0，生成 5 个小程序文件。
-- `npm test`：467/467，fail/skip/todo 均为 0。
-- `npm run check`：469 test declarations，退出 0。
+- `npm run build:mini`：退出 0，生成 5 个小程序文件；生成的 `application.js` 已纳入本轮交付。
+- `npm test -- --test-reporter=tap`：475/475，fail/cancelled/skip/todo 均为 0。
+- `npm run check`：477 test declarations，退出 0。
 - `npm run check:mini`：退出 0，五页、详情页、生成包和源码边界通过。
 - `git diff --check`：退出 0；仅有工作区换行符转换提示。
 - 自动视觉取证已在本环境恢复复测；本环境结论、历史失败和发布边界见 `docs/VISUAL_EVIDENCE.md`。
 
 ## 当前功能缺陷
 
-- 应用内“清除本地数据”尚未通过 Stable 实测。微信缺失存储键读回空字符串，而 `clearLocalLedger` 目前只把 `undefined` / `null` 当作删除成功，因此真实删除后会误报失败并尝试回滚。
-- 该缺陷影响用户主动清除这一隐私能力，应先于新增功能修复。修复必须覆盖空字符串缺键语义、只删除本应用键、失败原子回滚和无关键不受影响。
+- 本轮 P0“清除本地数据”已在隔离 Stable 完成一次真实清除：主键和临时键读回 `''`，无关哨兵保留，生成 JSON/CSV 已删除，页面进入未初始化状态。
+- 本轮 P0 业务闭环与全部当前门禁均已通过；生成清单由本轮补充授权后的 `npm run build:mini` 自动生成。
 
 ## 阶段十八任务0基线（2026-08-11）
 
@@ -40,7 +40,7 @@
 - 命令：`node --test tests/phase7-data-safety.test.js tests/phase8-release-readiness.test.js`
 - 实际结果：退出 1；80 tests，72 pass，8 fail，0 cancelled，0 skipped，0 todo。
 - 失败项：5 个 Stable/空字符串缺键与精确回滚测试；3 个“账本先清除、文件后清理/部分成功”页面测试。
-- 结论：旧实现确实在任务书列明的真实缺陷上变红，已保存本次红灯事实，尚未改生产代码。
+- 结论：旧实现确实在任务书列明的真实缺陷上变红，红灯事实已保存，随后完成了领域与页面修复。
 
 ## 阶段十八任务2领域与页面定向绿灯（2026-08-11）
 
@@ -53,15 +53,30 @@
 
 - 已重建隔离副本：`.visual-qa`，AppID 为 `touristappid`；未读取或写入测试 AppID `wx9567fb4ff6336d0b`。
 - 清除前已准备：主键、恢复临时键、哨兵键 `phase7-isolated-sentinel=keep-this-sentinel`，以及 `yongdu-backup-20260811-213700.json`、`yongdu-transactions-20260811-213700.csv` 和无关文件。
-- 已从真实设置页进入“数据与隐私”，输入“清除”并打开最终确认弹窗；尚未点击破坏性“确认清除”，待动作前确认后继续。
+- 已从真实设置页进入“数据与隐私”，输入“清除”并打开最终确认弹窗；本节只记录准备过程，最终结果见下一节。
+
+## 阶段十八 Stable 隔离验收完成（2026-08-11）
+
+- 真实设置页确认动作已在 `.visual-qa` / `touristappid` 隔离 fixture 执行；未触碰测试 AppID `wx9567fb4ff6336d0b` 或真实账本。
+- 清除后主键、恢复临时键均读回 `''`；`phase7-isolated-sentinel` 仍为 `keep-this-sentinel`；生成 JSON/CSV 不存在，无关文件仍存在。
+- 页面路径为 `pages/settings/settings`，`initialized=false`，`globalData.state=null`，运行摘要和存储错误均为空。
+- 原始结果（不含账本内容）：`artifacts/phase7/local-clear-stable.txt`。
+
+## 阶段十八收口门禁实测（2026-08-11）
+
+- `npm test -- --test-reporter=tap`：退出 0；475 tests、475 pass、0 fail、0 cancelled、0 skipped、0 todo。
+- `npm run check`：退出 0；477 test declarations、必需规格章节和 domain 边界通过。
+- `npm run check:mini`：退出 0；五页、详情页、生成包和源码边界通过。
+- `git diff --check`：退出 0；仅有 LF→CRLF 转换提示。
+- 当前未提交变更仅为本轮授权范围内的 `BLOCKED.md`、`PROGRESS.md`、`README.md`、自动生成的 `miniprogram/lib/build-manifest.json` 和 `artifacts/phase7/local-clear-stable.txt`。
+- 475 tests / 477 declarations 是任务1新增回归测试后的当前数量，不是任务0基线异常。
 
 ## 下一步优先级
 
-1. 修复并验收“清除本地数据”的空字符串缺键语义；使用隔离账本做 Stable 验证，不触碰真实账本。
-2. 在记账入口补齐奖励余额的全额或部分抵扣交互。领域层已经支持 `rewardOffsetCents`，但当前记账页没有用户入口。
-3. 实现账户重命名、停用/归档和可追溯余额校准。
-4. 补齐信用卡、借贷和投资操作的历史日期补录。
-5. 功能闭环后再继续全局 UI、交互细节和自动视觉取证投入。
+1. 在记账入口补齐奖励余额的全额或部分抵扣交互。领域层已经支持 `rewardOffsetCents`，但当前记账页没有用户入口。
+2. 实现账户重命名、停用/归档和可追溯余额校准。
+3. 补齐信用卡、借贷和投资操作的历史日期补录。
+4. 功能闭环后再继续全局 UI、交互细节和自动视觉取证投入。
 
 ## 文档权威顺序
 

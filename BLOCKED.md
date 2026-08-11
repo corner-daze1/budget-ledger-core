@@ -2,12 +2,22 @@
 
 更新时间：2026-08-11
 
-## P0：本地清除功能缺陷
+本任务无新增待裁决项。
 
-- Stable 已确认：删除不存在的微信存储键后，`wx.getStorageSync` 读回空字符串。当前 `clearLocalLedger` 只把 `undefined` / `null` 判为空，因此会把真实删除误判为失败并尝试恢复原数据。
-- 影响：用户无法可靠完成应用内本地数据清除；控制台定向删除只是一份历史取证手段，不能冒充产品功能通过。
-- 修复边界：统一规范缺键语义，只删除 `yongdu-ledger-v1`、恢复临时键和本应用生成文件；失败时原子回滚，不得调用全局 `clearStorage`，不得碰无关键。
-- 验收：增加空字符串缺键回归测试，运行完整静态门禁，并在隔离账本中完成一次 Stable 清除验证。真实账本不在自动验收范围内。
+## 任务0现状复核（2026-08-11）
+
+- `npm test -- --test-reporter=tap`：退出 0；475 tests、475 pass、0 fail、0 cancelled、0 skipped、0 todo。
+- `npm run check`：退出 0；477 test declarations，通过。
+- `npm run check:mini`：退出 0；五页、详情页、生成包和源码边界通过。
+- `git status --short --branch`：`## agent/publish-current-progress...origin/agent/publish-current-progress`，当前差异为 `BLOCKED.md`、`PROGRESS.md`、`README.md`、自动生成的 `miniprogram/lib/build-manifest.json` 和新证据文件。
+- 475 tests / 477 declarations 是任务1新增回归测试后的正常当前数量，不是任务0基线异常。
+
+## P0：本地清除功能缺陷（已解除，2026-08-11）
+
+- 根因已修复：`undefined`、`null`、`''` 统一视为缺键；空白字符串及其他无效值不视为缺键。
+- 领域层已覆盖账本清除失败的精确回滚；页面编排为先清账本、成功后清内存状态和页面初始化标志、再清理生成文件，文件失败不恢复账本。
+- 隔离 Stable 实测已通过：主键和临时键读回 `''`，哨兵 `phase7-isolated-sentinel=keep-this-sentinel` 保持不变，用度 JSON/CSV 不存在，无关文件保留，页面未初始化。
+- 证据文件：`artifacts/phase7/local-clear-stable.txt`；真实账本和测试 AppID `wx9567fb4ff6336d0b` 未触碰。
 
 ## 任务0基线核对（2026-08-11）
 
@@ -37,10 +47,11 @@
 - 账单修改、分次退款、退款撤销、普通撤销、历史调整、分析重述、CSV 与 schema v2 审计关系已经实现并通过 467/467 自动测试。
 - 详情页已接入普通点击与左滑快捷入口，且保持唯一非 Tab 页。
 - 版本 0 和版本 1 的恢复与迁移路径已删除；当前恢复只接受 schema v2。
+- 阶段十八生成清单与白名单冲突已解除：本轮补充授权仅允许 `npm run build:mini` 自动生成 `miniprogram/lib/build-manifest.json`，未手工编辑；随后 `npm run check:mini` 已通过。
 
-## 阶段十八暂挂：Stable 清除最终确认（2026-08-11）
+## 阶段十八 Stable 清除证据（已完成，2026-08-11）
 
-- 隔离 `.visual-qa` / `touristappid` 已准备主键、临时键、哨兵键和生成文件，真实设置页已停在最终清除确认弹窗。
-- 点击确认会删除隔离本地数据，属于必须在动作前再次确认的本地破坏性 UI 操作；当前尚未执行删除，不能把 Stable 验收写成通过。
+- `.visual-qa` / `touristappid` 隔离 fixture 已从真实设置页完成最终确认；清除后两项目标键均为 `''`，哨兵和无关文件均保留，生成文件均不存在。
+- 页面读回为 `pages/settings/settings`、`initialized=false`、`globalData.state=null`；完整原始结果见 `artifacts/phase7/local-clear-stable.txt`。
 
 详细历史错误、旧窗口 ID、中间测试数字和已经结束的阶段过程以 Git 历史及 `artifacts/` 为准，不再在本文件重复维护。

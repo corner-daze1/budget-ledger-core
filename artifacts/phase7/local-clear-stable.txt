@@ -1,0 +1,30 @@
+Phase 7 Stable isolated local-clear evidence
+
+Captured at: 2026-08-11 21:49:39 +08:00
+Stable project: C:\Users\Administrator\Desktop\记账小程序\.visual-qa
+AppID: touristappid
+Scope: isolated fixture only; the test AppID wx9567fb4ff6336d0b and any real ledger were not accessed.
+
+Before the action:
+- yongdu-ledger-v1: present (464 bytes; ledger content intentionally omitted)
+- yongdu-ledger-v1-restore-temp: present (464 bytes; ledger content intentionally omitted)
+- phase7-isolated-sentinel: keep-this-sentinel
+- files: miniprogramLog, phase7-unrelated.txt, yongdu-backup-20260811-213700.json, yongdu-transactions-20260811-213700.csv
+
+Action:
+- Opened the real settings page in the isolated Stable project.
+- Entered the required clear phrase and confirmed the final clear dialog.
+
+After the action:
+- yongdu-ledger-v1 readback: ''
+- yongdu-ledger-v1-restore-temp readback: ''
+- phase7-isolated-sentinel readback: keep-this-sentinel
+- files: miniprogramLog, phase7-unrelated.txt
+- generated JSON/CSV files: absent
+- current route: pages/settings/settings
+- settings page initialized: false
+- globalData.state: null
+- globalData.storageError: empty
+- globalData.planRunSummary: null
+
+Result: isolated ledger clear and generated-file cleanup completed without touching the unrelated sentinel or file.
