@@ -343,9 +343,10 @@ test('README and product spec describe current capabilities and exclude only unb
     for (const capability of ['动态累计预算', '六类账户', '小程序内提醒', '三张分析图', 'JSON', 'CSV']) assert.ok(source.includes(capability));
     for (const exclusion of ['AI分析', '云同步', '行情', '汇率', '会员', '后台定时通知']) assert.ok(source.includes(exclusion));
   }
-  for (const path of ['首次设置', '支出、收入与转账', '预算结算', '资产、债务与投资', '计划提醒与待处理', '两种分析口径', '备份预检与取消', '关闭并重开持久化']) {
+  for (const path of ['首次设置', '支出、收入与转账', '预算结算', '资产、债务与投资', '计划提醒与待处理', '两种分析口径', '修改、退款与撤销', '备份、恢复与清除', '关闭并重开持久化']) {
     assert.ok(checklist.includes(path));
   }
-  assert.match(checklist, /恢复成功路径：只由自动化测试覆盖/);
-  assert.match(checklist, /清除成功路径：只由自动化测试覆盖/);
+  assert.match(checklist, /真实账本只执行导出、预检和最终确认前取消/);
+  assert.match(checklist, /独立隔离账本完成一次 schema v2 恢复、清除和无关键保留验证/);
+  assert.match(checklist, /微信缺失存储键可能读回空字符串/);
 });

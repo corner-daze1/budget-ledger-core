@@ -20,12 +20,6 @@ npm run evidence:visual
 
 视觉取证只使用 `.visual-qa` 隔离副本和 `touristappid`，不会读取测试 AppID 的账本。完整机制、产物和失败规则见 `docs/VISUAL_EVIDENCE.md`。
 
-## 历史验证状态（2026-08-06）
-
-当时领域与小程序静态门禁为全量测试 400/400、视觉基础设施测试 33/33、`npm run check` 403 项声明、`npm run check:mini` 通过。以上只证明当时的代码和静态契约通过，不代表自动截图运行成功。
-
-C 盘 Stable 的空白 `touristappid` 探针已定位为 `App.captureScreenshot` 出现一次 SEND、没有同 UUID RECV，分类为 `sent-no-matching-reply`；截图仍未修复。Computer Use 对该 Stable NW.js 窗口也仍存在窗口归属矛盾，不能替代自动截图。唯一下一阶段建议是取得用户另行授权后，用同一空白探针对另一个已核实来源和版本号的 C 盘 Stable 做受控版本对照；不得据此访问真实 AppID 账本。
-
 ## 设计边界
 
 `src/domain/` 不接触微信运行时、DOM、网络、文件系统、进程环境或密钥。当前小程序界面只负责把表单输入转换成应用层参数、展示返回值和选择备份文件；金额、周期、结转、退款和账户余额仍由领域函数决定。云端若在后续版本接入，只能保存版本化 JSON、鉴权和处理同步冲突，不能直接覆盖本地流水或静默丢弃损坏数据。
@@ -44,7 +38,7 @@ C 盘 Stable 的空白 `touristappid` 探针已定位为 `App.captureScreenshot`
 
 设置页的数据管理区可以把完整账本导出为 `schemaVersion: 2` 的 JSON，也可以把最新有效、用户可读的固定列账单导出为 CSV。恢复只接受当前 `schemaVersion: 2`，旧版本不会迁移；JSON 可经预检和两次人工确认后原子恢复，CSV 只供查看、不能恢复。文件写在微信小程序用户目录，只有用户主动点击时才分享或复制，不会自动上传、读取剪贴板或扫描设备。
 
-恢复会先校验 5 MiB 上限、JSON、版本、CNY、结构、重复标识和流水引用，再经过临时键与主键的写后读校验。任何失败都会尝试保留原主键并清理临时键；恢复成功后也不会顺带执行到期计划。清除只处理本应用主键、恢复临时键和本应用生成的 JSON/CSV 文件，不调用全局清空。
+恢复会先校验 5 MiB 上限、JSON、版本、CNY、结构、重复标识和流水引用，再经过临时键与主键的写后读校验。任何失败都会尝试保留原主键并清理临时键；恢复成功后也不会顺带执行到期计划。清除的产品契约只允许处理本应用主键、恢复临时键和本应用生成的 JSON/CSV 文件，不调用全局清空；当前 Stable 缺键读回空字符串，而实现仍按 `undefined` / `null` 校验，因此应用内清除尚未通过，见 `BLOCKED.md`。
 
 数据默认仅存在本机，不上传、不用于 AI；只有用户主动导出、分享或复制时才离开小程序。卸载小程序、清理微信缓存或设备故障可能造成数据丢失，请定期保存 JSON 完整备份。备份和 CSV 是未加密明文，可能含有敏感财务信息，分享前请确认接收方和存放位置。清除后如果没有 JSON 备份，数据无法恢复。本阶段没有云同步、账号找回、网络上传或加密承诺；以上是产品说明，不代表已完成平台法律合规。详细规则见 `docs/PHASE7_DATA_SAFETY_SPEC.md`。
 
@@ -52,10 +46,14 @@ C 盘 Stable 的空白 `touristappid` 探针已定位为 `App.captureScreenshot`
 
 - 当前产品规则：`docs/PRODUCT_SPEC.md`
 - 当前首页视觉与导航：`docs/PHASE10_TDESIGN_UI_SPEC.md`
+- 本地数据安全：`docs/PHASE7_DATA_SAFETY_SPEC.md`
+- 发布前验收：`docs/PHASE8_RELEASE_CHECKLIST.md`
 - 自动视觉取证：`docs/VISUAL_EVIDENCE.md`
 - 当前进度与待办：`PROGRESS.md`、`BLOCKED.md`
-- `docs/PHASE2_UI_SPEC.md`、`PHASE3_ASSET_SPEC.md`、`PHASE7_DATA_SAFETY_SPEC.md`、`PHASE9_DESIGN_SYSTEM.md` 保留各阶段决策背景；与现役文档冲突时，以产品规格和阶段十规范为准。
+- `docs/PHASE2_UI_SPEC.md`、`PHASE3_ASSET_SPEC.md`、`PHASE9_DESIGN_SYSTEM.md` 只保留各阶段决策背景；与现役文档冲突时，以以上现役入口为准。
 
-## 阶段十六验证状态（2026-08-11）
+## 当前验证状态（2026-08-11）
 
-`npm run build:mini` 生成5个文件并通过；`npm test` 为467/467，fail/skip/todo均为0；`npm run check` 为470 test declarations；`npm run check:mini`通过五页、详情页与生成包同步；`git diff --check`退出0。详情页和左滑动作只做本地账本操作，未接入网络、AI或云同步。
+`npm run build:mini` 生成 5 个文件并通过；`npm test` 为 467/467，fail/skip/todo 均为 0；`npm run check` 为 469 test declarations；`npm run check:mini` 通过五页、详情页与生成包同步；`git diff --check` 退出 0。详情页和左滑动作只做本地账本操作，未接入网络、AI或云同步。
+
+自动截图仍阻塞于 Stable/automator 的 `App.captureScreenshot` 无匹配回复，本轮没有把它写成通过。当前功能缺陷和后续优先级见 `BLOCKED.md` 与 `PROGRESS.md`。

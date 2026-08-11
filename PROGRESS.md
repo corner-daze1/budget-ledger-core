@@ -2,332 +2,49 @@
 
 更新时间：2026-08-11
 
-## 现役结论
+当前基线：`master` / `7188fd9`
 
-- 当前分支为 `master`；阶段十一至十五的首页、取证、测试、文档和证据改动已纳入 2026-08-07 收口提交，不再把旧提交 `1411267` 当作现役实现基线。
-- 当前参赛版支持动态累计预算、六类账户、周期计划与小程序内提醒、三张账单分析图、JSON 完整备份与恢复预检、CSV 账单导出。
-- 小程序固定五页顺序为 home、settings、entry、bills、transaction-detail；详情页为唯一非Tab页。已初始化用户默认进入账本；首次无账本时由 `home.onShow` 切换到我的完成设置。
-- 底部视觉导航固定为“账本｜记一笔｜我的”。只有账本和我的是 Tab；中央“记一笔”是动作入口，完整账单与分析从账本页“全部”进入。
-- 首页第二版采用暖灰、松绿和预算刻度带，保留真实预算、积攒/预支、计划事件、错误、空状态及最多五笔近期账单。现役规范为 `docs/PHASE10_TDESIGN_UI_SPEC.md`。
-- 自动截图尚未修复：空白 `touristappid` 协议定位只观察到一次 `App.captureScreenshot` SEND，没有同 UUID RECV，冻结分类为 `sent-no-matching-reply`；不得归罪首页或表述为自动取证通过。
+## 现役产品
 
-## 已验证基线
+- 当前参赛版是离线原生微信小程序，支持人民币、整数分、动态累计预算、六类账户、周期计划与小程序内提醒、三张账单分析图、JSON 完整备份、CSV 导出，以及账单修改、退款、撤销的可追溯闭环。
+- 小程序固定五页：home、settings、entry、bills、transaction-detail。详情页是唯一非 Tab 页；底部视觉导航为“账本｜记一笔｜我的”，中央“记一笔”是动作入口。
+- 日常账单列表只显示逻辑账单的最新有效版本；修改使用冲正与新版本，退款可分次发生，撤销保留审计关系。账户、预算、负债、奖励余额和可退金额必须原子一致。
+- 当前存储版本是 `schemaVersion: 2`，只接受当前版本备份，不迁移版本 0 或版本 1。阶段九的 schema v1 证据只保留为历史验证记录。
+- 首版仍不包含 AI 分析、云同步、行情、汇率、会员、后台定时通知或正式生产 AppID。
 
-- 视觉基础设施测试：33/33，fail/skip/todo 均为 0。
-- 全量测试：400/400，fail/skip/todo 均为 0。
-- `npm run check`：403 test declarations。
-- `npm run check:mini`：退出 0。
-- 保护比较：112→112、`changed=[]`；`git diff --check`退出 0，仅保留既有 LF/CRLF 转换提示。
-- 协议原始日志与结构化结果一致：截图请求1次、匹配回复0次、清理确认、端口关闭、自动化残留0、`.visual-probe`删除。`protocol-trace-red.txt`与`protocol-trace-green.txt`仅为摘要，原始测试stdout/stderr未保留。
+## 当前验证基线
+
+- `npm run build:mini`：退出 0，生成 5 个小程序文件。
+- `npm test`：467/467，fail/skip/todo 均为 0。
+- `npm run check`：469 test declarations，退出 0。
+- `npm run check:mini`：退出 0，五页、详情页、生成包和源码边界通过。
+- `git diff --check`：退出 0；仅有工作区换行符转换提示。
+- 自动视觉取证未重跑，也未冒充通过；当前协议阻塞见 `docs/VISUAL_EVIDENCE.md`。
+
+## 当前功能缺陷
+
+- 应用内“清除本地数据”尚未通过 Stable 实测。微信缺失存储键读回空字符串，而 `clearLocalLedger` 目前只把 `undefined` / `null` 当作删除成功，因此真实删除后会误报失败并尝试回滚。
+- 该缺陷影响用户主动清除这一隐私能力，应先于新增功能修复。修复必须覆盖空字符串缺键语义、只删除本应用键、失败原子回滚和无关键不受影响。
+
+## 下一步优先级
+
+1. 修复并验收“清除本地数据”的空字符串缺键语义；使用隔离账本做 Stable 验证，不触碰真实账本。
+2. 在记账入口补齐奖励余额的全额或部分抵扣交互。领域层已经支持 `rewardOffsetCents`，但当前记账页没有用户入口。
+3. 实现账户重命名、停用/归档和可追溯余额校准。
+4. 补齐信用卡、借贷和投资操作的历史日期补录。
+5. 功能闭环后再继续全局 UI、交互细节和自动视觉取证投入。
 
 ## 文档权威顺序
 
 1. `docs/PRODUCT_SPEC.md`：现役产品与业务规则。
 2. `docs/PHASE10_TDESIGN_UI_SPEC.md`：现役首页视觉与导航契约。
-3. `docs/VISUAL_EVIDENCE.md`：自动视觉取证机制。
-4. `docs/PHASE8_RELEASE_CHECKLIST.md`：发布前非破坏验收入口。
-5. 其余阶段文档保留当时的决策背景；与现役文档冲突时不得覆盖上述现役口径。
+3. `docs/PHASE7_DATA_SAFETY_SPEC.md`：本地备份、恢复和精确清除契约。
+4. `docs/VISUAL_EVIDENCE.md`：自动视觉取证机制与当前协议结论。
+5. `docs/PHASE8_RELEASE_CHECKLIST.md`：发布前验收入口及隔离数据边界。
 
-## 下一步
+其余阶段文档只保留当时的决策背景；与上述现役文档冲突时，不得覆盖现役口径。详细实施过程、旧测试数和中间失败保留在 Git 与 `artifacts/`，不再堆入本文件。
 
-1. 取得用户另行授权后，用同一空白探针对另一个已核实来源和版本号的 C 盘 Stable 做受控版本对照；未授权前不安装、切换或重跑。
-2. 自动截图链路恢复后，由产品方审阅当前首页第二版；风格确认前不把内容重绘铺到我的、记账和账单分析三页。
-3. 正式发布前另做真实账本 JSON 导出/恢复、关闭重开和真机冒烟；隔离 fixture 不能替代发布级数据安全验证。
+## 发布边界
 
-## 已知限制
-
-- 首页实现和静态门禁已通过；自动截图运行未通过，视觉细节也尚未获得产品方最终确认。
-- 21–23 号证据已在测试账本完成：私密备份元数据、两种机型预支态截图和恢复后精确哈希均已落盘；应用内“清除”仍真实失败，未把外部定向清除包装成应用功能通过。
-- Computer Use 的 `sky.get_window_state` 对 Stable NW.js 窗口仍返回所有权矛盾；本轮改用当前可见 Stable 窗口的 Win32 输入与截屏完成手工证据，不代表自动截图协议恢复。
-- Stable/automator 在截图 SEND 后返回5条无UUID的 `App.logAdded type:error args:[{}]` 事件；它们不是截图回复，空参数也不足以识别错误原因。
-
-## 阶段十一账本首页任务基线（2026-08-06）
-- 目标：把首页收敛为预算概览态与全屏账本态两个停靠状态，展开后连续浏览全部流水。
-- 顺序：先冻结契约并取得旧首页红证据，再实现首页状态/分组，最后修复取证滚动归零并做六图验收。
-- 最大风险：展开滚动、返回与重复点账本不能破坏预算、提醒、结算和既有底栏导航。
-- 约束：只改任务书白名单；领域、存储、设置/账单页、依赖、真实数据和既有视觉证据保持只读。
-
-## 阶段十一契约红证据（2026-08-06）
-- 已冻结两停靠态、全部流水、日期分组、日汇总、状态恢复、重复点账本和小屏契约。
-- 旧首页按新目标真实变红：目标集合共69项，47 pass、22 fail，skip/todo均为0；失败集中在缺少账本分组、双停靠状态和新首页结构。
-- 完整原始输出已保存为 `artifacts/visual-evidence/phase11-ledger-sheet-red.txt`；自此不放松断言。
-
-## 历史任务2：21–23号证据与状态恢复最终收口（2026-08-06）
-- Stable 已重新打开；新鲜 `list_apps()` 与随后 `list_windows()` 都只返回同一个项目窗口 `2887566`。
-- 对 `list_apps()` 句柄、`list_windows()` 句柄以及 `get_window()` 重新绑定后的句柄分别读取状态，均复现同一原始错误：`window id 2887566 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`。
-- 因没有可信的当前 UI 状态，本轮未点击导出、预支、恢复或清除，未访问测试 AppID 账本，未创建 `21-private-backup-proof.txt`、`22-home-prepaid-top-iphone12-13.png` 或 `23-home-prepaid-top-iphone5-320.png`，也未把历史 `17-state-restore-check.txt` 升格为本轮证据。
-- 状态恢复仍为未验证；本轮未重跑已完成自动门禁，未修改业务代码、测试、配置或数据文件，未提交 Git；阻塞已同步到 `BLOCKED.md`。
-
-## 阶段十一首页账本原型实现（2026-08-06）
-- 首页已按冻结契约实现预算概览态与全屏账本态：全部流水由 `core.listRecentTransactions` 进入同一日期分组列表，概览固定可用空间，展开态接管滚动。
-- 已覆盖收入、退款、固定/可控支出、转账、还款、借贷、投资的日汇总边界；保留结算、计划、逾期、待处理、错误和空状态入口。
-- 目标测试完整绿证据已保存为 `artifacts/visual-evidence/phase11-ledger-sheet-green.txt`：69/69，fail/skip/todo 均为 0。
-
-## 阶段十一取证滚动红证据（2026-08-06）
-- 已先增加截图前页面与账本滚动归零、并读回为0的回归测试；旧脚本真实变红：`tests/visual-evidence.test.js` 共18项，17 pass、1 fail，skip/todo均为0。
-- 完整原始输出已保存为 `artifacts/visual-evidence/phase11-visual-scroll-red.txt`；失败明确为尚未提供 `resetPageScrollForEvidence`，未放宽断言。
-
-## 阶段十一取证滚动实现（2026-08-06）
-- 已保留现有 `miniprogram-automator@0.12.1` 的 `pageScrollTo(0)` 与 `page.scrollTop()`；Stable 对 `Page.getWindowProperties` 无响应时，脚本改用小程序原生 `selectViewport().scrollOffset` 真实读回页面 viewport，账本仍用 `.ledger-scroll` 的 `scrollTo(0, 0)`。
-- 新增账本概览/全屏两个真实 fixture；每个均包含三天、支出、收入、退款和转账。`tests/visual-evidence.test.js` 当前为20/20，fail/skip/todo均为0。
-- 兼容探针已生成真实 `compatibility.json`：`ok:true`、390×753 样图、viewport 读回0、runtimeErrors为0；外层 npm 调用在产物落盘后仍被工具超时截断，未把它记为命令退出0。
-- 六图自动取证已运行三轮但均失败；不把旧四图、旧 manifest 或旧 green 计为本轮证据。静态门禁继续执行不受影响的部分。
-
-## 阶段十一取证 viewport 兜底（2026-08-06）
-- 为不把 Stable 的固定协议超时误判为截图成功，取证脚本现在先通过真实 `wx.createSelectorQuery().selectViewport().scrollOffset` 读回页面滚动；只有该读回不可用时才调用 `page.scrollTop()`，两者都必须读回0。
-- `node --test tests/visual-evidence.test.js`：20/20，fail/skip/todo均为0；兼容样图与六图运行结果分别按后续记录保存，未把脚本测试当作六图运行时通过。
-
-## 阶段十一取证路由收口（2026-08-06）
-- 三轮六图运行中，空流水兼容 fixture 已成功，但有流水的 `normal-accumulated` 每轮均连续三次截图超时；每次会话均确认清理。
-- `writeAndReadFixture` 已通过唯一 `switchTab(HOME_ROUTE)` 完成首页路由，截图阶段不再重复 `reLaunch`，只读取当前页并断言路径；原因和替换已记录，未改页面业务代码。
-
-## 阶段十一取证原生滚动样式收口（2026-08-06）
-- 第二、三次六图运行在移除重复 `reLaunch`、删除子控件冗余 `overflow:hidden` 后仍于 `normal-accumulated` 截图超时；按三轮上限停止，不再用猜测继续改 UI。
-
-## 阶段十一静态门禁结果（2026-08-06）
-- `npm test`：386/386，fail/skip/todo均为0。
-- `npm run check`：389 test declarations，退出0；`npm run check:mini`退出0；`git diff --check`退出0（仅换行符提示）。
-- 保护范围核对 `git diff --exit-code 42770e6 -- src miniprogram/lib miniprogram/pages/bills miniprogram/pages/settings package.json package-lock.json project.config.json` 退出0。
-- 兼容样图虽已真实生成，三轮六图命令均以 `TIMEOUT screenshot normal-accumulated after 30000ms` 退出1；无六张 PNG、manifest 或 green，因此任务3未满足，不能创建提交或宣称阶段十一完成。
-
-## 阶段十一取证修复任务基线（2026-08-06）
-- 目标：修复页面实例取证通道与严格 QA 进程/端口清理，不改业务代码、不提交 Git。
-- 顺序：先补回归测试并取得旧实现红证据，再实现 evaluate 读回和清理核验，最后只跑规定的视觉与静态门禁。
-- 最大风险：close/disconnect 表面成功但 `.visual-qa` 进程或端口残留，造成假绿或重试污染；残留时必须失败且不重试。
-- 基线：HEAD `42770e64c42dc3a826c52cc37db07d2d3ccfd9af`，automator `0.12.1`，视觉20/20，全量387/387，check 390 declarations。
-
-## 阶段十一取证修复结果（2026-08-06）
-- 已先保存旧实现红证据 `artifacts/visual-evidence/phase11-runtime-cleanup-red.txt`：22项中20 pass、2 fail；现有视觉测试22/22，`npm test`为389/389，`npm run check`为392 declarations，`npm run check:mini`退出0。
-- 取证滚动和展开现通过 `miniProgram.evaluate()` 的真实页面实例通道完成，测试覆盖无 `page.$`、`page.callMethod`、`page.data` automator API 时读回 `ledgerMode=expanded`、`ledgerScrollTop=0`。
-- 清理逻辑已核对精确 `.visual-qa`/诊断副本、CLI包装进程、`wxfilewatcher_x64.exe`、端口与 CLI close；全六态本轮三次 normal 会话清理均 `confirmed:true`，结束后无匹配自动化进程。
-- 兼容探针本轮三次命令均因 `empty-bills` 截图30秒超时退出1；全六态命令运行一轮，`normal-accumulated`三次新鲜会话均截图超时退出1。原始失败保留在 `artifacts/visual-evidence/compatibility/compatibility-error.txt` 与 `artifacts/visual-evidence/console.jsonl`。
-- 未生成本轮六张PNG、`manifest.json`、`six-states-green.txt`或兼容成功JSON/样图；未把旧证据升格，未重跑21–23状态恢复，未改业务代码，未提交Git。当前阻塞与处理边界已同步至 `BLOCKED.md` 和 `docs/VISUAL_EVIDENCE.md`。
-
-## 历史任务2：21–23号最终文档收口（2026-08-06）
-- Stable 重开后重新建立了全新的桌面控制会话；`list_apps()` 与 `list_windows()` 均只发现项目窗口 `2887566`。
-- 新鲜句柄的 `get_window_state()`、直接窗口句柄读取、仅文本读取，以及激活后重新发现再读取，均返回同一原始错误：`window id 2887566 no longer belongs to nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default; current owner is nwjs._nwjs_mbeehgnikfbgjh.80d774828fb0.Default`。
-- 因当前 UI 状态仍不可验证，本轮没有点击导出、预支、恢复或清除，没有访问测试 AppID 账本；21–23 号证据文件仍未创建，历史 `17-state-restore-check.txt` 未升格，`match=true` 仍不能声称。
-- 按用户边界未重跑已完成自动门禁，未修改业务代码、测试、配置或数据文件，未提交 Git；本次真实阻塞已同步至 `BLOCKED.md`。
-
-## 阶段十一取证修复任务0复核（2026-08-06）
-- 目标仍是只修取证基础设施：先红证据，再 evaluate 页面实例与精确清理，最后六态真实验收；最大风险是把 close/disconnect 成功误报为清理完成。
-- `git status --short --branch`：`## master`，工作区有既有阶段十一及文档/证据改动；`npm ls miniprogram-automator --depth=0`：`miniprogram-automator@0.12.1`。
-- 任务书基线要求视觉20/20、全量387/387、check390；当前真实输出为视觉22/22、全量389/389、check392，测试数字不符，按任务书停止在任务0。
-- 实测 `npm run check:mini` 退出0；`npm run evidence:visual -- --hash-protected before` 退出0，`protectedCount=112`；精确 `cli.js auto` 残留进程数为0（动态值）。
-- 本轮未进入任务1–3，未改业务代码、测试或配置，未提交 Git；原始任务0输出已追加至 `BLOCKED.md`。
-
-## 阶段十一截图诊断任务0（2026-08-06）
-- 目标：用最小空白小程序分层判断 `App.captureScreenshot` 超时属于宿主 Node、Stable/automator 协议、启动链路还是现有取证步骤，不把失败归罪首页。
-- 顺序：先补诊断入口与结果完整性报警器，再用系统 Node 最多两场；未达2/2时改用Stable内置Node最多两场；只有2/2稳定才进入当前项目A–C对照。
-- 最大风险：复用挂起runtime、把单次成功写成稳定成功，或把清理命令成功误判成进程/端口已消失。
-- 任务0实测：视觉22/22、全量389/389、check392、check:mini退出0；HEAD与automator依赖匹配，保护哈希前置`ok:true`且112项。
-- 开始诊断时精确匹配本项目`cli.js auto`进程为0；本轮不改业务/UI、依赖或配置，不提交Git。
-
-## 阶段十一截图诊断任务1实现（2026-08-06）
-- 已新增最小截图探针结果完整性校验与2/2决策器；未满足最小项目稳定2/2时，决策器明确禁止继续当前项目探针或归罪应用。
-- 先跑旧实现取得真实红证据：`artifacts/visual-evidence/phase11-screenshot-diagnostic-red.txt`，24项中22 pass、2 fail、skip/todo均为0。
-- 实现后 `node --test tests/visual-evidence.test.js` 为24/24，fail/skip/todo均为0；最小探针随后按规定分层运行，每个Node最多两场。
-
-## 阶段十一截图诊断任务1结果（2026-08-06）
-- `npm run evidence:visual -- --screenshot-diagnostic` 真实退出0，生成 `artifacts/visual-evidence/screenshot-diagnostic.json` 与 `.log`；结果校验`validation.ok=true`。
-- 系统Node `v24.16.0` 使用端口 `64066`、`63529` 两个新会话；Stable内置Node `v16.13.1` 使用端口 `61029`、`59968` 两个新会话。
-- 四场均成功连接最小空白页 `pages/index/index`，`evaluate(() => 7)`真实读回7；四场截图请求均为 `TIMEOUT diagnostic screenshot after 30000ms`，没有生成或伪造PNG。
-- 四场cleanup均`confirmed:true`、CLI close完成、残留进程0、端口不可连接；最终`.visual-probe`已删除，精确匹配`.visual-probe/.visual-qa cli.js auto`进程为0。
-- 决策为`minimal-probe-not-stable`、`continueCurrentProject=false`、`canDeclareApplicationIssue=false`；按分支规则不运行当前项目A–C，结论限定为宿主/Stable/automator协议链路不稳定，不能归罪首页。
-
-## 阶段十一截图诊断最终静态验收（2026-08-06）
-- 已有真实自动化结果：视觉测试 `24/24`，全量 `391/391`，均 `fail=0`、`skip=0`、`todo=0`。
-- `npm run check` 真实退出0：`394 test declarations, required spec sections present, domain boundary clean`。
-- `npm run check:mini` 真实退出0：四页面、生成应用包和源码边界检查通过。
-- `npm run evidence:visual -- --compare-protected` 真实退出0：`beforeCount=112`、`afterCount=112`、`changed=[]`、`ok=true`。
-- 最终只读残留核对：`diagnosticValidation=true`、`probeRemoved=true`、`allResidualZero=true`、`allPortsClosed=true`、`matchingAutomationProcesses=0`、`probeDirectoryExists=false`；`git status --short --branch` 仅显示既有工作区改动与本轮白名单文件，未提交Git。
-- 诊断分支已按最小探针不稳定结论闭合；未运行当前项目A–C或六态截图，不改业务代码、依赖、配置，不提交Git。
-
-## 阶段十二截图链路兼容性审计任务0（2026-08-06）
-- 已读取本文件与 `BLOCKED.md` 后续跑；未重启截图会话，未触碰两套开发者工具。
-- 基线命令实测：`HEAD=42770e64c42dc3a826c52cc37db07d2d3ccfd9af`；Node `v24.16.0`；npm `11.9.0`；`miniprogram-automator@0.12.1`。
-- `node --test tests/visual-evidence.test.js`：24/24；`npm test`：391/391；两者 fail/skip/todo 均为0。
-- `npm run check`：394 declarations、domain boundary clean；`npm run check:mini` 退出0。
-- `npm run evidence:visual -- --compare-protected`：`beforeCount=112`、`afterCount=112`、`changed=[]`、`ok=true`。
-- 既有诊断结论保持：系统Node与Stable Node各2场，currentPage/evaluate成功，截图0/4，cleanup4/4；本轮只做只读兼容性审计，不修代码、不提交Git。
-
-## 阶段十二截图链路兼容性审计任务1（2026-08-06）
-- 微信官方快速入门 `https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/quick-start.html` 实测HTTP 200：通用门槛为 Node.js `>8.0`、基础库 `>=2.7.3`、开发者工具 `>=1.02.1907232`，并要求开启 CLI/HTTP 调用。
-- 微信官方 `https://developers.weixin.qq.com/miniprogram/dev/devtools/auto/miniprogram.html` 实测HTTP 200：截图专属门槛为 automator `>=0.9.0`、基础库 `>=2.9.5`、开发者工具 `>=1.02.2001082`；仅开发者工具模拟器支持，客户端不可用。
-- npm 官方版本数据 `npm view miniprogram-automator version time --json`：当前版本 `0.12.1`，最后发布 `2023-11-07T03:05:39.610Z`；本地安装同为 `0.12.1`。版本页未给出额外 Node/工具最低版本。
-- 当前 Node `v24.16.0` 满足通用 Node 门槛；C盘注册工具 `2.01.2510290`、D盘副本文件版本 `2.02.0` 均高于数字版工具门槛，但基础库当前值与CLI/HTTP开关现场状态未记录。
-- 版本门槛满足只证明文档条件，不证明本机截图运行通过；npm包发布时间久也不单独证明不兼容。既有最小项目截图实际仍为0/4。
-
-## 阶段十二截图链路兼容性审计任务2（2026-08-06）
-- C盘注册安装证据：卸载注册表 `DisplayVersion=2.01.2510290`、图标指向 `C:\Program Files (x86)\Tencent\微信web开发者工具\微信开发者工具.exe`；该目录 `cli.bat`、`cli.js`、`node.exe`、`node-18.exe` 和 `code\package.nw\js\common\cli\index.js` 均存在，文件版本分别为外壳 `1.03.0`、内置 Node `16.13.1/18.20.8`。
-- D盘副本证据：`D:\微信\微信web开发者工具\微信开发者工具.exe` 文件版本 `2.02.0`，`cli.bat` 与 `cli.js` 存在；`cli.bat` 明确调用同目录 `node.exe`，但该文件不存在，递归也未找到 `node*.exe` 或 CLI `index.js`。D盘注册渠道未知，不能把文件版本等同为已注册安装。
-- 进程快照 `2026-08-06T17:54:42.5015870+08:00`：C盘工具族30个进程、D盘副本2个进程同时存在；PID只代表该次快照，不写成恒定事实。
-- 包源码 `node_modules/miniprogram-automator/out/MiniProgram.js` 实际为 `checkVersion()` 要求基础库至少2.7.3；`screenshot()` 无中间截图实现，直接 `send("App.captureScreenshot")`，成功后才按base64写入指定路径。
-- 既有诊断JSON复核：最小 `touristappid` 空白页，system/stable各2场；四场 connect/currentPage/evaluate成功，screenshot均30秒TIMEOUT，cleanup均确认、残留0、端口关闭；决策 `minimal-probe-not-stable`，不能归罪首页。
-
-## 阶段十二截图链路兼容性审计任务3收口（2026-08-06）
-- 已新增 [artifacts/visual-evidence/compatibility-audit/report.md](artifacts/visual-evidence/compatibility-audit/report.md)，包含三份一手来源矩阵、C/D安装与进程矩阵、源码映射、最多六条带标签结论和唯一授权后下一实验。
-- 已生成 `artifacts/visual-evidence/compatibility-audit/source-matrix.txt`、`local-matrix.txt`、`sha256-before.txt`、`sha256-after.txt`、`sha256-compare.txt`。
-- SHA-256只读核对实测：`beforeCount=19`、`afterCount=19`、`changedCount=0`、`ok=true`；两份既有 `screenshot-diagnostic.json/.log`均在清单且前后一致。
-- 收口门禁：`npm run check` 394 declarations通过；`npm run check:mini`退出0；`git diff --check`退出0（仅LF/CRLF提示）。视觉24/24、全量391/391及保护112/112来自任务0基线，因本轮未改代码/测试/依赖，未重跑截图或全量测试。
-- 本轮仅新增白名单内兼容性报告与审计附件；开工时已存在的阶段十一工作区改动保留未碰；工具两套继续并存，未关闭、未升级、未执行D盘CLI，不提交Git。
-
-## 阶段十三保护哈希门禁修复任务0（2026-08-06）
-- 复核 `git status --short --branch`：`## master`，保留既有阶段十一工作区改动；未发现本轮任务开始前的其他新范围变化。
-- 三个固定SHA-256实测一致：`protected-hashes-before.txt=D92A3918A1DC9EDA1E2C8B3DD2CCCD549275B34E89E716B8A7EF84BE8DD5E038`；诊断JSON=`0948F7C16590E4B593CF57A880CFC721363E01F6952C8A48F61060539F13838A`；诊断log=`58E69E9B8E8D47413285BB848A365D775491938D34FE6A2D16CD5FA1CD19689C`。
-- `npm run evidence:visual -- --compare-protected`真实退出1，JSON为 `beforeCount=112`、`afterCount=113`、`changed=["docs/VISUAL_COMPATIBILITY_AUDIT.md"]`、`ok=false`；完整红证据已保存为 `artifacts/visual-evidence/compatibility-audit/protected-scope-red.txt`。
-
-## 阶段十三保护哈希门禁修复任务1（2026-08-06）
-- 已用 `apply_patch` 完成报告移动：旧 `docs/VISUAL_COMPATIBILITY_AUDIT.md` 删除，新 `artifacts/visual-evidence/compatibility-audit/report.md` 建立；正文结论未重写，仅修正诊断JSON相对链接和末尾附件引用。
-
-## 阶段十三保护哈希门禁修复任务2最终验收（2026-08-06）
-- 移动后真实保护比较退出0：`beforeCount=112`、`afterCount=112`、`changed=[]`、`ok=true`；完整绿证据已保存为 `artifacts/visual-evidence/compatibility-audit/protected-scope-green.txt`。
-- `node --test tests/visual-evidence.test.js`：24/24，fail/skip/todo均为0；`npm test`：391/391，fail/skip/todo均为0。
-- `npm run check`：394 declarations通过；`npm run check:mini`退出0；`git diff --check`退出0，仅有LF/CRLF提示。
-- 最终路径核对：旧报告`oldExists=false`，新报告`newExists=true`，报告旧路径匹配0，诊断JSON相对链接2处；三个固定SHA-256再次一致。未启动截图、未关闭工具、未提交Git。
-
-## 阶段十四D盘变量隔离任务0（2026-08-06）
-- 目标：只通过临时关闭D盘工具，判断D盘并存是否是C盘Stable截图超时的必要条件；顺序为基线→严格两场入口→关闭D盘精确进程树→唯一一次实验→收口，最大风险是误杀C盘进程或在清理未确认时继续。
-- 基线实测：视觉 `24/24`、全量 `391/391`、check `394`、check:mini退出0、保护比较 `beforeCount=112`、`afterCount=112`、`changed=[]`、`ok=true`。
-- 旧诊断JSON/log固定SHA-256仍为 `0948F7C16590E4B593CF57A880CFC721363E01F6952C8A48F61060539F13838A`、`58E69E9B8E8D47413285BB848A365D775491938D34FE6A2D16CD5FA1CD19689C`。
-- 进程快照已保存 `artifacts/visual-evidence/single-instance/process-before.json`：`2026-08-06T20:22:50.3985833+08:00`，C盘相关进程30、D盘相关进程2、精确 `.visual-probe/.visual-qa cli.js auto` 残留0；PID仅作快照。
-- 任务0未关闭工具、未启动截图、未访问账本、未提交Git；D盘关闭动作留到任务2，严格两场入口先做红测。
-
-## 历史任务2：21–23号证据与状态恢复最终重试（2026-08-06）
-- Stable 重开后，新鲜 `list_apps()` 和 `list_windows()` 均只发现项目窗口 `2887566`；现场事实与原始错误已按当次对话输出记录。
-- 对新鲜窗口分别执行 `get_window_state`、`get_window` 和 `activate_window` 的只读尝试，三次均返回同一窗口所有权矛盾错误；没有可信的 UI 状态可供操作或复核。
-- 因此没有执行导出、预支、恢复或清除，没有访问测试 AppID 账本；21–23 号证据文件仍缺失，历史 `17-state-restore-check.txt` 未升格，状态恢复 `match=true` 仍未验证。
-- 本轮仅完成重试记录与文档收口；未重跑已完成自动门禁，未修改业务代码、测试、配置或数据文件，未提交 Git。
-
-## 阶段十四D盘变量隔离任务1（2026-08-06）
-- 已先取得真实红证据 `artifacts/visual-evidence/single-instance/single-instance-red.txt`：严格入口新增4项前，视觉测试28项为24 pass、4 fail，失败均为尚未导出的入口/判定函数。
-- 已实现固定 C 盘 `cli.bat` 与内置 `node.exe`、最小 `touristappid` 探针、独立 `single-instance` 输出目录、不同端口保护、清理未确认即停止和2/2、0/2、1/2判定；worker 不准备或删除 `.visual-probe`。
-- 单测绿证据 `artifacts/visual-evidence/single-instance/single-instance-green.txt`：视觉测试28/28，fail/skip/todo均为0；尚未启动严格真实入口，D盘工具尚未关闭。
-
-## 阶段十四D盘变量隔离任务2（2026-08-06）
-- 关闭前重新解析到 D 盘相关进程2个：PID 33024 为明确调用 D 盘 `cli.bat` 的 `cmd.exe` 包装进程，PID 32716 为 D 盘工具本体；两者 `MainWindowHandle=0`，无可见窗口可正常关闭。
-- 仅对上述已核实 PID 执行精确 `taskkill /PID /T /F`；33024 的树实际终止32716与33024，随后对已消失的32716得到“not found”，没有按进程名批量结束，也未触碰 C 盘。
-- `artifacts/visual-evidence/single-instance/process-after-close.json` 已保存连续复核：D盘计数在 `20:38:22`、`20:38:25`、`20:38:27` 均为0；精确自动化残留均为0；C盘 CLI、内置 Node 和工具本体仍存在。
-- D盘工具保持关闭；任务2通过，下一步只运行一次严格两场实验。
-
-## 阶段十四D盘变量隔离任务3（2026-08-06）
-- 唯一真实命令 `npm run evidence:visual -- --stable-single-instance-diagnostic` 外层运行一次并退出0；结果写入 `artifacts/visual-evidence/single-instance/result.json`，原始过程写入 `run.log`。
-- C盘内置 Node `v16.13.1` 串行完成2场，端口为 `54962`、`60191`；两场 connect/currentPage/evaluate成功，截图均为 `TIMEOUT diagnostic screenshot after 30000ms`，没有生成PNG，cleanup均确认。
-- 冻结判定严格落在 `stable-single-instance-0-of-2` / `d-coexistence-not-necessary`；不能据此证明唯一根因，也未运行当前项目A–C或六态取证。
-- `process-after-run.json` 核对D盘0、精确自动化残留0、两端口关闭、`.visual-probe`不存在、C盘工具文件存在；旧诊断JSON/log的实际64位SHA-256保持为 `0948F7C16590E4B593CF57A880CFC721363E01F6952C8A48F61060539F13838A`、`58E69E9B8E8D47413285BB848A365D775491938D34FE6A2D16CD5FA1CD19689C`。
-- 实验已闭合，D盘保持关闭；下一步只做规定的静态门禁与残留核对。
-
-## 阶段十四最终静态收口（2026-08-06）
-- 视觉测试 `node --test tests/visual-evidence.test.js`：28/28，fail/skip/todo均为0；`npm test`：395/395，fail/skip/todo均为0。
-- `npm run check`：398 test declarations，退出0；`npm run check:mini`退出0。
-- `npm run evidence:visual -- --compare-protected`：`beforeCount=112`、`afterCount=112`、`changed=[]`、`ok=true`；`git diff --check`退出0，仅有换行符提示。
-- 最终产物核对：结果 `ok=true`、严格判定0/2、两场cleanup确认、PNG成功数0、总清理确认、探针删除；D盘保持关闭。未提交Git；工作区仍保留开工前既有改动及本任务白名单内改动。
-
-## 阶段十五协议定位任务0（2026-08-06）
-- 目标：只用一个全新 C 盘 Stable/空白 `touristappid` 会话追踪 `App.captureScreenshot` 的协议请求与响应，分类后停止，不修复截图。
-- 顺序：静态门禁/六哈希/进程基线 → 协议解析测试红绿 → 唯一一次真实会话 → 原始与结构化证据、文档和最终门禁。
-- 最大风险：把调试 SEND 当成工具已收到、超时后复用 runtime，或清理未确认仍继续；任一清理/匹配失败即 `trace-inconclusive` 并停止。
-- 任务0基线：视觉28/28、全量395/395、check398、check:mini退出0、保护112/112且`changed=[]`。
-- 六个固定SHA-256全部匹配；D盘进程0、精确自动化残留0、`.visual-probe`不存在；基线文件见 `artifacts/visual-evidence/protocol-trace/`。
-- 任务1已完成：新增5项协议定位测试；现有`protocol-trace-red.txt`与`protocol-trace-green.txt`只保留人工摘要，原始测试stdout/stderr未留存，不能称为原始红绿证据。管理验收已独立复跑当前绿态为33/33，fail/skip/todo均为0。
-- 任务2待做：仅运行一次真实协议会话并保存原始stdout/stderr、结构化结果、进程恢复和事实/推断/未知报告；未访问真实账本、未使用Computer Use、未提交Git。
-
-## 阶段十五协议定位任务2（2026-08-06）
-- 唯一真实命令 `npm run evidence:visual -- --trace-screenshot-protocol` 退出0；C盘 Stable 空白 `touristappid` 探针依次完成 connect/currentPage/evaluate/systemInfo，唯一一次截图请求在30秒处超时。
-- 协议流实际解析17条、0解析错误；`App.captureScreenshot` SEND UUID `4bb59914-6d9d-4d4b-bef7-9170b659f207` 已观察到，同UUID RECV未观察到；5条无UUID `App.logAdded type:error args:[{}]` 未冒充截图回复。冻结分类：`sent-no-matching-reply`；`diagnosticCompleted=true`、`screenshotSucceeded=false`。
-- 截图超时后未继续调用 runtime；cleanup `confirmed=true`、CLI close完成、残留0、端口关闭、`.visual-probe`删除。原始协议/worker stdout/stderr/CLI输出、结构化结果、process-before/after及报告均在`artifacts/visual-evidence/protocol-trace/`。
-
-## 阶段十五协议定位任务3最终收口（2026-08-06）
-- `npm test`：400/400，fail/skip/todo均为0；`npm run check`：403 declarations通过；`npm run check:mini`退出0。
-- `npm run evidence:visual -- --compare-protected`：before112、after112、`changed=[]`、`ok=true`；`git diff --check`退出0，仅有既有LF/CRLF转换提示。
-- 六项固定SHA-256再次全部Match=true：package.json、package-lock.json、`node_modules/miniprogram-automator/out/Connection.js`、`out/MiniProgram.js`、旧诊断JSON、旧诊断log；当前只读进程核对为C盘工具30、D盘0、精确自动化残留0、`.visual-probe=false`。
-- Git仅保留既有工作区改动与本阶段白名单改动，分支`master`；未提交Git。协议定位到此停止，不修业务、不重试真实会话。
-- 文档复核修正：协议报告已补记截图SEND后5条无UUID的`App.logAdded type:error args:[{}]`事件，并明确它们既不是截图回复，也不足以识别错误原因；唯一下一阶段建议为用户另行授权后使用同一空白探针对另一个已核实来源和版本号的C盘Stable做受控版本对照。本轮不重跑真实会话。
-
-## 阶段十五知识收口（2026-08-06）
-
-- 已纠正现役文档中的旧提交、旧测试数、干净工作区和“自动取证已通过”表述；`README.md`、`docs/PRODUCT_SPEC.md`、`AGENTS.md`、本文件与`BLOCKED.md`现统一为静态门禁通过、自动截图未修复。
-- 全量测试400/400、check403、check:mini退出0、Markdown本地链接14份/0断链、`git diff --check`退出0。
-- 首次保护比较按设计检出本轮获准修改的`AGENTS.md`、`README.md`、`docs/PRODUCT_SPEC.md`；验证内容后已刷新获准基线，再比较为112→112、`changed=[]`。
-- `.visual-qa`曾包含70个文件、约758636字节且无匹配自动化进程；用户于2026-08-07明确确认清理后，已移入Windows回收站并复核项目路径不存在，可从回收站恢复。本轮未写长期记忆。
-- 阶段十一至十五的现役实现、自动化测试、诊断证据和知识收口文件已在本次收口提交中统一归档。
-
-## 历史任务2：21–23号证据与状态恢复完成（2026-08-09）
-
-- Stable 当前窗口为 `396752`；Computer Use 新鲜句柄读取仍复现同所有者字符串的绑定错误，因此未把它写成可用截图链路。随后只对当前可见窗口使用 Win32 输入与窗口截屏，不改业务代码、不运行自动取证脚本。
-- `artifacts/phase9/21-private-backup-proof.txt` 已记录完整备份的非明文证明：4615字符/4675字节、schema v1、CNY、6账户、2周期、10流水，SHA-256 `b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5`。
-- 应用内最终清除真实失败并提示“本地数据删除或校验失败；原数据已保留”。用户已明确确认清除后，只在 DevTools 控制台定向移除 `yongdu-ledger-v1` 与 `yongdu-restore-temp-v1`，读回均为空；该绕行不计作应用清除通过，业务代码按要求未改。
-- 通过应用 UI 粘贴、预检并确认恢复后，存储哈希与备份完全一致；再次普通编译重载后仍为同一哈希，10笔流水、开放周期支出90000分、奖励余额0均一致。
-- 用户再次重开 Stable 后只读复核：首页仍显示10笔流水与今日可自由花807.09元；`yongdu-ledger-v1` 为4615字符/4675字节，SHA-256仍为 `b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5`，与备份、恢复后及普通编译重载后三次结果完全一致。原始JSON未写盘，核对后剪贴板为空。
-- `22-home-prepaid-top-iphone12-13.png` 为428×835、SHA-256 `dbdbfd7eb737193cccc34581a52a1df5c0dd372a8c0297c850792afe1642b3b3`；`23-home-prepaid-top-iphone5-320.png` 为320×504、SHA-256 `7c0d5f45d873db911227be111e009a81cf8eacf697c99fa2403c52d435923b71`。两图均显示今日0、预支192.91元、2026-08-12恢复至每日189.68元。
-- 临时原始备份与含原文的临时截图已清零，剪贴板已清空；仓库未保存原始JSON。本轮未重跑已完成自动门禁，未修改业务代码、测试或配置，未提交Git。
-
-## 阶段十六账单修正闭环任务0（2026-08-09）
-
-- 目标：补齐可迁移、可回滚的账单修改、退款与撤销闭环，保证账户、预算、负债和奖励余额一致。
-- 顺序：先冻结领域红测并实现 schema v2/原子修正，再接两入口与详情页，最后统一列表、分析、JSON/CSV和文档。
-- 最大风险：跨账户、跨周期或组合操作产生半状态，或改写已结算历史；所有修正先完整校验再一次返回新状态。
-- 基线实测：HEAD `a7dc7f28cd7c7f9eb1f9cb7bc06268d97c5a16d8`；`npm test` 400/400，`npm run check` 403 declarations，`npm run check:mini`四页通过。
-- 开工前已有上一任务的 `PROGRESS.md`、`BLOCKED.md` 与 phase9 21–23号证据差异；本阶段保留不碰、不删除、不提交。
-
-## 阶段十六任务1领域红证据（2026-08-09）
-
-- 新增 `tests/transaction-corrections.test.js` 后运行 `node --test tests/transaction-corrections.test.js`，退出1：0 pass、1 fail、skip/todo均为0。
-- 首个真实失败为 `SyntaxError: ... ledger.js does not provide an export named 'getLatestTransaction'`；说明旧内核尚无账单版本链与修正入口，未放宽断言。
-
-## 阶段十六任务1首轮领域绿证据（2026-08-10）
-
-- `node --test tests/transaction-corrections.test.js` 退出0：33/33，fail/skip/todo均为0。
-- 已覆盖 v0/v1→v2、信用卡负债负号/溢缴、稳定逻辑ID与操作组、原子修改/撤销、请求幂等、未来日期、余额差额、多次退款、退款改账户/信用卡、退款撤销、关闭周期差额和组合还贷。
-- 本轮仅证明新增领域契约；旧测试与应用/UI尚未完成兼容，任务1继续。
-
-## 阶段十六任务1扩展领域绿证据（2026-08-10）
-
-- 扩充保存回滚、全业务修改矩阵、列表隐藏技术冲正与详情动作矩阵后，再运行 `node --test tests/transaction-corrections.test.js`，退出0：46/46，fail/skip/todo均为0。
-- 随后补充 v1 旧退款关联重建与累计退款回归后，该测试当前为47/47，fail/skip/todo均为0。
-- 兼容测试已分组实跑：`tests/ledger.test.js tests/storage.test.js` 为62/62；应用相关五组测试为175/175，均无失败、跳过或todo。
-- 第一轮全量曾为433项中419 pass、14 fail，失败均定位为旧schema/信用卡正欠款断言；只按v2已确认规则更新对应断言，未删除或放宽业务测试。任务1继续接通应用层原子保存入口。
-
-## 阶段十六任务2–3应用与界面红证据（2026-08-10）
-
-- 新增 `tests/transaction-correction-ui.test.js` 后运行 `node --test tests/transaction-correction-ui.test.js`，退出1：0 pass、1 fail，skip/todo均为0。
-- 首个真实失败是 `app-core.js does not provide an export named 'getTransactionDetailModel'`；旧应用层尚不能按逻辑账单ID生成详情，也没有修正入口与第五页。
-
-## 阶段十六任务2–3应用与界面绿证据（2026-08-11）
-
-- 接通应用层详情/修改/退款/撤销入口、原子提交、最新有效列表、历史调整展示、分析和用户可读 CSV；新增唯一非Tab详情页及首页/分析页左滑动作。
-- `node --test tests/transaction-correction-ui.test.js` 退出0：20/20，fail/skip/todo均为0；覆盖人民币表单转换、详情重读、多次退款、撤销、列表/分析/CSV、五页配置、动作顺序、方向锁、忙锁、放弃修改提示和已撤销筛选。
-- 任务2–3继续进行：需完成生成包同步、全量兼容和文档/最终门禁，未运行视觉取证，未提交 Git。
-
-## 阶段十六全量兼容红证据（2026-08-11）
-
-- 首次接通详情页后运行 `npm test`，退出1：464项中459 pass、5 fail、skip/todo均为0。
-- 5项失败已定位为生成包尚未重建、既有四页断言未随已确认第五页规则更新、计划保存静态契约仍匹配旧入口、两项既有CSV表头断言仍匹配旧列；未发现领域金额或账户失败。
-
-## 阶段十六全量兼容绿证据（2026-08-11）
-
-- 修正上述5项兼容断言并重建生成包后，`npm test`曾退出0：464/464，fail/skip/todo均为0；最终补充回归后为467/467。
-- `npm run build:mini` 退出0，报告生成5个文件；`npm run check:mini`随后通过五页、详情页和生成包同步检查。
-
-## 阶段十六最终门禁修复红证据（2026-08-11）
-
-- 在补充 v1 退款关联、已撤销筛选和首页状态徽标后，按最终门禁真实运行 `npm test`，退出1：467项中466 pass、1 fail、skip/todo均为0。
-- 唯一失败为冻结的首页视觉契约拒绝新增状态徽标的 `font-size 20rpx < 24`；未放宽判断，已将新增字号调整为24rpx。
-
-## 阶段十六最终门禁绿证据（2026-08-11）
-
-- 依次实际运行：`npm run build:mini` 退出0（生成5文件）；`npm test` 退出0（467/467，fail/skip/todo均为0）；`npm run check` 退出0（470 test declarations）；`npm run check:mini` 退出0（五页、详情页和生成包同步）；`git diff --check` 退出0，仅输出既有LF/CRLF转换警告。
-- 未运行 `evidence:visual`，未访问真实账本，未提交、推送或部署；阶段九的21–23号证据文件保持原样。
-
-## 21–23号证据与状态恢复最终只读复核（2026-08-11）
-
-- 21号完整备份证明、22号 iPhone 12/13 Pro Max 预支态图、23号 iPhone 5 预支态图均已存在；本次只读哈希核对与既有记录一致：22号 `428x835` / `dbdbfd7eb737193cccc34581a52a1df5c0dd372a8c0297c850792afe1642b3b3`，23号 `320x504` / `7c0d5f45d873db911227be111e009a81cf8eacf697c99fa2403c52d435923b71`。
-- 21号证明记录的备份、恢复后、编译重载后和 Stable 重开后 SHA-256 均为 `b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5`；恢复前后 `match=true`，Stable 重开后仍为10笔流水、4615字符/4675字节、奖励余额0。`17-state-restore-check.txt` 的历史 `match=true`、两机型恢复匹配也保持可读。
-- 证据属于2026-08-09测试账本收口记录（当时备份 `schemaVersion=1`），不冒充当前 schema v2 代码的重新运行结果；本轮未重跑自动门禁、未改业务代码、未运行自动视觉取证、未提交 Git。
-
-## 阶段十六验收缺陷修复（2026-08-11）
-
-- 退款分析改为在原支出日期重述累计退款后的历史净额；退款日仍保留可读退款流水，但不再产生负支出点。关闭周期只重述分析，预算结算值保持冻结。
-- 撤销已关闭周期退款时，退款形成的奖励若已被使用，先扣现有奖励，不足部分只记入覆盖撤销日的开放预算周期；没有对应周期时整笔失败，账户、奖励、预算和审计状态均不产生半状态。
-- 删除任意开放周期回退，只允许历史少扣金额进入覆盖修正日的开放周期；同时按现行规则删除 v0/v1 迁移路径，旧 schema 明确拒绝。现有主存储键不变，避免让已经写入当前 schema v2 的本地测试账本失联。
-- 新增或改写对应回归后，`npm run build:mini` 退出0（生成5文件）；`npm test` 退出0（467/467，fail/skip/todo均为0）；`npm run check` 退出0（469 test declarations）；`npm run check:mini` 退出0；`git diff --check` 退出0，仅有既有LF/CRLF提示。未运行已知阻塞的自动视觉取证。
+- 当前只有测试 AppID `wx9567fb4ff6336d0b`，没有正式小程序主体和生产 AppID。
+- 正式发布前仍需在明确授权的环境中完成当前 schema v2 JSON 导出/恢复、关闭重开、真机冒烟和产品视觉确认；隔离 fixture 与 2026-08-09 的 schema v1 证据不能替代发布验收。
