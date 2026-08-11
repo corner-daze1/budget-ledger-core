@@ -151,7 +151,7 @@ test('CSV export uses the required local timestamp filename', () => {
 
 test('CSV export retains the existing fixed domain columns', () => {
   const header = createTransactionsCsvExport(stateWithData()).content.split('\n')[0];
-  assert.equal(header, 'logicalTransactionId,id,date,kind,businessKind,status,version,accountId,counterpartyAccountId,amountCents,budgetPeriodId,budgetImpactCents,rewardImpactCents,categoryLevel1,categoryLevel2,note,source,refundOfLogicalTransactionId');
+  assert.equal(header, 'logicalTransactionId,id,date,kind,businessKind,status,version,accountId,counterpartyAccountId,amountCents,budgetPeriodId,budgetImpactCents,categoryLevel1,categoryLevel2,note,source,refundOfLogicalTransactionId');
 });
 
 test('CSV export explicitly declares that it cannot restore', () => {
@@ -279,8 +279,8 @@ test('backup preview reports file metadata and all required counts', () => {
 
 test('backup preview reports schema, currency, latest transaction date and unknown generated date', () => {
   const preview = validPreview().preview;
-  assert.equal(preview.sourceSchemaVersion, 2);
-  assert.equal(preview.targetSchemaVersion, 2);
+  assert.equal(preview.sourceSchemaVersion, 3);
+  assert.equal(preview.targetSchemaVersion, 3);
   assert.equal(preview.currency, 'CNY');
   assert.equal(preview.latestTransactionDate, '2028-01-02');
   assert.equal(preview.generatedAt, '未知');

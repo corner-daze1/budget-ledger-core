@@ -36,7 +36,6 @@ function loadSettingsPage(options = {}) {
       totalAssets: '¥5700.00',
       totalLiabilities: '¥4020.00',
       netAssets: '¥1680.00',
-      rewardBalance: '¥0.00',
       accounts: [],
     },
   };
@@ -419,6 +418,6 @@ test('README and product spec describe current capabilities and exclude only unb
     assert.ok(checklist.includes(path));
   }
   assert.match(checklist, /真实账本只执行导出、预检和最终确认前取消/);
-  assert.match(checklist, /独立隔离账本完成一次 schema v2 恢复、清除和无关键保留验证/);
+  assert.match(checklist, /独立隔离账本完成一次 schema v3 恢复、清除和无关键保留验证/);
   assert.match(checklist, /微信缺失存储键可能读回空字符串/);
 });

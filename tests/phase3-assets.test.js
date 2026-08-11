@@ -177,13 +177,13 @@ test('phase-three nine-step acceptance produces exact assets liabilities net ass
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 12000);
 });
 
-test('phase-three state round trips through the schema-version-two storage contract', () => {
+test('phase-three state round trips through the schema-version-three storage contract', () => {
   const memory = new Map();
   const state = finalAcceptanceState();
   savePersisted(memory, state);
   const loaded = loadPersisted(memory);
   assert.equal(loaded.ok, true);
-  assert.equal(loaded.state.schemaVersion, 2);
+  assert.equal(loaded.state.schemaVersion, 3);
   assert.deepEqual(loaded.state.accounts, state.accounts);
   assert.deepEqual(loaded.state.transactions, state.transactions);
   assert.deepEqual(loaded.state.budgetPeriods, state.budgetPeriods);
@@ -228,10 +228,10 @@ test('entry page contract exposes all three unified transaction modes', () => {
   assert.match(entry, /modes:\s*\['支出', '收入', '转账'\]/);
 });
 
-test('asset center contract exposes debt investment and four financial totals', () => {
+test('asset center contract exposes debt investment and three financial totals', () => {
   const assets = readFileSync(new URL('../miniprogram/pages/settings/settings.wxml', import.meta.url), 'utf8');
   const behavior = readFileSync(new URL('../miniprogram/pages/settings/settings.js', import.meta.url), 'utf8');
-  for (const text of ['总资产', '总负债', '净资产', '奖励余额']) assert.match(assets, new RegExp(text));
+  for (const text of ['总资产', '总负债', '净资产']) assert.match(assets, new RegExp(text));
   for (const text of ['信用卡还款', '投资买入', '手工估值']) assert.match(behavior, new RegExp(text));
 });
 

@@ -18,7 +18,6 @@ import {
   recordLoanInterestPayment,
   recordLoanPrincipalRepayment,
   recordRefund,
-  recordRewardPayment,
   recordTransfer,
   revokeFixedPlan,
   setInvestmentValue,
@@ -36,8 +35,19 @@ function freshLedger() {
       { id: 'fund', name: '投资', type: 'investment', balanceCents: 50000, costBasisCents: 50000 },
     ],
     budgetPeriods: [{ id: 'p1', startDate: '2028-01-01', endDate: '2028-01-30', baseBudgetCents: 300000 }],
-    rewardBalanceCents: 10000,
   });
+}
+
+function closedLedgerWithNextPeriod() {
+  const closed = closeBudgetPeriod(freshLedger(), 'p1', {
+    settledAt: '2028-02-01',
+    result: 'balanced',
+    resultCents: 0,
+    decision: 'none',
+    carryCents: 0,
+    nextPeriodId: null,
+  });
+  return addBudgetPeriod(closed, { id: 'p2', startDate: '2028-02-01', endDate: '2028-02-29', baseBudgetCents: 300000 });
 }
 
 test('createLedger starts with CNY and separate account and budget collections', () => {
@@ -119,37 +129,36 @@ test('recordInvestmentSell converts investment value back to cash without budget
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 0);
 });
 test('setInvestmentValue accepts a manual current value without a market lookup', () => assert.equal(setInvestmentValue(freshLedger(), { id: 'valuation', date: '2028-01-09', investmentAccountId: 'fund', currentValueCents: 60000 }).accounts.find((item) => item.id === 'fund').balanceCents, 60000));
-test('recordRewardPayment decreases reward balance and cash but not budget', () => {
-  const state = recordRewardPayment(freshLedger(), { id: 'reward-pay', date: '2028-01-10', accountId: 'cash', amountCents: 3000 });
-  assert.equal(state.rewardBalanceCents, 7000);
-  assert.equal(state.accounts.find((item) => item.id === 'cash').balanceCents, 97000);
-  assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 0);
+test('recordExpense always charges the full controlled amount to budget', () => {
+  const state = recordExpense(freshLedger(), { id: 'ordinary', date: '2028-01-10', accountId: 'cash', amountCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '购物' });
+  assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 3000);
+  assert.equal(state.transactions.at(-1).budgetImpactCents, 3000);
 });
-test('recordExpense can partially use reward balance without charging that part to budget', () => {
-  const state = recordExpense(freshLedger(), { id: 'reward-offset', date: '2028-01-10', accountId: 'cash', amountCents: 3000, rewardOffsetCents: 1000, budgetPeriodId: 'p1', categoryLevel1: '奖励抵扣' });
-  assert.equal(state.rewardBalanceCents, 9000);
-  assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 2000);
-  assert.equal(state.transactions.at(-1).budgetImpactCents, 2000);
+test('recordExpense rejects the removed partial-payment field instead of silently changing rules', () => assert.throws(() => recordExpense(freshLedger(), { id: 'old-field', date: '2028-01-10', accountId: 'cash', amountCents: 3000, rewardOffsetCents: 1000, budgetPeriodId: 'p1', categoryLevel1: '购物' }), /removed|unsupported/));
+test('recordExpense keeps the account and budget unchanged when a removed field is rejected', () => {
+  const before = freshLedger();
+  assert.throws(() => recordExpense(before, { id: 'old-field', date: '2028-01-10', accountId: 'cash', amountCents: 3000, rewardOffsetCents: 1000, budgetPeriodId: 'p1', categoryLevel1: '购物' }));
+  assert.equal(before.accounts[0].balanceCents, 100000);
+  assert.equal(before.budgetPeriods[0].netBudgetSpendCents, 0);
 });
-test('recordRewardPayment rejects a payment larger than reward balance', () => assert.throws(() => recordRewardPayment(freshLedger(), { id: 'too-much', date: '2028-01-10', accountId: 'cash', amountCents: 10001 }), /reward balance/));
 test('recordRefund restores an open ordinary expense to the same budget period', () => {
   const spent = recordExpense(freshLedger(), { id: 'ordinary', date: '2028-01-11', accountId: 'cash', amountCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '购物' });
   const refunded = recordRefund(spent, { id: 'refund', date: '2028-01-12', originalTransactionId: 'ordinary', amountCents: 3000 });
   assert.equal(refunded.budgetPeriods[0].netBudgetSpendCents, 0);
-  assert.equal(refunded.rewardBalanceCents, 10000);
   assert.equal(refunded.accounts.find((item) => item.id === 'cash').balanceCents, 100000);
 });
-test('recordRefund of a closed ordinary period enters reward balance', () => {
+test('recordRefund of a closed controlled period reduces the current open period and keeps the closed period immutable', () => {
   const spent = recordExpense(freshLedger(), { id: 'ordinary', date: '2028-01-11', accountId: 'cash', amountCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '购物' });
-  const closed = closeBudgetPeriod(spent, 'p1');
+  const closed = addBudgetPeriod(closeBudgetPeriod(spent, 'p1'), { id: 'p2', startDate: '2028-01-31', endDate: '2028-02-29', baseBudgetCents: 300000 });
   const refunded = recordRefund(closed, { id: 'refund', date: '2028-02-01', originalTransactionId: 'ordinary', amountCents: 3000 });
   assert.equal(refunded.budgetPeriods[0].netBudgetSpendCents, 3000);
-  assert.equal(refunded.rewardBalanceCents, 13000);
+  assert.equal(refunded.budgetPeriods[1].netBudgetSpendCents, -3000);
+  assert.equal(refunded.transactions.at(-1).kind, 'historical_adjustment');
 });
-test('recordRefund of reward payment restores reward balance', () => {
-  const paid = recordRewardPayment(freshLedger(), { id: 'reward-pay', date: '2028-01-10', accountId: 'cash', amountCents: 3000 });
-  const refunded = recordRefund(paid, { id: 'reward-refund', date: '2028-01-11', originalTransactionId: 'reward-pay', amountCents: 3000 });
-  assert.equal(refunded.rewardBalanceCents, 10000);
+test('recordRefund of a fixed expense never changes any budget period', () => {
+  const spent = recordFixedExpense(freshLedger(), { id: 'fixed', date: '2028-01-10', accountId: 'cash', amountCents: 3000, categoryLevel1: '房租' });
+  const refunded = recordRefund(spent, { id: 'fixed-refund', date: '2028-01-11', originalTransactionId: 'fixed', amountCents: 3000 });
+  assert.equal(refunded.budgetPeriods[0].netBudgetSpendCents, 0);
 });
 test('recordRefund of credit card expense reduces the liability', () => {
   const spent = recordExpense(freshLedger(), { id: 'card-spend', date: '2028-01-12', accountId: 'card', amountCents: 2000, budgetPeriodId: 'p1', categoryLevel1: '交通' });
@@ -157,53 +166,47 @@ test('recordRefund of credit card expense reduces the liability', () => {
   assert.equal(refunded.accounts.find((item) => item.id === 'card').balanceCents, 0);
   assert.equal(refunded.budgetPeriods[0].netBudgetSpendCents, 0);
 });
-test('recordRefund fully restores a mixed budget and reward expense in one refund', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-full', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+test('recordRefund fully restores a controlled expense in one refund', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-full', date: '2028-01-12', accountId: 'cash', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
   const refunded = recordRefund(spent, { id: 'mixed-full-refund', date: '2028-01-13', originalTransactionId: 'mixed-full', amountCents: 10000 });
   assert.equal(refunded.budgetPeriods[0].netBudgetSpendCents, 0);
-  assert.equal(refunded.rewardBalanceCents, 10000);
-  assert.equal(refunded.transactions.at(-1).budgetImpactCents, -7000);
-  assert.equal(refunded.transactions.at(-1).rewardImpactCents, 3000);
+  assert.equal(refunded.transactions.at(-1).budgetImpactCents, -10000);
 });
-test('recordRefund restores two mixed partial refunds to exactly the original budget and reward amounts', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-parts', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+test('recordRefund restores two partial refunds to exactly the original budget amount', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-parts', date: '2028-01-12', accountId: 'cash', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
   const first = recordRefund(spent, { id: 'mixed-parts-refund-1', date: '2028-01-13', originalTransactionId: 'mixed-parts', amountCents: 4000 });
   const second = recordRefund(first, { id: 'mixed-parts-refund-2', date: '2028-01-14', originalTransactionId: 'mixed-parts', amountCents: 6000 });
   assert.equal(second.budgetPeriods[0].netBudgetSpendCents, 0);
-  assert.equal(second.rewardBalanceCents, 10000);
-  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-parts').reduce((sum, item) => sum - item.budgetImpactCents, 0), 7000);
-  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-parts').reduce((sum, item) => sum + item.rewardImpactCents, 0), 3000);
+  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-parts').reduce((sum, item) => sum - item.budgetImpactCents, 0), 10000);
 });
-test('recordRefund allocates mixed refunds consistently when the larger refund arrives first', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-order', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+test('recordRefund restores refunds cumulatively when the larger refund arrives first', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-order', date: '2028-01-12', accountId: 'cash', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
   const first = recordRefund(spent, { id: 'mixed-order-refund-1', date: '2028-01-13', originalTransactionId: 'mixed-order', amountCents: 6000 });
   const second = recordRefund(first, { id: 'mixed-order-refund-2', date: '2028-01-14', originalTransactionId: 'mixed-order', amountCents: 4000 });
   assert.equal(second.budgetPeriods[0].netBudgetSpendCents, 0);
-  assert.equal(second.rewardBalanceCents, 10000);
-  assert.deepEqual(second.transactions.slice(-2).map((item) => [item.budgetImpactCents, item.rewardImpactCents]), [[-6000, 0], [-1000, 3000]]);
+  assert.deepEqual(second.transactions.slice(-2).map((item) => item.budgetImpactCents), [-6000, -4000]);
 });
-test('recordRefund keeps cumulative budget restoration capped in an open mixed expense', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-cap', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+test('recordRefund keeps cumulative budget restoration capped at the original expense', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-cap', date: '2028-01-12', accountId: 'cash', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
   const first = recordRefund(spent, { id: 'mixed-cap-refund-1', date: '2028-01-13', originalTransactionId: 'mixed-cap', amountCents: 8000 });
   const second = recordRefund(first, { id: 'mixed-cap-refund-2', date: '2028-01-14', originalTransactionId: 'mixed-cap', amountCents: 2000 });
-  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-cap').reduce((sum, item) => sum - item.budgetImpactCents, 0), 7000);
-  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-cap').reduce((sum, item) => sum + item.rewardImpactCents, 0), 3000);
+  assert.equal(second.transactions.filter((item) => item.relatedTransactionId === 'mixed-cap').reduce((sum, item) => sum - item.budgetImpactCents, 0), 10000);
 });
-test('recordRefund of a closed mixed expense follows the closed-period reward rule without changing budget spend', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-closed', date: '2028-01-12', accountId: 'cash', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
-  const closed = closeBudgetPeriod(spent, 'p1');
+test('recordRefund of a closed controlled expense applies every refund to the current open budget', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-closed', date: '2028-01-12', accountId: 'cash', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
+  const closed = addBudgetPeriod(closeBudgetPeriod(spent, 'p1'), { id: 'p2', startDate: '2028-01-31', endDate: '2028-02-29', baseBudgetCents: 300000 });
   const first = recordRefund(closed, { id: 'mixed-closed-refund-1', date: '2028-02-01', originalTransactionId: 'mixed-closed', amountCents: 4000 });
   const second = recordRefund(first, { id: 'mixed-closed-refund-2', date: '2028-02-02', originalTransactionId: 'mixed-closed', amountCents: 6000 });
-  assert.equal(second.budgetPeriods[0].netBudgetSpendCents, 7000);
-  assert.equal(second.rewardBalanceCents, 17000);
+  assert.equal(second.budgetPeriods[0].netBudgetSpendCents, 10000);
+  assert.equal(second.budgetPeriods[1].netBudgetSpendCents, -10000);
+  assert.equal(second.transactions.filter((item) => item.kind === 'historical_adjustment').length, 2);
 });
-test('recordRefund of a mixed credit card expense restores the card liability and split impacts', () => {
-  const spent = recordExpense(freshLedger(), { id: 'mixed-card', date: '2028-01-12', accountId: 'card', amountCents: 10000, rewardOffsetCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '混合支付' });
+test('recordRefund of a credit card expense restores the card liability and budget', () => {
+  const spent = recordExpense(freshLedger(), { id: 'mixed-card', date: '2028-01-12', accountId: 'card', amountCents: 10000, budgetPeriodId: 'p1', categoryLevel1: '可控支出' });
   const first = recordRefund(spent, { id: 'mixed-card-refund-1', date: '2028-01-13', originalTransactionId: 'mixed-card', amountCents: 6000 });
   const second = recordRefund(first, { id: 'mixed-card-refund-2', date: '2028-01-14', originalTransactionId: 'mixed-card', amountCents: 4000 });
   assert.equal(second.accounts.find((item) => item.id === 'card').balanceCents, 0);
   assert.equal(second.budgetPeriods[0].netBudgetSpendCents, 0);
-  assert.equal(second.rewardBalanceCents, 10000);
 });
 test('recordRefund rejects more than the unrefunded original amount', () => {
   const spent = recordExpense(freshLedger(), { id: 'ordinary', date: '2028-01-11', accountId: 'cash', amountCents: 3000, budgetPeriodId: 'p1', categoryLevel1: '购物' });
@@ -247,19 +250,19 @@ test('budgetForPeriod preserves signed carry in the actual budget calculation', 
   const state = addBudgetPeriod(freshLedger(), { id: 'debt', startDate: '2028-02-01', endDate: '2028-02-29', baseBudgetCents: 300000, carryCents: -350000 });
   assert.deepEqual(budgetForPeriod(state, 'debt'), { actualBudgetCents: 0, budgetDebtCents: -50000 });
 });
-test('totals keep assets, liabilities, net assets and reward balance separate', () => {
+test('totals keep assets, liabilities and net assets separate', () => {
   const state = recordBorrowing(freshLedger(), { id: 'borrow', date: '2028-01-15', cashAccountId: 'cash', loanAccountId: 'loan', amountCents: 20000 });
   const result = totals(state);
   assert.equal(result.totalAssetsCents, 190000);
   assert.equal(result.totalLiabilitiesCents, 20000);
   assert.equal(result.netAssetsCents, 170000);
-  assert.equal(result.rewardBalanceCents, 10000);
+  assert.deepEqual(Object.keys(result).sort(), ['netAssetsCents', 'totalAssetsCents', 'totalLiabilitiesCents']);
 });
 test('recordExpense rejects an asset payment that would make the account negative', () => assert.throws(() => recordExpense(freshLedger(), { id: 'too-much', date: '2028-01-15', accountId: 'cash', amountCents: 100001, budgetPeriodId: 'p1', categoryLevel1: '超支' }), /insufficient/));
 test('recordTransfer rejects a self transfer instead of inventing a transaction', () => assert.throws(() => recordTransfer(freshLedger(), { id: 'self', date: '2028-01-15', fromAccountId: 'cash', toAccountId: 'cash', amountCents: 1 }), /differ/));
 test('recordCreditCardRepayment allows an overpayment credit balance', () => assert.equal(recordCreditCardRepayment(freshLedger(), { id: 'pay', date: '2028-01-15', fromAccountId: 'cash', creditCardAccountId: 'card', amountCents: 1 }).accounts.find((item) => item.id === 'card').balanceCents, 1));
 test('recordLoanPrincipalRepayment rejects a payment larger than loan liability', () => assert.throws(() => recordLoanPrincipalRepayment(freshLedger(), { id: 'pay', date: '2028-01-15', cashAccountId: 'cash', loanAccountId: 'loan', amountCents: 1 }), /exceeds/));
 test('recordInvestmentTrade rejects selling more than current investment value', () => assert.throws(() => recordInvestmentTrade(freshLedger(), { id: 'sell', date: '2028-01-15', side: 'sell', cashAccountId: 'cash', investmentAccountId: 'fund', amountCents: 50001 }), /insufficient/));
-test('recordExpense cannot use more reward offset than the expense', () => assert.throws(() => recordExpense(freshLedger(), { id: 'bad-offset', date: '2028-01-15', accountId: 'cash', amountCents: 100, rewardOffsetCents: 101, budgetPeriodId: 'p1', categoryLevel1: '奖励' }), /offset/));
-test('recordExpense cannot spend reward balance that is not available', () => assert.throws(() => recordExpense(freshLedger(), { id: 'bad-reward', date: '2028-01-15', accountId: 'cash', amountCents: 100, rewardOffsetCents: 10001, budgetPeriodId: 'p1', categoryLevel1: '奖励' }), /offset/));
+test('recordExpense rejects a removed offset field even when it exceeds the expense', () => assert.throws(() => recordExpense(freshLedger(), { id: 'bad-offset', date: '2028-01-15', accountId: 'cash', amountCents: 100, rewardOffsetCents: 101, budgetPeriodId: 'p1', categoryLevel1: '可控支出' }), /removed|unsupported/));
+test('recordExpense rejects a removed offset field instead of reading any balance', () => assert.throws(() => recordExpense(freshLedger(), { id: 'bad-offset', date: '2028-01-15', accountId: 'cash', amountCents: 100, rewardOffsetCents: 10001, budgetPeriodId: 'p1', categoryLevel1: '可控支出' }), /removed|unsupported/));
 test('recordLoanInterestPayment keeps the related loan optional for a fixed interest bill', () => assert.equal(recordLoanInterestPayment(freshLedger(), { id: 'interest', date: '2028-01-15', cashAccountId: 'cash', amountCents: 100 }).transactions.at(-1).kind, 'fixed_expense'));

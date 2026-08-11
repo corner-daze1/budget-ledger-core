@@ -58,6 +58,17 @@
           <button wx:if="{{settings.pendingStartDay && settings.pendingStage === 'pending'}}" class="link-button" bindtap="cancelPendingStartDayChange">取消待生效起始日</button>
           <view class="fixed-hint">房租、房贷、车贷等固定开支不建议计入可控预算，请在记账时关闭“计入可控预算”。</view>
         </view>
+        <view class="card period-history-card">
+          <view class="card-title">预算周期与结算</view>
+          <view wx:for="{{settings.budgetPeriods}}" wx:key="id" class="period-history-item">
+            <view class="setting-line"><text>{{item.startDate}} 至 {{item.endDate}}</text><text>{{item.statusLabel}} · {{item.kindLabel}}</text></view>
+            <view class="setting-line"><text>实际预算</text><text>{{item.actualBudget}}</text></view>
+            <view class="setting-line"><text>净支出</text><text>{{item.netBudgetSpend}}</text></view>
+            <view class="setting-line"><text>{{item.resultLabel}}</text><text>{{item.resultAmount}}</text></view>
+            <view class="setting-line"><text>结算选择</text><text>{{item.decisionLabel}}</text></view>
+            <view class="hint">{{item.settledAt ? '结算于 ' + item.settledAt : '等待用户选择全部带入或全部不带入'}}</view>
+          </view>
+        </view>
       </view>
     </view>
 
@@ -117,7 +128,6 @@
           <view class="summary-card"><text>总资产</text><strong>{{assets.totalAssets}}</strong></view>
           <view class="summary-card liability"><text>总负债</text><strong>{{assets.totalLiabilities}}</strong></view>
           <view class="summary-card net"><text>净资产</text><strong>{{assets.netAssets}}</strong></view>
-          <view class="summary-card"><text>奖励余额</text><strong>{{assets.rewardBalance}}</strong></view>
         </view>
         <view wx:if="{{!assets.accounts.length}}" class="card empty-state">暂无账户，请在下方添加第一个账户。</view>
         <view wx:for="{{assets.accounts}}" wx:key="id" class="account-card">

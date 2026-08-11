@@ -48,7 +48,7 @@ function memoryStorage() {
 
 function nineDayTransitionState() {
   let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
   return state;
 }
 
@@ -69,7 +69,6 @@ test('仅本周期修改只更新基础预算并逐字段保留财务历史', ()
   assert.deepEqual(state.transactions, before.transactions);
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, before.budgetPeriods[0].netBudgetSpendCents);
   assert.equal(state.budgetPeriods[0].carryCents, before.budgetPeriods[0].carryCents);
-  assert.equal(state.rewardBalanceCents, before.rewardBalanceCents);
 });
 
 test('本周期及以后同时更新当前基础预算和两个默认预算字段', () => {
@@ -88,7 +87,7 @@ test('下周期及以后不改当前周期只更新两个默认预算字段', ()
 
 test('正结转在修改本期基础预算后仍参与实际天数累计释放', () => {
   let state = baseState({ date: '2026-06-15' });
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'carry' });
   assert.equal(state.budgetPeriods[1].carryCents, 300000);
   state = changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'only_current', date: '2026-07-01' });
   const model = getHomeModel(state, '2026-07-01');
@@ -104,7 +103,7 @@ test('负结转在修改本期基础预算后保持原值且继续抵扣', () =>
     categoryLevel1: '购物',
     categoryLevel2: '数码',
   });
-  state = settleCurrentPeriod(state, '2026-07-01', { overspendMode: 'carry' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'carry' });
   assert.equal(state.budgetPeriods[1].carryCents, -50000);
   state = changeBudgetSettings(state, { newBudgetYuan: '3200', scope: 'only_current', date: '2026-07-01' });
   assert.equal(state.budgetPeriods[1].carryCents, -50000);
@@ -168,7 +167,7 @@ test('待生效起始日再次设置时最后一次规则覆盖前一次', () =>
 
 test('结算旧周期后创建无重叠无断档且按月实际天数折算的过渡周期', () => {
   let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
   assert.equal(state.budgetPeriods[0].status, 'closed');
   assert.deepEqual(
     { startDate: state.budgetPeriods[1].startDate, endDate: state.budgetPeriods[1].endDate, kind: state.budgetPeriods[1].kind },
@@ -180,8 +179,8 @@ test('结算旧周期后创建无重叠无断档且按月实际天数折算的�
 
 test('结算过渡周期后从目标日期建立常规周期并正式启用新起始日', () => {
   let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
-  state = settleCurrentPeriod(state, '2026-08-10', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
+  state = settleCurrentPeriod(state, '2026-08-10', { decision: 'discard' });
   assert.equal(state.appSettings.startDay, 10);
   assert.equal(state.appSettings.pendingStartDayChange, undefined);
   assert.deepEqual(
@@ -224,7 +223,7 @@ test('跨年起始日规划保持日期连续并正确处理30日', () => {
   );
 });
 
-test('待生效规则经schemaVersion二存储往返后完整恢复', () => {
+test('待生效规则经schemaVersion三存储往返后完整恢复', () => {
   const storage = memoryStorage();
   const state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
   savePersisted(storage, state);
@@ -233,12 +232,12 @@ test('待生效规则经schemaVersion二存储往返后完整恢复', () => {
   assert.deepEqual(restored.state.appSettings.pendingStartDayChange, state.appSettings.pendingStartDayChange);
   assert.deepEqual(restored.state.accounts, state.accounts);
   assert.deepEqual(restored.state.transactions, state.transactions);
-  assert.equal(restored.state.schemaVersion, 2);
+  assert.equal(restored.state.schemaVersion, 3);
 });
 
-test('预算修改逐字段保持资产负债投资流水和奖励余额不变', () => {
+test('预算修改逐字段保持资产负债投资流水不变', () => {
   let state = baseState({ date: '2026-06-15' });
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'discard' });
   state = addAssetAccount(state, { id: 'card', name: '信用卡', type: 'credit_card', balanceYuan: '500' });
   state = addAssetAccount(state, { id: 'loan', name: '贷款', type: 'loan', balanceYuan: '3000' });
   state = addAssetAccount(state, { id: 'fund', name: '投资', type: 'investment', balanceYuan: '1000', costBasisYuan: '800' });
@@ -246,24 +245,22 @@ test('预算修改逐字段保持资产负债投资流水和奖励余额不变',
   const before = {
     accounts: structuredClone(state.accounts),
     transactions: structuredClone(state.transactions),
-    rewardBalanceCents: state.rewardBalanceCents,
   };
   const changed = changeBudgetSettings(state, { newBudgetYuan: '3300', scope: 'current_and_future', date: '2026-07-01' });
   assert.deepEqual(changed.accounts, before.accounts);
   assert.deepEqual(changed.transactions, before.transactions);
-  assert.equal(changed.rewardBalanceCents, before.rewardBalanceCents);
 });
 
 test('待生效期间修改默认预算后过渡周期使用最新默认值折算', () => {
   let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
   state = changeBudgetSettings(state, { newBudgetYuan: '3100', scope: 'next_and_future', date: '2026-07-15' });
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
   assert.equal(state.budgetPeriods[1].baseBudgetCents, Math.floor(310000 * 9 / 31));
 });
 
 test('进入过渡周期后取消会明确失败并保持连续性规则', () => {
   let state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
   const before = structuredClone(state);
   assert.throws(() => cancelPendingStartDayChange(state, { date: '2026-08-01' }), /已进入过渡周期/);
   assert.deepEqual(state, before);
@@ -308,7 +305,7 @@ test('预算与起始日修改拒绝三类非法公历日期且失败保持原�
 
 test('结算后的空周期改起始日遇到前置周期时改为待生效并保持所有周期连续', () => {
   let state = baseState({ date: '2026-06-15' });
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'discard' });
   state = changeStartDay(state, { newStartDay: 15, date: '2026-07-20' });
   assert.equal(state.appSettings.startDay, 1);
   assert.equal(state.appSettings.pendingStartDayChange.newStartDay, 15);
@@ -316,8 +313,8 @@ test('结算后的空周期改起始日遇到前置周期时改为待生效并�
     { startDate: state.budgetPeriods[1].startDate, endDate: state.budgetPeriods[1].endDate },
     { startDate: '2026-07-01', endDate: '2026-07-31' },
   );
-  state = settleCurrentPeriod(state, '2026-08-01', { positiveMode: 'reward' });
-  state = settleCurrentPeriod(state, '2026-08-15', { positiveMode: 'reward' });
+  state = settleCurrentPeriod(state, '2026-08-01', { decision: 'discard' });
+  state = settleCurrentPeriod(state, '2026-08-15', { decision: 'discard' });
   assert.deepEqual(
     state.budgetPeriods.map((period) => [period.startDate, period.endDate, period.kind || 'regular']),
     [
@@ -333,7 +330,7 @@ test('结算后的空周期改起始日遇到前置周期时改为待生效并�
 });
 
 test('延迟结算仍从上一周期次日创建下一周期而不按操作日期跳月', () => {
-  const state = settleCurrentPeriod(baseState({ date: '2026-06-15' }), '2026-08-20', { positiveMode: 'reward' });
+  const state = settleCurrentPeriod(baseState({ date: '2026-06-15' }), '2026-08-20', { decision: 'discard' });
   assert.deepEqual(
     state.budgetPeriods.map((period) => [period.startDate, period.endDate]),
     [
@@ -355,7 +352,6 @@ test('过渡周期仅本周期按新月度基准折算为90000分且财务历史
   assert.equal(changed.budgetPeriods[1].netBudgetSpendCents, before.budgetPeriods[1].netBudgetSpendCents);
   assert.deepEqual(changed.accounts, before.accounts);
   assert.deepEqual(changed.transactions, before.transactions);
-  assert.equal(changed.rewardBalanceCents, before.rewardBalanceCents);
   assert.deepEqual(state, before);
 });
 

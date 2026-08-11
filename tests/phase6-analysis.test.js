@@ -18,8 +18,8 @@ import {
   updateInvestmentValue,
 } from '../src/application/app-core.js';
 import {
+  recordFixedExpense,
   recordRefund,
-  recordRewardPayment,
 } from '../src/domain/ledger.js';
 
 const ROOT = new URL('..', import.meta.url);
@@ -174,10 +174,9 @@ test('贷款利息作为固定消费进入全部支出', () => {
   assert.equal(model.categories.items[0].name, '利息');
 });
 
-test('奖励支付进入全部支出但不进入可控支出', () => {
-  let state = baseState();
-  state.rewardBalanceCents = 20000;
-  state = recordRewardPayment(state, { id: 'reward-1', date: '2026-07-15', accountId: 'cash', amountCents: 5000 });
+test('待结算期间固定支出仍进入全部支出但不进入可控支出', () => {
+  let state = settleCurrentPeriod(baseState({ date: '2026-06-15' }), '2026-07-01', { decision: 'discard' });
+  state = expense(state, { amount: '50', date: '2026-07-15', controlled: false, level1: '居住', level2: '房租' });
   assert.equal(getBillAnalysisModel(state, { today: '2026-07-15', scope: 'all' }).daily.totalCents, 5000);
   assert.equal(getBillAnalysisModel(state, { today: '2026-07-15', scope: 'controlled' }).daily.totalCents, 0);
 });
@@ -203,7 +202,7 @@ test('开放周期退款在原消费日重述可控净支出', () => {
 
 test('关闭周期退款冻结预算结算但重述历史可控净支出', () => {
   let state = expense(baseState({ date: '2026-06-15' }), { amount: '100', date: '2026-06-15' });
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'carry' });
   state = recordRefund(state, { id: 'refund-closed', date: '2026-07-05', originalTransactionId: 'entry-1', amountCents: 10000 });
   const june = getBillAnalysisModel(state, { today: '2026-06-30', scope: 'controlled' });
   const july = getBillAnalysisModel(state, { today: '2026-07-05', scope: 'controlled' });
@@ -215,7 +214,7 @@ test('关闭周期退款冻结预算结算但重述历史可控净支出', () =>
 
 test('跨期退款只重述原消费周期且退款周期不产生负支出', () => {
   let state = expense(baseState({ date: '2026-06-15' }), { amount: '100', date: '2026-06-15', level1: '购物' });
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'carry' });
   state = recordRefund(state, { id: 'refund-cross', date: '2026-07-05', originalTransactionId: 'entry-1', amountCents: 3000 });
   const june = getBillAnalysisModel(state, { today: '2026-06-30', scope: 'all' });
   const july = getBillAnalysisModel(state, { today: '2026-07-05', scope: 'all' });
@@ -235,11 +234,8 @@ test('分类净额小于等于零时不画扇区但文字合计保留负退款',
 });
 
 test('退款原账单缺少分类时不会凭空创建其他分类', () => {
-  let state = baseState();
-  state.rewardBalanceCents = 10000;
-  state = recordRewardPayment(state, { id: 'reward-1', date: '2026-07-02', accountId: 'cash', amountCents: 5000, categoryLevel1: null });
-  state.transactions[0].categoryLevel1 = null;
-  state = recordRefund(state, { id: 'refund-1', date: '2026-07-03', originalTransactionId: 'reward-1', amountCents: 1000 });
+  let state = recordFixedExpense(baseState(), { id: 'entry-1', date: '2026-07-02', accountId: 'cash', amountCents: 5000, categoryLevel1: null, categoryLevel2: null });
+  state = recordRefund(state, { id: 'refund-1', date: '2026-07-03', originalTransactionId: 'entry-1', amountCents: 1000 });
   const model = getBillAnalysisModel(state, { today: '2026-07-03', scope: 'all' });
   assert.equal(model.categories.items.some((item) => item.name === '其他'), false);
 });

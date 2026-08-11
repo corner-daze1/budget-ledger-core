@@ -64,30 +64,36 @@ test('budgetDebtCents preserves the unfulfilled negative carry separately', () =
 test('applyBudgetChange only changes the current cycle for only_current', () => assert.deepEqual(applyBudgetChange({ currentBudgetCents: 300000, defaultBudgetCents: 300000, newBudgetCents: 350000, scope: 'only_current' }), { currentBudgetCents: 350000, defaultBudgetCents: 300000, scope: 'only_current' }));
 test('applyBudgetChange changes the current cycle and template for current_and_future', () => assert.equal(applyBudgetChange({ currentBudgetCents: 300000, defaultBudgetCents: 300000, newBudgetCents: 350000, scope: 'current_and_future' }).defaultBudgetCents, 350000));
 test('applyBudgetChange preserves the current cycle for next_and_future', () => assert.deepEqual(applyBudgetChange({ currentBudgetCents: 300000, defaultBudgetCents: 300000, newBudgetCents: 350000, scope: 'next_and_future' }), { currentBudgetCents: 300000, defaultBudgetCents: 350000, scope: 'next_and_future' }));
-test('settleBudgetCycle carries positive surplus when carry mode is selected', () => {
+test('settleBudgetCycle does not preselect a decision for a positive surplus', () => {
   const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 250000 });
   assert.equal(settled.positiveSurplusCents, 50000);
-  assert.equal(settled.nextCarryCents, 50000);
+  assert.equal(settled.decisionRequired, true);
+  assert.equal(settled.nextCarryCents, null);
 });
-test('settleBudgetCycle moves positive surplus to reward balance when reward mode is selected', () => assert.equal(settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 250000, positiveMode: 'reward' }).rewardAddedCents, 50000));
-test('settleBudgetCycle carries remaining overspend as signed debt', () => {
-  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 350000 });
+test('settleBudgetCycle carries all positive surplus only after carry is selected', () => assert.equal(settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 250000, decision: 'carry' }).nextCarryCents, 50000));
+test('settleBudgetCycle discards all positive surplus only after discard is selected', () => assert.equal(settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 250000, decision: 'discard' }).nextCarryCents, 0));
+test('settleBudgetCycle carries all overspend as signed debt after carry is selected', () => {
+  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 350000, decision: 'carry' });
   assert.equal(settled.grossDebtCents, 50000);
   assert.equal(settled.nextCarryCents, -50000);
 });
-test('settleBudgetCycle carries inherited debt forward even when the zero-budget period has no new spend', () => {
-  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: -350000, netBudgetSpendCents: 0 });
+test('settleBudgetCycle discards overspend debt after the user explicitly chooses discard', () => {
+  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 350000, decision: 'discard' });
+  assert.equal(settled.grossDebtCents, 50000);
+  assert.equal(settled.nextCarryCents, 0);
+});
+test('settleBudgetCycle carries inherited debt forward when the zero-budget period has no new spend', () => {
+  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: -350000, netBudgetSpendCents: 0, decision: 'carry' });
   assert.equal(settled.actualBudgetCents, 0);
   assert.equal(settled.budgetDebtCents, -50000);
   assert.equal(settled.nextCarryCents, -50000);
 });
-test('settleBudgetCycle uses only available reward balance to offset debt', () => {
-  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 350000, rewardBalanceCents: 20000, rewardOffsetCents: 30000 });
-  assert.equal(settled.rewardUsedCents, 20000);
-  assert.equal(settled.remainingDebtCents, 30000);
-  assert.equal(settled.rewardBalanceAfterCents, 0);
+test('settleBudgetCycle reports a zero result without requiring a user decision', () => {
+  const settled = settleBudgetCycle({ baseBudgetCents: 300000, carryCents: 0, netBudgetSpendCents: 300000 });
+  assert.equal(settled.resultCents, 0);
+  assert.equal(settled.decisionRequired, false);
+  assert.equal(settled.nextCarryCents, 0);
 });
-test('settleBudgetCycle never produces a negative reward balance', () => assert.ok(settleBudgetCycle({ baseBudgetCents: 0, carryCents: 0, netBudgetSpendCents: 100, rewardBalanceCents: 10, rewardOffsetCents: 100 }).rewardBalanceAfterCents >= 0));
 test('planStartDayChange closes the old cycle before creating a one-time transition', () => {
   const plan = planStartDayChange({ currentDate: '2028-07-28', oldStartDay: 1, newStartDay: 15, defaultMonthlyBudgetCents: 310000 });
   assert.equal(plan.oldCycle.startDate, '2028-07-01');

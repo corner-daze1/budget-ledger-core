@@ -187,31 +187,29 @@ export function applyBudgetChange({ currentBudgetCents, defaultBudgetCents, newB
   };
 }
 
-export function settleBudgetCycle({ baseBudgetCents, carryCents, netBudgetSpendCents, positiveMode = 'carry', overspendMode = 'carry', rewardBalanceCents = 0, rewardOffsetCents = 0 }) {
+export function settleBudgetCycle({ baseBudgetCents, carryCents, netBudgetSpendCents, decision = null }) {
   nonNegativeInteger(baseBudgetCents, 'baseBudgetCents');
   integer(carryCents, 'carryCents');
   const rawActual = baseBudgetCents + carryCents;
   const actual = Math.max(0, rawActual);
   integer(netBudgetSpendCents, 'netBudgetSpendCents');
-  nonNegativeInteger(rewardBalanceCents, 'rewardBalanceCents');
-  nonNegativeInteger(rewardOffsetCents, 'rewardOffsetCents');
-  if (!['carry', 'reward'].includes(positiveMode) || !['carry', 'reward'].includes(overspendMode)) throw new RangeError('unknown settlement mode');
-  const usable = Math.max(0, actual);
-  const difference = usable - netBudgetSpendCents;
-  const positiveSurplus = Math.max(0, difference);
+  if (decision !== null && !['carry', 'discard'].includes(decision)) throw new RangeError('unknown settlement decision');
+  const positiveSurplus = Math.max(0, actual - netBudgetSpendCents);
   const inheritedDebt = Math.max(0, -rawActual);
-  const grossDebt = Math.max(0, -difference) + inheritedDebt;
-  const rewardUsed = Math.min(rewardOffsetCents, rewardBalanceCents, grossDebt);
-  const remainingDebt = grossDebt - rewardUsed;
+  const grossDebt = Math.max(0, netBudgetSpendCents - actual) + inheritedDebt;
+  const resultCents = positiveSurplus > 0 ? positiveSurplus : (grossDebt > 0 ? -grossDebt : 0);
+  const result = resultCents > 0 ? 'surplus' : (resultCents < 0 ? 'overspend' : 'balanced');
+  const decisionRequired = resultCents !== 0;
   return {
     actualBudgetCents: actual,
     budgetDebtCents: -inheritedDebt,
     positiveSurplusCents: positiveSurplus,
     grossDebtCents: grossDebt,
-    rewardUsedCents: rewardUsed,
-    remainingDebtCents: remainingDebt,
-    nextCarryCents: positiveSurplus > 0 && positiveMode === 'carry' ? positiveSurplus : (remainingDebt > 0 && overspendMode === 'carry' ? -remainingDebt : 0),
-    rewardAddedCents: positiveSurplus > 0 && positiveMode === 'reward' ? positiveSurplus : 0,
-    rewardBalanceAfterCents: rewardBalanceCents - rewardUsed + (positiveSurplus > 0 && positiveMode === 'reward' ? positiveSurplus : 0),
+    overspendCents: grossDebt,
+    resultCents,
+    result,
+    decisionRequired,
+    decision: decisionRequired ? decision : 'none',
+    nextCarryCents: !decisionRequired ? 0 : decision === null ? null : (decision === 'carry' ? resultCents : 0),
   };
 }

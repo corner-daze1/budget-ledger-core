@@ -1,5 +1,5 @@
 // GENERATED FILE. Run npm run build:mini.
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 const ACCOUNT_TYPES = new Set(['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment']);
 const TRANSACTION_STATUSES = new Set(['active', 'superseded', 'revoked']);
@@ -16,11 +16,11 @@ function validateState(state) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) throw new Error('backup root must be an object');
   if (state.schemaVersion !== CURRENT_SCHEMA_VERSION) throw new Error(`unsupported schema version: ${state.schemaVersion}`);
   if (state.currency !== 'CNY') throw new Error('only CNY backups are supported');
+  if (Object.prototype.hasOwnProperty.call(state, 'rewardBalanceCents')) throw new Error('backup contains a removed field');
   if (state.defaultBudgetCents !== undefined && (!isInteger(state.defaultBudgetCents) || state.defaultBudgetCents < 0)) throw new Error('defaultBudgetCents must be a non-negative integer');
   for (const field of ['accounts', 'budgetPeriods', 'transactions', 'plans', 'pendingItems']) {
     if (!Array.isArray(state[field])) throw new Error(`backup field ${field} must be an array`);
   }
-  if (!isInteger(state.rewardBalanceCents) || state.rewardBalanceCents < 0) throw new Error('rewardBalanceCents must be a non-negative integer');
   const accountIds = new Set();
   for (const item of state.accounts) {
     if (!item || typeof item.id !== 'string' || accountIds.has(item.id)) throw new Error('backup contains an invalid or duplicate account id');
@@ -33,7 +33,8 @@ function validateState(state) {
   for (const item of state.transactions) {
     if (!item || typeof item.id !== 'string' || transactionIds.has(item.id)) throw new Error('backup contains an invalid or duplicate transaction id');
     if (!isInteger(item.amountCents) || item.amountCents <= 0) throw new Error(`invalid transaction amount: ${item.id}`);
-    if (!isInteger(item.budgetImpactCents) || !isInteger(item.rewardImpactCents)) throw new Error(`invalid transaction impact: ${item.id}`);
+    if (Object.prototype.hasOwnProperty.call(item, 'rewardImpactCents')) throw new Error(`transaction contains a removed field: ${item.id}`);
+    if (!isInteger(item.budgetImpactCents)) throw new Error(`invalid transaction impact: ${item.id}`);
     if (typeof item.logicalTransactionId !== 'string' || !item.logicalTransactionId) throw new Error(`invalid logical transaction id: ${item.id}`);
     if (typeof item.operationGroupId !== 'string' || !item.operationGroupId) throw new Error(`invalid operation group id: ${item.id}`);
     if (!TRANSACTION_STATUSES.has(item.status)) throw new Error(`invalid transaction status: ${item.id}`);
@@ -71,7 +72,7 @@ function csvCell(value) {
 
 function exportTransactionsCsv(state) {
   validateState(clone(state));
-  const columns = ['logicalTransactionId', 'id', 'date', 'kind', 'businessKind', 'status', 'version', 'accountId', 'counterpartyAccountId', 'amountCents', 'budgetPeriodId', 'budgetImpactCents', 'rewardImpactCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source', 'refundOfLogicalTransactionId'];
+  const columns = ['logicalTransactionId', 'id', 'date', 'kind', 'businessKind', 'status', 'version', 'accountId', 'counterpartyAccountId', 'amountCents', 'budgetPeriodId', 'budgetImpactCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source', 'refundOfLogicalTransactionId'];
   const rows = [columns.join(',')];
   const grouped = new Map();
   for (const transaction of state.transactions) {
@@ -91,7 +92,6 @@ function exportTransactionsCsv(state) {
     if (representative.businessKind === 'loan_repayment') representative.kind = 'loan_repayment';
     representative.amountCents = ordered.reduce((sum, item) => sum + item.amountCents, 0);
     representative.budgetImpactCents = ordered.reduce((sum, item) => sum + item.budgetImpactCents, 0);
-    representative.rewardImpactCents = ordered.reduce((sum, item) => sum + item.rewardImpactCents, 0);
     exported.push(representative);
   }
   exported.sort((left, right) => right.date.localeCompare(left.date) || right.id.localeCompare(left.id));
