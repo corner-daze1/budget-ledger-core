@@ -1,6 +1,6 @@
 // GENERATED FILE. Run npm run build:mini.
 const { actualBudgetCents, addDays, applyBudgetChange, budgetDebtCents, budgetSnapshot, cycleForDate, dateDistance, parseDate, planStartDayTransition, prorateMonthlyBudgetCents, settleBudgetCycle } = require('./domain/budget.js');
-const { addAccount, addBudgetPeriod, advanceFixedPlan, closeBudgetPeriod, createFixedPlan, createLedger, editFixedPlan, executeFixedPlan, fixedPlanOccurrenceKey, markLegacyPlanPending, recordBorrowing, recordCreditCardRepayment, recordExpense, recordFixedExpense, recordIncome, recordInvestmentTrade, recordLoanInterestPayment, recordLoanPrincipalRepayment, recordTransfer, retryFixedPlanPending, revokeFixedPlan, setInvestmentValue, totals } = require('./domain/ledger.js');
+const { addAccount, addBudgetPeriod, advanceFixedPlan, closeBudgetPeriod, createFixedPlan, createLedger, editFixedPlan, executeFixedPlan, fixedPlanOccurrenceKey, getLatestTransaction, getTransactionActionAvailability, listUserTransactions, markLegacyPlanPending, modifyTransaction, recordBorrowing, recordCreditCardRepayment, recordExpense, recordFixedExpense, recordIncome, recordInvestmentTrade, recordLoanInterestPayment, recordLoanPrincipalRepayment, recordRefund, recordTransfer, retryFixedPlanPending, revokeRefund, revokeFixedPlan, revokeTransaction, setInvestmentValue, totals } = require('./domain/ledger.js');
 const { CURRENT_SCHEMA_VERSION, exportTransactionsCsv, restoreBackup, serializeBackup } = require('./domain/storage.js');
 
 const STORAGE_KEY = 'yongdu-ledger-v1';
@@ -48,6 +48,7 @@ const TRANSACTION_TYPE_LABELS = {
   refund: '退款',
   reward_payment: '奖励支付',
   loan_interest_accrual: '利息计提',
+  historical_adjustment: '历史账单调整',
 };
 
 function clone(value) {
@@ -213,6 +214,44 @@ function savePersisted(storage, state) {
   return { ok: true, rawData };
 }
 
+function commitPreparedState(storage, currentState, candidateState) {
+  let oldRawData;
+  let hadOldValue = false;
+  let candidateRawData;
+  try {
+    candidateRawData = serializeBackup(candidateState);
+    oldRawData = storage.get(STORAGE_KEY);
+    hadOldValue = oldRawData !== undefined && oldRawData !== null && oldRawData !== '';
+  } catch (error) {
+    return { ok: false, state: clone(currentState), error: `保存预检失败：${error.message}` };
+  }
+  try {
+    storage.set(STORAGE_KEY, candidateRawData);
+    const readback = storage.get(STORAGE_KEY);
+    if (readback !== candidateRawData) throw new Error('保存读回校验不一致');
+    return { ok: true, state: clone(candidateState), rawData: candidateRawData };
+  } catch (error) {
+    let rollbackError = null;
+    try {
+      if (hadOldValue) storage.set(STORAGE_KEY, oldRawData);
+      else if (typeof storage.remove === 'function') storage.remove(STORAGE_KEY);
+      else storage.set(STORAGE_KEY, oldRawData ?? '');
+      const rollbackReadback = storage.get(STORAGE_KEY);
+      const rollbackMatches = hadOldValue ? rollbackReadback === oldRawData : (rollbackReadback === undefined || rollbackReadback === null || rollbackReadback === '');
+      if (!rollbackMatches) throw new Error('原数据回滚读回校验不一致');
+    } catch (rollbackFailure) {
+      rollbackError = rollbackFailure.message;
+    }
+    return {
+      ok: false,
+      state: clone(currentState),
+      error: `本地数据保存失败：${error.message}`,
+      rollbackError,
+      originalRawData: oldRawData,
+    };
+  }
+}
+
 function utf8ByteLength(text) {
   let bytes = 0;
   for (let index = 0; index < text.length; index += 1) {
@@ -375,14 +414,7 @@ function previewBackupRestore(rawData, { fileName = '粘贴的 JSON', sizeBytes 
     }
     const restored = restoreBackup(rawData);
     if (!restored.ok) throw new Error(chineseBackupError(restored.error));
-    const migrated = clone(restored.data);
-    if (source.schemaVersion === 0 && migrated.appSettings === undefined) {
-      migrated.appSettings = {
-        startDay: 1,
-        monthlyBudgetCents: migrated.defaultBudgetCents,
-      };
-    }
-    const candidate = assertApplicationBackup(migrated);
+    const candidate = assertApplicationBackup(clone(restored.data));
     const canonicalRawData = serializeBackup(candidate);
     assertWithinBackupLimit(utf8ByteLength(canonicalRawData));
     const transactionDates = candidate.transactions
@@ -833,18 +865,11 @@ function cancelPendingStartDayChange(state, { date }) {
   return next;
 }
 
-function setTransactionNote(state, transactionId, note) {
-  const next = clone(state);
-  const transaction = next.transactions.find((item) => item.id === transactionId);
-  if (transaction) transaction.note = String(note || '').trim();
-  return next;
-}
-
 function recordEntry(state, { amountYuan, date, accountId, categoryLevel1, categoryLevel2, note = '', includeControlledBudget = true }) {
   const amountCents = parseYuanToCents(amountYuan);
   assertDate(date);
   if (!categoryLevel1 || !categoryLevel2) throw new Error('请选择完整的两级分类');
-  const details = { id: `entry-${state.transactions.length + 1}`, date, accountId, amountCents, categoryLevel1, categoryLevel2 };
+  const details = { id: `entry-${state.transactions.length + 1}`, date, accountId, amountCents, categoryLevel1, categoryLevel2, note: String(note || '').trim() };
   let next;
   if (includeControlledBudget) {
     const activePeriod = state.budgetPeriods.find((item) => date >= item.startDate && date <= item.endDate);
@@ -856,36 +881,25 @@ function recordEntry(state, { amountYuan, date, accountId, categoryLevel1, categ
   } else {
     next = runOperation(() => recordFixedExpense(state, details));
   }
-  return setTransactionNote(next, details.id, note);
+  return next;
 }
 
 function findPreviousSimilar(state, { categoryLevel1, categoryLevel2 }) {
-  const expenses = state.transactions
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.kind === 'controlled_expense' || item.kind === 'fixed_expense');
-  const exact = categoryLevel2 ? expenses.filter(({ item }) => item.categoryLevel2 === categoryLevel2) : [];
-  const candidates = exact.length ? exact : expenses.filter(({ item }) => item.categoryLevel1 === categoryLevel1);
-  candidates.sort((left, right) => left.item.date.localeCompare(right.item.date) || left.index - right.index);
-  const latest = candidates.length ? candidates[candidates.length - 1].item : undefined;
+  const expenses = listUserTransactions(state)
+    .filter((item) => item.status === 'active' && (item.kind === 'controlled_expense' || item.kind === 'fixed_expense'));
+  const exact = categoryLevel2 ? expenses.filter((item) => item.categoryLevel2 === categoryLevel2) : [];
+  const candidates = exact.length ? exact : expenses.filter((item) => item.categoryLevel1 === categoryLevel1);
+  candidates.sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id));
+  const latest = candidates.length ? candidates[candidates.length - 1] : undefined;
   return latest ? { amountCents: latest.amountCents, amount: formatCents(latest.amountCents), date: latest.date } : null;
 }
 
 function listRecentBills(state) {
-  return state.transactions
-    .map((item, index) => ({ item, index }))
-    .filter(({ item }) => item.kind === 'controlled_expense' || item.kind === 'fixed_expense')
-    .sort((left, right) => right.item.date.localeCompare(left.item.date) || right.index - left.index)
-    .map(({ item }) => ({
-      id: item.id,
-      date: item.date,
-      amountCents: item.amountCents,
-      amount: formatCents(item.amountCents),
+  return listRecentTransactions(state)
+    .filter((item) => item.kind === 'controlled_expense' || item.kind === 'fixed_expense')
+    .map((item) => ({
+      ...item,
       budgetType: item.kind === 'controlled_expense' ? '可控' : '固定',
-      categoryLevel1: item.categoryLevel1,
-      categoryLevel2: item.categoryLevel2,
-      category: `${item.categoryLevel1} · ${item.categoryLevel2}`,
-      account: accountName(state, item.accountId),
-      note: item.note || '',
     }));
 }
 
@@ -923,7 +937,8 @@ function addAssetAccount(state, { id = null, name, type, balanceYuan = '0', cost
   return runOperation(() => {
     if (!name || !String(name).trim()) throw new Error('请输入账户名称');
     if (!ALL_ACCOUNT_TYPES.has(type)) throw new Error('不支持的账户类型');
-    const balanceCents = parseYuanToCents(balanceYuan);
+    const enteredBalanceCents = parseYuanToCents(balanceYuan);
+    const balanceCents = type === 'credit_card' ? -enteredBalanceCents : enteredBalanceCents;
     const costBasisCents = type === 'investment' ? parseYuanToCents(costBasisYuan) : 0;
     if (type !== 'investment' && costBasisCents !== 0) throw new Error('只有投资账户可以填写投入成本');
     return addAccount(state, {
@@ -1260,32 +1275,460 @@ function dismissOverduePlanBanner(state, occurrenceKeys = null) {
   return next;
 }
 
-function listRecentTransactions(state) {
+function transactionTypeLabel(item) {
+  if (item.kind === 'fixed_expense' && item.categoryLevel1 === '利息') return '利息支付';
+  return TRANSACTION_TYPE_LABELS[item.kind] || item.kind;
+}
+
+function transactionCategory(item, fallback) {
+  return [item.categoryLevel1, item.categoryLevel2].filter(Boolean).join(' · ') || fallback;
+}
+
+function relatedOriginal(state, refund) {
+  const logicalId = refund.refundOfLogicalTransactionId
+    || state.transactions.find((item) => item.id === refund.relatedTransactionId)?.logicalTransactionId
+    || refund.relatedTransactionId;
+  if (!logicalId) return null;
+  try {
+    return getLatestTransaction(state, logicalId);
+  } catch {
+    return null;
+  }
+}
+
+function activeRefunds(state, logicalTransactionId) {
   return state.transactions
-    .map((item, index) => ({ item, index }))
-    .sort((left, right) => right.item.date.localeCompare(left.item.date) || right.index - left.index)
-    .map(({ item }) => {
-      const typeLabel = item.kind === 'fixed_expense' && item.categoryLevel1 === '利息'
-        ? '利息支付'
-        : (TRANSACTION_TYPE_LABELS[item.kind] || item.kind);
-      const fromAccount = item.accountId ? accountName(state, item.accountId) : '';
-      const toAccount = item.counterpartyAccountId ? accountName(state, item.counterpartyAccountId) : '';
-      const categoryParts = [item.categoryLevel1, item.categoryLevel2].filter(Boolean);
+    .filter((item) => item.kind === 'refund'
+      && item.status === 'active'
+      && item.refundOfLogicalTransactionId === logicalTransactionId)
+    .sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id));
+}
+
+function transactionStatusBadge(state, item) {
+  if (item.status === 'revoked') return '已撤销';
+  if (item.kind === 'historical_adjustment') return '历史调整';
+  if (item.kind === 'refund') return '退款';
+  const refundedCents = activeRefunds(state, item.logicalTransactionId).reduce((sum, refund) => sum + refund.amountCents, 0);
+  if (refundedCents >= item.amountCents && item.amountCents > 0) return '已退款';
+  if (refundedCents > 0) return '部分退款';
+  if ((item.version || 1) > 1) return '已修改';
+  return '';
+}
+
+function actionModel(state, item) {
+  const available = getTransactionActionAvailability(state, item.logicalTransactionId);
+  const ordered = [
+    available.refund ? { key: 'refund', label: '退款', tone: 'neutral' } : null,
+    available.modify ? { key: 'modify', label: '修改', tone: 'accent' } : null,
+    available.revoke ? { key: 'revoke', label: '撤销', tone: 'danger' } : null,
+  ].filter(Boolean);
+  return { ...available, ordered };
+}
+
+function historicalAdjustmentModel(state, item) {
+  const payload = item.businessPayload || {};
+  const before = payload.beforeAmountCents || 0;
+  const after = payload.afterAmountCents || 0;
+  const budgetDeltaCents = (payload.changes || []).reduce((sum, change) => sum + (change.currentBudgetDeltaCents || 0), 0);
+  const rewardDeltaCents = (payload.changes || []).reduce((sum, change) => sum + (change.rewardDeltaCents || 0), 0);
+  const accountChanges = (payload.accountChanges || []).map((change) => ({
+    accountId: change.accountId,
+    accountName: accountName(state, change.accountId),
+    balanceDeltaCents: change.balanceDeltaCents || 0,
+    balanceDelta: formatCents(change.balanceDeltaCents || 0),
+    costBasisDeltaCents: change.costBasisDeltaCents || 0,
+    costBasisDelta: formatCents(change.costBasisDeltaCents || 0),
+  }));
+  return {
+    id: item.id,
+    logicalTransactionId: item.logicalTransactionId,
+    kind: item.kind,
+    businessKind: item.businessKind,
+    status: item.status,
+    statusBadge: '历史调整',
+    typeLabel: '历史账单调整',
+    date: item.date,
+    amountCents: after - before,
+    amount: formatCents(after - before),
+    account: '',
+    counterpartyAccount: '',
+    accountFlow: '不改变账户流水统计',
+    category: `历史账单调整 · 原账 ${payload.originalDate || '未知日期'}`,
+    budgetType: '不计收入、支出和分类统计',
+    note: `原金额 ${formatCents(before)} → ${formatCents(after)}；账户影响 ${accountChanges.map((change) => `${change.accountName} ${change.balanceDelta}`).join('、') || '无'}；预算影响 ${formatCents(budgetDeltaCents)}；奖励影响 ${formatCents(rewardDeltaCents)}`,
+    accountImpacts: accountChanges,
+    budgetImpactCents: budgetDeltaCents,
+    budgetImpact: formatCents(budgetDeltaCents),
+    rewardImpactCents: rewardDeltaCents,
+    rewardImpact: formatCents(rewardDeltaCents),
+    actions: { refund: false, modify: false, revoke: false, modifyFields: 'none', ordered: [] },
+    canSwipe: false,
+    affectsStatistics: false,
+    isIncome: false,
+    isExpense: false,
+  };
+}
+
+function transactionListItem(state, item) {
+  if (item.kind === 'historical_adjustment') return historicalAdjustmentModel(state, item);
+  const typeLabel = transactionTypeLabel(item);
+  const original = item.kind === 'refund' ? relatedOriginal(state, item) : null;
+  const originalCategory = original ? transactionCategory(original, transactionTypeLabel(original)) : '';
+  const fromAccount = item.accountId ? accountName(state, item.accountId) : '';
+  const toAccount = item.counterpartyAccountId ? accountName(state, item.counterpartyAccountId) : '';
+  const actions = actionModel(state, item);
+  const category = item.kind === 'refund'
+    ? `${originalCategory || '原支出'}退款`
+    : transactionCategory(item, typeLabel);
+  const budgetType = item.kind === 'refund'
+    ? ((item.budgetImpactCents || 0) < 0 ? '恢复预算' : ((item.rewardImpactCents || 0) > 0 ? '退回奖励' : '退款'))
+    : (item.kind === 'controlled_expense' ? '计入预算' : '不计预算');
+  return {
+    id: item.id,
+    logicalTransactionId: item.logicalTransactionId,
+    operationGroupId: item.operationGroupId,
+    version: item.version || 1,
+    status: item.status,
+    statusBadge: transactionStatusBadge(state, item),
+    kind: item.kind,
+    businessKind: item.businessKind,
+    typeLabel,
+    date: item.date,
+    accountId: item.accountId || null,
+    counterpartyAccountId: item.counterpartyAccountId || null,
+    amountCents: item.amountCents,
+    amount: item.kind === 'refund' ? `+${formatCents(item.amountCents)}` : formatCents(item.amountCents),
+    account: fromAccount,
+    counterpartyAccount: toAccount,
+    accountFlow: toAccount ? `${fromAccount} → ${toAccount}` : fromAccount,
+    category,
+    categoryLevel1: item.categoryLevel1,
+    categoryLevel2: item.categoryLevel2,
+    budgetType,
+    note: item.note || '',
+    refundedCents: item.refundedCents || 0,
+    actions,
+    canSwipe: item.status === 'active' && actions.ordered.length > 0,
+    affectsStatistics: item.affectsStatistics !== false,
+    isIncome: item.kind === 'income',
+    isExpense: item.affectsStatistics !== false && ALL_EXPENSE_KINDS.has(item.kind),
+  };
+}
+
+function listRecentTransactions(state, { status = 'active' } = {}) {
+  if (!['active', 'revoked', 'all'].includes(status)) throw new Error('请选择有效或已撤销账单筛选');
+  return listUserTransactions(state, { includeRevoked: status !== 'active' })
+    .filter((item) => status === 'all' || (status === 'revoked' ? item.status === 'revoked' : item.status !== 'revoked'))
+    .map((item) => transactionListItem(state, item));
+}
+
+function latestLogicalGroup(state, latest) {
+  return state.transactions.filter((item) => item.logicalTransactionId === latest.logicalTransactionId
+    && (item.version || 1) === (latest.version || 1)
+    && item.status === latest.status
+    && !item.technical
+    && item.kind !== 'historical_adjustment');
+}
+
+function sumImpacts(group, field) {
+  return group.reduce((sum, item) => sum + (item[field] || 0), 0);
+}
+
+function accountImpactModels(state, group) {
+  const impacts = new Map();
+  for (const transaction of group) {
+    for (const impact of transaction.accountImpacts || []) {
+      const current = impacts.get(impact.accountId) || { balanceDeltaCents: 0, costBasisDeltaCents: 0 };
+      current.balanceDeltaCents += impact.balanceDeltaCents || 0;
+      current.costBasisDeltaCents += impact.costBasisDeltaCents || 0;
+      impacts.set(impact.accountId, current);
+    }
+  }
+  return [...impacts.entries()].map(([accountId, impact]) => ({
+    accountId,
+    accountName: accountName(state, accountId),
+    ...impact,
+    balanceDelta: formatCents(impact.balanceDeltaCents),
+    costBasisDelta: formatCents(impact.costBasisDeltaCents),
+  }));
+}
+
+function yuanInput(cents) {
+  return (Number(cents || 0) / 100).toFixed(2);
+}
+
+function accountField(state, key, label, value, types) {
+  const options = state.accounts
+    .filter((item) => types.includes(item.type))
+    .map((item) => ({ value: item.id, label: `${item.name} · ${ACCOUNT_TYPE_LABELS[item.type] || item.type}` }));
+  const selectedIndex = Math.max(0, options.findIndex((item) => item.value === value));
+  return { key, label, type: 'account', value: value || '', displayValue: options[selectedIndex]?.label || '请选择', selectedIndex, options, optionLabels: options.map((item) => item.label) };
+}
+
+function textField(key, label, value, type = 'text') {
+  return { key, label, type, value: value === null || value === undefined ? '' : String(value) };
+}
+
+function editableFieldsFor(state, latest, modifyFields) {
+  const payload = latest.businessPayload || {};
+  if (modifyFields === 'none') return [];
+  if (modifyFields === 'category-note') {
+    return [
+      textField('categoryLevel1', '一级分类', payload.categoryLevel1),
+      textField('categoryLevel2', '二级分类', payload.categoryLevel2),
+      textField('note', '备注', payload.note),
+    ];
+  }
+  const fields = [];
+  const addDate = () => fields.push(textField('date', '日期', payload.date, 'date'));
+  const addAmount = (key = 'amountYuan', cents = payload.amountCents, label = '金额') => fields.push(textField(key, label, yuanInput(cents), 'amount'));
+  const cashTypes = ['cash', 'bank', 'wallet'];
+  if (latest.businessKind === 'expense') {
+    addDate();
+    addAmount();
+    fields.push(accountField(state, 'accountId', '支出账户', payload.accountId, [...cashTypes, 'credit_card']));
+    fields.push(textField('categoryLevel1', '一级分类', payload.categoryLevel1));
+    fields.push(textField('categoryLevel2', '二级分类', payload.categoryLevel2));
+    fields.push({
+      key: 'expenseKind', label: '支出性质', type: 'choice', value: payload.expenseKind || 'controlled',
+      options: [{ value: 'controlled', label: '可控支出' }, { value: 'fixed', label: '固定支出' }],
+      optionLabels: ['可控支出', '固定支出'],
+      selectedIndex: (payload.expenseKind || 'controlled') === 'fixed' ? 1 : 0,
+      displayValue: (payload.expenseKind || 'controlled') === 'fixed' ? '固定支出' : '可控支出',
+    });
+  } else if (latest.businessKind === 'income') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'accountId', '到账账户', payload.accountId, cashTypes));
+    fields.push(textField('categoryLevel2', '收入来源', payload.categoryLevel2));
+    fields.push(textField('source', '来源备注', payload.source));
+  } else if (latest.businessKind === 'transfer') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'fromAccountId', '转出账户', payload.fromAccountId, cashTypes));
+    fields.push(accountField(state, 'toAccountId', '转入账户', payload.toAccountId, cashTypes));
+  } else if (latest.businessKind === 'credit_card_repayment') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'fromAccountId', '付款账户', payload.fromAccountId, cashTypes));
+    fields.push(accountField(state, 'creditCardAccountId', '信用卡', payload.creditCardAccountId, ['credit_card']));
+  } else if (latest.businessKind === 'borrowing') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'cashAccountId', '到账账户', payload.cashAccountId, cashTypes));
+    fields.push(accountField(state, 'loanAccountId', '借贷账户', payload.loanAccountId, ['loan']));
+  } else if (latest.businessKind === 'loan_repayment') {
+    addDate();
+    addAmount('principalYuan', payload.principalCents, '本金');
+    addAmount('interestYuan', payload.interestCents, '利息');
+    fields.push(accountField(state, 'cashAccountId', '付款账户', payload.cashAccountId, cashTypes));
+    fields.push(accountField(state, 'loanAccountId', '借贷账户', payload.loanAccountId, ['loan']));
+  } else if (['loan_principal_repayment', 'loan_interest_payment'].includes(latest.businessKind)) {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'cashAccountId', '付款账户', payload.cashAccountId, cashTypes));
+    fields.push(accountField(state, 'loanAccountId', '借贷账户', payload.loanAccountId, ['loan']));
+  } else if (latest.businessKind === 'loan_interest_accrual') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'loanAccountId', '借贷账户', payload.loanAccountId, ['loan']));
+  } else if (latest.businessKind === 'investment_trade') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'cashAccountId', '资金账户', payload.cashAccountId, cashTypes));
+    fields.push(accountField(state, 'investmentAccountId', '投资账户', payload.investmentAccountId, ['investment']));
+  } else if (latest.businessKind === 'investment_valuation') {
+    addDate(); addAmount('currentValueYuan', payload.currentValueCents, '当前现值');
+    fields.push(accountField(state, 'investmentAccountId', '投资账户', payload.investmentAccountId, ['investment']));
+  } else if (latest.businessKind === 'reward_payment') {
+    addDate(); addAmount();
+    fields.push(accountField(state, 'accountId', '付款账户', payload.accountId, cashTypes));
+    fields.push(textField('categoryLevel1', '分类', payload.categoryLevel1));
+  }
+  fields.push(textField('note', '备注', payload.note));
+  return fields;
+}
+
+function versionHistory(state, latest) {
+  const groups = new Map();
+  for (const item of state.transactions) {
+    if (item.logicalTransactionId !== latest.logicalTransactionId || item.technical || item.kind === 'historical_adjustment') continue;
+    const version = item.version || 1;
+    const current = groups.get(version) || [];
+    current.push(item);
+    groups.set(version, current);
+  }
+  return [...groups.entries()]
+    .sort(([left], [right]) => right - left)
+    .map(([version, group]) => {
+      const representative = group[0];
+      const amountCents = group.reduce((sum, item) => sum + item.amountCents, 0);
+      const statusLabel = representative.status === 'active' ? '当前版本' : (representative.status === 'superseded' ? '已被替代' : '已撤销');
       return {
-        id: item.id,
-        kind: item.kind,
-        typeLabel,
-        date: item.date,
-        amountCents: item.amountCents,
-        amount: formatCents(item.amountCents),
-        account: fromAccount,
-        counterpartyAccount: toAccount,
-        accountFlow: toAccount ? `${fromAccount} → ${toAccount}` : fromAccount,
-        category: categoryParts.join(' · ') || typeLabel,
-        budgetType: item.kind === 'controlled_expense' ? '计入预算' : '不计预算',
-        note: item.note || '',
+        version,
+        date: representative.date,
+        status: representative.status,
+        statusLabel,
+        amountCents,
+        amount: formatCents(amountCents),
+        summary: `第${version}版 · ${representative.date} · ${formatCents(amountCents)} · ${statusLabel}`,
       };
     });
+}
+
+function getTransactionDetailModel(state, logicalTransactionId) {
+  const latest = getLatestTransaction(state, logicalTransactionId);
+  if (latest.kind === 'historical_adjustment') return { ...historicalAdjustmentModel(state, latest), readOnly: true, refunds: [], changeHistory: [] };
+  const group = latestLogicalGroup(state, latest);
+  const listItem = transactionListItem(state, latest);
+  const refunds = latest.kind === 'refund' ? [] : activeRefunds(state, latest.logicalTransactionId).map((item) => ({
+    logicalTransactionId: item.logicalTransactionId,
+    id: item.id,
+    date: item.date,
+    amountCents: item.amountCents,
+    amount: `+${formatCents(item.amountCents)}`,
+    destinationAccountId: item.accountId,
+    destinationAccount: accountName(state, item.accountId),
+    canRevoke: getTransactionActionAvailability(state, item.logicalTransactionId).revoke,
+  }));
+  const refundedCents = refunds.reduce((sum, item) => sum + item.amountCents, 0);
+  const actions = actionModel(state, latest);
+  return {
+    ...listItem,
+    id: latest.id,
+    logicalTransactionId: latest.logicalTransactionId,
+    version: latest.version || 1,
+    status: latest.status,
+    statusLabel: latest.status === 'active' ? '有效' : (latest.status === 'superseded' ? '已被替代' : '已撤销'),
+    businessPayload: clone(latest.businessPayload || {}),
+    accountImpacts: accountImpactModels(state, group),
+    budgetImpactCents: sumImpacts(group, 'budgetImpactCents'),
+    budgetImpact: formatCents(sumImpacts(group, 'budgetImpactCents')),
+    rewardImpactCents: sumImpacts(group, 'rewardImpactCents'),
+    rewardImpact: formatCents(sumImpacts(group, 'rewardImpactCents')),
+    refunds,
+    refundedCents,
+    refunded: formatCents(refundedCents),
+    remainingRefundableCents: Math.max(0, latest.amountCents - refundedCents),
+    remainingRefundable: formatCents(Math.max(0, latest.amountCents - refundedCents)),
+    changeHistory: versionHistory(state, latest),
+    editableFields: editableFieldsFor(state, latest, actions.modifyFields),
+    refundAccountOptions: state.accounts
+      .filter((item) => ['cash', 'bank', 'wallet'].includes(item.type) || (item.type === 'credit_card' && item.id === latest.accountId))
+      .map((item) => ({ value: item.id, label: `${item.name} · ${ACCOUNT_TYPE_LABELS[item.type]}` })),
+    readOnly: latest.status !== 'active',
+  };
+}
+
+function normalizeModificationChanges(state, latest, supplied) {
+  const changes = clone(supplied || {});
+  const moneyFields = [
+    ['amountYuan', 'amountCents'],
+    ['principalYuan', 'principalCents'],
+    ['interestYuan', 'interestCents'],
+    ['currentValueYuan', 'currentValueCents'],
+    ['rewardOffsetYuan', 'rewardOffsetCents'],
+  ];
+  for (const [yuanField, centsField] of moneyFields) {
+    if (!Object.prototype.hasOwnProperty.call(changes, yuanField)) continue;
+    changes[centsField] = parseYuanToCents(changes[yuanField]);
+    if (['amountCents', 'principalCents'].includes(centsField) && changes[centsField] <= 0) throw new Error('金额必须大于0');
+    if (['interestCents', 'currentValueCents', 'rewardOffsetCents'].includes(centsField) && changes[centsField] < 0) throw new Error('金额不能为负');
+    delete changes[yuanField];
+  }
+  if (Object.prototype.hasOwnProperty.call(changes, 'note')) changes.note = String(changes.note || '').trim();
+  const targetDate = changes.date || latest.businessPayload?.date || latest.date;
+  const targetExpenseKind = changes.expenseKind || latest.businessPayload?.expenseKind;
+  const hasActiveRefund = activeRefunds(state, latest.logicalTransactionId).length > 0;
+  const categoryOnly = Object.keys(changes).every((field) => ['categoryLevel1', 'categoryLevel2', 'note'].includes(field));
+  if (latest.businessKind === 'expense' && targetExpenseKind === 'controlled' && !(hasActiveRefund && categoryOnly)) {
+    const matching = state.budgetPeriods.find((item) => item.startDate <= targetDate && targetDate <= item.endDate);
+    if (!matching) throw new Error('修改后的日期没有可用预算周期');
+    changes.budgetPeriodId = matching.id;
+  }
+  return changes;
+}
+
+function modifyTransactionEntry(state, { logicalTransactionId, changes, requestId, today = todayIso() }) {
+  assertDate(today);
+  const latest = getLatestTransaction(state, logicalTransactionId);
+  return runOperation(() => modifyTransaction(state, {
+    logicalTransactionId,
+    changes: normalizeModificationChanges(state, latest, changes),
+    requestId,
+    today,
+  }));
+}
+
+function refundTransactionEntry(state, {
+  logicalTransactionId,
+  amountYuan,
+  date,
+  destinationAccountId = null,
+  requestId,
+  note = '',
+  today = todayIso(),
+}) {
+  assertDate(date);
+  assertDate(today);
+  return runOperation(() => recordRefund(state, {
+    originalTransactionId: logicalTransactionId,
+    amountCents: positiveAmount(amountYuan),
+    date,
+    destinationAccountId,
+    requestId,
+    note: String(note || '').trim(),
+    today,
+  }));
+}
+
+function revokeTransactionEntry(state, { logicalTransactionId, requestId, date = todayIso(), today = todayIso() }) {
+  assertDate(date);
+  assertDate(today);
+  return runOperation(() => revokeTransaction(state, { logicalTransactionId, requestId, date, today }));
+}
+
+function revokeRefundEntry(state, { logicalTransactionId, requestId, date = todayIso(), today = todayIso() }) {
+  assertDate(date);
+  assertDate(today);
+  return runOperation(() => revokeRefund(state, { logicalTransactionId, requestId, date, today }));
+}
+
+function signedCents(amountCents) {
+  if (amountCents > 0) return `+${formatCents(amountCents)}`;
+  return formatCents(amountCents);
+}
+
+function buildStateImpactPreview(currentState, candidateState) {
+  const accounts = candidateState.accounts.map((candidate) => {
+    const current = currentState.accounts.find((item) => item.id === candidate.id);
+    const balanceDeltaCents = candidate.balanceCents - (current?.balanceCents || 0);
+    const costBasisDeltaCents = (candidate.costBasisCents || 0) - (current?.costBasisCents || 0);
+    return {
+      accountId: candidate.id,
+      accountName: candidate.name,
+      balanceDeltaCents,
+      balanceDelta: signedCents(balanceDeltaCents),
+      costBasisDeltaCents,
+      costBasisDelta: signedCents(costBasisDeltaCents),
+    };
+  }).filter((item) => item.balanceDeltaCents !== 0 || item.costBasisDeltaCents !== 0);
+  const budgets = candidateState.budgetPeriods.map((candidate) => {
+    const current = currentState.budgetPeriods.find((item) => item.id === candidate.id);
+    const netSpendDeltaCents = candidate.netBudgetSpendCents - (current?.netBudgetSpendCents || 0);
+    return {
+      periodId: candidate.id,
+      label: `${candidate.startDate} 至 ${candidate.endDate}`,
+      netSpendDeltaCents,
+      netSpendDelta: signedCents(netSpendDeltaCents),
+    };
+  }).filter((item) => item.netSpendDeltaCents !== 0);
+  const rewardDeltaCents = candidateState.rewardBalanceCents - currentState.rewardBalanceCents;
+  const parts = [
+    ...accounts.map((item) => `账户“${item.accountName}” ${item.balanceDelta}`),
+    ...budgets.map((item) => `预算净支出 ${item.netSpendDelta}`),
+    ...(rewardDeltaCents ? [`奖励余额 ${signedCents(rewardDeltaCents)}`] : []),
+  ];
+  return {
+    accounts,
+    budgets,
+    rewardDeltaCents,
+    rewardDelta: signedCents(rewardDeltaCents),
+    summary: parts.length ? parts.join('；') : '账面金额不变，仅更新分类或备注。',
+  };
 }
 
 const ALL_EXPENSE_KINDS = new Set([
@@ -1305,32 +1748,22 @@ function analysisPeriodForDate(state, today) {
 }
 
 function transactionAnalysisEntry(state, item, scope) {
+  if (item.affectsStatistics === false || item.status === 'revoked') return null;
   if (scope === 'controlled') {
-    if (item.kind === 'controlled_expense') {
-      return { amountCents: item.budgetImpactCents || 0, categoryLevel1: item.categoryLevel1 || null };
-    }
-    if (item.kind !== 'refund') return null;
-    const original = state.transactions.find((candidate) => candidate.id === item.relatedTransactionId);
-    if (!original || original.kind !== 'controlled_expense') return null;
+    if (item.kind !== 'controlled_expense') return null;
     return {
-      amountCents: item.budgetImpactCents || 0,
-      categoryLevel1: original.categoryLevel1 || null,
+      amountCents: Math.max(0, (item.budgetImpactCents || 0) - (item.refundedCents || 0)),
+      categoryLevel1: item.categoryLevel1 || null,
     };
   }
 
   if (ALL_EXPENSE_KINDS.has(item.kind)) {
     return {
-      amountCents: item.amountCents,
+      amountCents: Math.max(0, item.amountCents - (item.refundedCents || 0)),
       categoryLevel1: item.categoryLevel1 || (item.kind === 'loan_interest_accrual' ? '利息' : null),
     };
   }
-  if (item.kind !== 'refund') return null;
-  const original = state.transactions.find((candidate) => candidate.id === item.relatedTransactionId);
-  if (!original || !ALL_EXPENSE_KINDS.has(original.kind)) return null;
-  return {
-    amountCents: -item.amountCents,
-    categoryLevel1: original.categoryLevel1 || (original.kind === 'loan_interest_accrual' ? '利息' : null),
-  };
+  return null;
 }
 
 function normalizedSeries(values) {
@@ -1361,7 +1794,7 @@ function dailyAnalysis(state, period, today, scope) {
   const endDate = todayInside && today < period.endDate ? today : period.endDate;
   const days = dateDistance(period.startDate, endDate) + 1;
   const amounts = new Map();
-  for (const item of state.transactions) {
+  for (const item of listUserTransactions(state)) {
     if (item.date < period.startDate || item.date > endDate) continue;
     const entry = transactionAnalysisEntry(state, item, scope);
     if (!entry) continue;
@@ -1400,7 +1833,7 @@ function pointsRatio(index, count) {
 function categoryAnalysis(state, period, daily, scope) {
   const totalsByCategory = new Map();
   if (period) {
-    for (const item of state.transactions) {
+    for (const item of listUserTransactions(state)) {
       if (item.date < period.startDate || item.date > daily.endDate) continue;
       const entry = transactionAnalysisEntry(state, item, scope);
       if (!entry || !entry.categoryLevel1) continue;
@@ -1562,4 +1995,4 @@ function getSettingsModel(state, date = todayIso()) {
   };
 }
 
-module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, createBackupExport, createTransactionsCsvExport, previewBackupRestore, commitBackupRestore, clearLocalLedger, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, createScheduledPlan, editScheduledPlan, disableScheduledPlan, processDuePlans, retryPendingPlan, dismissOverduePlanBanner, listRecentTransactions, getBillAnalysisModel, getSettingsModel, STORAGE_KEY, RESTORE_TEMP_KEY, MAX_BACKUP_BYTES, CATEGORY_TREE };
+module.exports = { todayIso, parseYuanToCents, formatCents, categoryOptions, initializeState, loadPersisted, savePersisted, commitPreparedState, createBackupExport, createTransactionsCsvExport, previewBackupRestore, commitBackupRestore, clearLocalLedger, getHomeModel, getSettlementModel, settleCurrentPeriod, changeBudgetSettings, previewStartDayChange, changeStartDay, cancelPendingStartDayChange, recordEntry, findPreviousSimilar, listRecentBills, accountTypeOptions, getAssetsModel, addAssetAccount, recordIncomeEntry, recordTransferEntry, repayCreditCard, borrowLoan, repayLoanPrincipal, payLoanInterest, buyInvestment, sellInvestment, updateInvestmentValue, createScheduledPlan, editScheduledPlan, disableScheduledPlan, processDuePlans, retryPendingPlan, dismissOverduePlanBanner, listRecentTransactions, getTransactionDetailModel, modifyTransactionEntry, refundTransactionEntry, revokeTransactionEntry, revokeRefundEntry, buildStateImpactPreview, getBillAnalysisModel, getSettingsModel, STORAGE_KEY, RESTORE_TEMP_KEY, MAX_BACKUP_BYTES, CATEGORY_TREE };

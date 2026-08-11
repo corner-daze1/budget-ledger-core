@@ -141,12 +141,12 @@ test('信用卡计划同时减少资产和卡欠款且不影响预算', () => {
   });
   const result = processDuePlans(state, '2028-01-20').state;
   assert.equal(result.accounts.find((item) => item.id === 'cash').balanceCents, 960000);
-  assert.equal(result.accounts.find((item) => item.id === 'card').balanceCents, 60000);
+  assert.equal(result.accounts.find((item) => item.id === 'card').balanceCents, -60000);
   assert.equal(result.budgetPeriods[0].netBudgetSpendCents, 0);
   assert.equal(result.transactions[0].kind, 'credit_card_repayment');
 });
 
-test('信用卡固定还款超过欠款转待处理且不自动缩小金额', () => {
+test('信用卡固定还款超过欠款时按原金额形成溢缴余额', () => {
   const before = addPlan(baseState({ cardYuan: '100' }), {
     type: 'credit_card_repayment',
     targetLiabilityAccountId: 'card',
@@ -155,9 +155,10 @@ test('信用卡固定还款超过欠款转待处理且不自动缩小金额', ()
     nextDueDate: '2028-01-20',
   });
   const result = processDuePlans(before, '2028-01-20').state;
-  assert.equal(result.pendingItems[0].reason, 'liability_insufficient');
-  assert.equal(result.transactions.length, 0);
-  assert.deepEqual(result.accounts, before.accounts);
+  assert.equal(result.pendingItems.length, 0);
+  assert.equal(result.transactions.length, 1);
+  assert.equal(result.accounts.find((item) => item.id === 'cash').balanceCents, 980000);
+  assert.equal(result.accounts.find((item) => item.id === 'card').balanceCents, 10000);
 });
 
 test('信用卡金额为空到期转一条中文待处理', () => {
@@ -290,7 +291,7 @@ test('停用计划只阻止未来发生期且保留历史', () => {
   assert.equal(later.plans[0].active, false);
 });
 
-test('旧schemaVersion一无到期日计划只标记待补充且幂等', () => {
+test('旧计划迁移至schemaVersion二后无到期日只标记待补充且幂等', () => {
   const state = baseState();
   state.plans.push({ id: 'legacy', name: '旧计划', amountCents: 1000, accountId: 'cash', categoryLevel1: '固定支出', active: true });
   const first = processDuePlans(state, '2028-01-20');
@@ -298,7 +299,7 @@ test('旧schemaVersion一无到期日计划只标记待补充且幂等', () => {
   assert.equal(second.state.pendingItems.length, 1);
   assert.equal(second.state.pendingItems[0].reasonText, '待补充计划信息');
   assert.equal(second.state.transactions.length, 0);
-  assert.equal(second.state.schemaVersion, 1);
+  assert.equal(second.state.schemaVersion, 2);
 });
 
 test('编辑旧计划补充到期信息后解除待补充标记', () => {
@@ -348,7 +349,7 @@ test('成功自动执行只显示已自动记账且不显示逾期', () => {
   assert.equal(home.showPlanOverdueBanner, false);
 });
 
-test('计划待处理提醒和发生期键经schemaVersion一备份完整恢复', () => {
+test('计划待处理提醒和发生期键经schemaVersion二备份完整恢复', () => {
   const store = storage();
   const state = processDuePlans(addPlan(baseState(), { amountYuan: '', nextDueDate: '2028-01-20', reminderDays: [3, 1, 0] }), '2028-01-20').state;
   savePersisted(store, state);
@@ -356,7 +357,7 @@ test('计划待处理提醒和发生期键经schemaVersion一备份完整恢复'
   assert.equal(restored.ok, true);
   assert.deepEqual(restored.state.plans, state.plans);
   assert.deepEqual(restored.state.pendingItems, state.pendingItems);
-  assert.equal(restored.state.schemaVersion, 1);
+  assert.equal(restored.state.schemaVersion, 2);
 });
 
 test('三类自动计划的预算净支出始终保持原值', () => {
@@ -381,7 +382,7 @@ test('app启动和回前台复用同一幂等入口且只在变化后保存', ()
   assert.match(app, /onLaunch\(\)[\s\S]*this\.runDuePlans\(\)/);
   assert.match(app, /onShow\(\)[\s\S]*this\.runDuePlans\(\)/);
   assert.match(app, /core\.processDuePlans/);
-  assert.match(app, /if \(result\.changed\)[\s\S]*this\.saveState\(\)/);
+  assert.match(app, /if \(result\.changed\)[\s\S]*this\.commitState\(result\.state\)/);
 });
 
 test('设置页和首页提供计划创建编辑停用提醒待处理重试及空状态契约', () => {

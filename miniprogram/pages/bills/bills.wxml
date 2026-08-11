@@ -1,4 +1,4 @@
-<view class="page" wx:if="{{model}}">
+<view class="page" wx:if="{{model}}" bindtap="closeSwipeRows">
   <view class="eyebrow">YONGDU / ANALYSIS</view>
   <view class="title">账单分析</view>
   <view wx:if="{{error}}" class="error">{{error}}</view>
@@ -6,6 +6,10 @@
   <view class="scope-switch" aria-label="分析范围">
     <button class="scope-option {{scope === 'controlled' ? 'active' : ''}}" data-scope="controlled" bindtap="onScopeTap">可控支出</button>
     <button class="scope-option {{scope === 'all' ? 'active' : ''}}" data-scope="all" bindtap="onScopeTap">全部支出</button>
+  </view>
+  <view class="status-switch" aria-label="流水状态">
+    <button class="status-option {{status === 'active' ? 'active' : ''}}" data-status="active" bindtap="onStatusTap">当前有效</button>
+    <button class="status-option {{status === 'revoked' ? 'active' : ''}}" data-status="revoked" bindtap="onStatusTap">已撤销</button>
   </view>
 
   <view wx:if="{{model.emptyText}}" class="card empty">{{model.emptyText}} 请先记下一笔真实收支，再回来查看分析。</view>
@@ -61,10 +65,17 @@
 
   <view class="section-title">最近流水</view>
   <view wx:if="{{!flows.length}}" class="card empty">还没有流水，请先记下第一笔真实收支。</view>
-  <view wx:for="{{flows}}" wx:key="id" class="bill-card">
-    <view class="bill-top"><text class="bill-category">{{item.typeLabel}} · {{item.category}}</text><text class="bill-amount">{{item.amount}}</text></view>
-    <view class="bill-bottom"><text class="bill-meta">{{item.accountFlow}}</text><text class="bill-meta">{{item.date}}</text></view>
-    <view class="bill-bottom"><text class="bill-budget">{{item.budgetType}}</text></view>
-    <view wx:if="{{item.note}}" class="bill-note">{{item.note}}</view>
+  <view wx:for="{{flows}}" wx:key="id" class="bill-row-wrap {{openLogicalTransactionId === item.logicalTransactionId ? 'bill-row-open' : ''}}" data-id="{{item.logicalTransactionId}}" bindtouchstart="onRowTouchStart" bindtouchmove="onRowTouchMove" bindtouchend="onRowTouchEnd" bindtouchcancel="onRowTouchCancel">
+    <view class="bill-card" catchtap="openTransaction" data-id="{{item.logicalTransactionId}}">
+      <view class="bill-top"><text class="bill-category">{{item.typeLabel}} · {{item.category}}</text><text class="bill-amount">{{item.amount}}</text></view>
+      <view class="bill-bottom"><text class="bill-meta">{{item.accountFlow}}</text><text class="bill-meta">{{item.date}}</text></view>
+      <view class="bill-bottom"><text class="bill-budget">{{item.budgetType}} {{item.statusBadge}}</text></view>
+      <view wx:if="{{item.note}}" class="bill-note">{{item.note}}</view>
+    </view>
+    <view wx:if="{{openLogicalTransactionId === item.logicalTransactionId}}" class="bill-action-tray" catchtap="closeSwipeRows">
+      <button wx:if="{{item.actions.refund}}" class="swipe-action swipe-action-neutral" data-id="{{item.logicalTransactionId}}" data-mode="refund" catchtap="openTransactionAction">退款</button>
+      <button wx:if="{{item.actions.modify}}" class="swipe-action swipe-action-accent" data-id="{{item.logicalTransactionId}}" data-mode="modify" catchtap="openTransactionAction">修改</button>
+      <button wx:if="{{item.actions.revoke}}" class="swipe-action swipe-action-danger" data-id="{{item.logicalTransactionId}}" data-mode="revoke" catchtap="openTransactionAction">撤销</button>
+    </view>
   </view>
 </view>

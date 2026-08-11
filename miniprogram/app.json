@@ -3,7 +3,8 @@
     "pages/home/home",
     "pages/settings/settings",
     "pages/entry/entry",
-    "pages/bills/bills"
+    "pages/bills/bills",
+    "pages/transaction-detail/transaction-detail"
   ],
   "window": {
     "navigationBarTitleText": "用度",

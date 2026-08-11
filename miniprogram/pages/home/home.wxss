@@ -470,6 +470,34 @@
   border-bottom: 1rpx solid #E5E7E2;
 }
 
+.ledger-row-wrap {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1rpx solid #E5E7E2;
+}
+
+.ledger-row-wrap .ledger-row {
+  border-bottom: 0;
+}
+
+.ledger-action-tray {
+  display: flex;
+  gap: 12rpx;
+  padding: 0 0 16rpx;
+}
+
+.swipe-action {
+  flex: 1;
+  margin: 0;
+  border: 0;
+  font-size: 24rpx;
+  line-height: 72rpx;
+}
+
+.swipe-action-neutral { color: #52655b; background: #e7efe9; }
+.swipe-action-accent { color: #fff; background: #3e725e; }
+.swipe-action-danger { color: #fff; background: #a34942; }
+
 .ledger-row:last-child {
   border-bottom: 0;
 }
@@ -485,6 +513,18 @@
   font-size: 28rpx;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.ledger-row-status {
+  display: inline-block;
+  margin-left: 8rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 999rpx;
+  color: #7a6f65;
+  background: #f0ebe4;
+  font-size: 24rpx;
+  font-weight: 400;
+  vertical-align: middle;
 }
 
 .ledger-row-note {

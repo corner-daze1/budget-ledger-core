@@ -136,6 +136,12 @@ function touchY(event) {
   return point ? (point.pageY ?? point.clientY ?? point.y) : null;
 }
 
+function touchPoint(event) {
+  const point = event?.changedTouches?.[0] || event?.touches?.[0];
+  if (!point) return null;
+  return { x: point.pageX ?? point.clientX ?? point.x, y: point.pageY ?? point.clientY ?? point.y };
+}
+
 Page({
   data: {
     model: null,
@@ -159,6 +165,9 @@ Page({
     pendingAmountYuan: '',
     pendingPrincipalYuan: '',
     pendingInterestYuan: '',
+    openLogicalTransactionId: '',
+    rowGesture: null,
+    swipeAxis: null,
   },
 
   onShow() {
@@ -231,7 +240,69 @@ Page({
   },
 
   onLedgerScroll(event) {
-    this.setData({ ledgerScrollTop: Number(event.detail.scrollTop) || 0 });
+    this.setData({ ledgerScrollTop: Number(event.detail.scrollTop) || 0, openLogicalTransactionId: '', swipeAxis: null });
+  },
+
+  closeSwipeRows() {
+    if (this.data.openLogicalTransactionId) this.setData({ openLogicalTransactionId: '', swipeAxis: null });
+  },
+
+  onRowTouchStart(event) {
+    const point = touchPoint(event);
+    if (!point) return;
+    const logicalTransactionId = event.currentTarget.dataset.id;
+    if (this.data.openLogicalTransactionId && this.data.openLogicalTransactionId !== logicalTransactionId) this.closeSwipeRows();
+    this.setData({ rowGesture: { logicalTransactionId, startX: point.x, startY: point.y, axis: null }, swipeAxis: null });
+  },
+
+  onRowTouchMove(event) {
+    const gesture = this.data.rowGesture;
+    const point = touchPoint(event);
+    if (!gesture || !point) return;
+    const deltaX = point.x - gesture.startX;
+    const deltaY = point.y - gesture.startY;
+    if (!gesture.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= 8) {
+      gesture.axis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+      this.setData({ rowGesture: gesture, swipeAxis: gesture.axis });
+    }
+  },
+
+  onRowTouchEnd(event) {
+    const gesture = this.data.rowGesture;
+    const point = touchPoint(event);
+    this.setData({ rowGesture: null, swipeAxis: null });
+    if (!gesture || !point) return;
+    const deltaX = point.x - gesture.startX;
+    const deltaY = point.y - gesture.startY;
+    if (gesture.axis !== 'x' || Math.abs(deltaX) < Math.abs(deltaY)) {
+      if (gesture.axis === 'y') this.closeSwipeRows();
+      return;
+    }
+    if (deltaX < -48) this.setData({ openLogicalTransactionId: gesture.logicalTransactionId });
+    else if (deltaX > 48) this.closeSwipeRows();
+  },
+
+  onRowTouchCancel() {
+    this.setData({ rowGesture: null, swipeAxis: null });
+  },
+
+  openTransaction(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id) return;
+    this.closeSwipeRows();
+    const app = getApp();
+    app.globalData.transactionReturn = { page: 'home', scrollTop: this.data.ledgerScrollTop };
+    wx.navigateTo({ url: `/pages/transaction-detail/transaction-detail?id=${encodeURIComponent(id)}&mode=view` });
+  },
+
+  openTransactionAction(event) {
+    const id = event.currentTarget.dataset.id;
+    const mode = event.currentTarget.dataset.mode;
+    if (!id || !mode) return;
+    this.closeSwipeRows();
+    const app = getApp();
+    app.globalData.transactionReturn = { page: 'home', scrollTop: this.data.ledgerScrollTop };
+    wx.navigateTo({ url: `/pages/transaction-detail/transaction-detail?id=${encodeURIComponent(id)}&mode=${mode}` });
   },
 
   goBills() { wx.navigateTo({ url: '/pages/bills/bills' }); },

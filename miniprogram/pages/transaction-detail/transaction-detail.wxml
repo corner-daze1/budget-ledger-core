@@ -1,0 +1,80 @@
+<view class="page transaction-detail-page" wx:if="{{model}}">
+  <view class="detail-header">
+    <button class="link-button" bindtap="goBack">返回</button>
+    <view class="eyebrow">YONGDU / TRANSACTION</view>
+    <view class="detail-amount">{{model.amount}}</view>
+    <view class="detail-type">{{model.typeLabel}} · {{model.statusLabel}}</view>
+    <view wx:if="{{model.statusBadge}}" class="status-badge">{{model.statusBadge}}</view>
+  </view>
+
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+
+  <view class="card detail-card">
+    <view class="detail-line"><text>日期</text><text>{{model.date}}</text></view>
+    <view class="detail-line"><text>账户</text><text>{{model.accountFlow}}</text></view>
+    <view class="detail-line"><text>分类</text><text>{{model.category}}</text></view>
+    <view class="detail-line"><text>备注</text><text>{{model.note || '无'}}</text></view>
+  </view>
+
+  <view class="card detail-card impact-card">
+    <view class="card-title">账面影响</view>
+    <view class="impact-section">
+      <view class="impact-heading">账户影响</view>
+      <view wx:for="{{model.accountImpacts}}" wx:key="accountId" class="detail-line"><text>{{item.accountName}}</text><text>{{item.balanceDelta}}</text></view>
+      <view wx:if="{{!model.accountImpacts.length}}" class="detail-muted">账户余额不变</view>
+    </view>
+    <view class="impact-section"><view class="impact-heading">预算影响</view><view class="detail-line"><text>本期预算净支出</text><text>{{model.budgetImpact}}</text></view></view>
+    <view class="impact-section"><view class="impact-heading">奖励影响</view><view class="detail-line"><text>奖励余额</text><text>{{model.rewardImpact}}</text></view></view>
+  </view>
+
+  <view wx:if="{{model.refunds.length}}" class="card detail-card">
+    <view class="card-title">退款明细</view>
+    <view wx:for="{{model.refunds}}" wx:key="logicalTransactionId" class="refund-line">
+      <view><view>{{item.date}} · {{item.amount}}</view><view class="detail-muted">到账 {{item.destinationAccount}}</view></view>
+      <button wx:if="{{item.canRevoke}}" class="text-danger" data-id="{{item.logicalTransactionId}}" bindtap="startRefundRevoke">撤销</button>
+    </view>
+  </view>
+
+  <view class="card detail-card">
+    <view class="history-heading" bindtap="showHistory"><text>变更记录</text><text>{{historyExpanded ? '收起' : '展开'}}</text></view>
+    <view wx:if="{{historyExpanded}}" class="history-list">
+      <view wx:for="{{model.changeHistory}}" wx:key="version" class="history-line"><text>{{item.summary}}</text></view>
+    </view>
+  </view>
+
+  <view wx:if="{{mode === 'view'}}" class="action-panel">
+    <view class="action-row">
+      <button wx:if="{{model.actions.refund}}" class="action-button action-neutral" data-mode="refund" bindtap="startAction">退款</button>
+      <button wx:if="{{model.actions.modify}}" class="action-button action-accent" data-mode="modify" bindtap="startAction">修改</button>
+      <button wx:if="{{model.actions.revoke}}" class="action-button action-danger" data-mode="revoke" bindtap="startAction">撤销</button>
+    </view>
+  </view>
+
+  <view wx:if="{{mode === 'modify'}}" class="card detail-card edit-card">
+    <view class="card-title">修改账单</view>
+    <view wx:for="{{model.editableFields}}" wx:key="key" class="field">
+      <text class="field-label">{{item.label}}</text>
+      <picker wx:if="{{item.type === 'account' || item.type === 'choice'}}" class="field-input" range="{{item.optionLabels}}" value="{{item.selectedIndex}}" data-key="{{item.key}}" bindchange="onEditPickerChange"><view class="picker-value">{{item.displayValue || '请选择'}}</view></picker>
+      <picker wx:elif="{{item.type === 'date'}}" mode="date" class="field-input" value="{{item.value}}" data-key="{{item.key}}" bindchange="onEditDateChange"><view class="picker-value">{{item.value}}</view></picker>
+      <input wx:else class="field-input" type="{{item.type === 'amount' ? 'digit' : 'text'}}" value="{{form[item.key]}}" data-key="{{item.key}}" bindinput="onEditInput" />
+    </view>
+    <button class="primary-button" disabled="{{busy}}" bindtap="confirmAction">{{busy ? '处理中…' : '预览并确认修改'}}</button>
+  </view>
+
+  <view wx:if="{{mode === 'refund'}}" class="card detail-card edit-card">
+    <view class="card-title">退款</view>
+    <view class="detail-muted">剩余可退 {{model.remainingRefundable}}</view>
+    <view class="field"><text class="field-label">退款金额</text><input class="field-input" type="digit" value="{{refundForm.amountYuan}}" data-key="amountYuan" bindinput="onRefundInput" /></view>
+    <view class="field"><text class="field-label">退款日期</text><picker mode="date" class="field-input" value="{{refundForm.date}}" bindchange="onRefundDateChange"><view class="picker-value">{{refundForm.date}}</view></picker></view>
+    <view class="field"><text class="field-label">到账账户</text><picker class="field-input" range="{{refundAccountLabels}}" value="{{refundAccountIndex}}" bindchange="onRefundAccountChange"><view class="picker-value">{{refundAccountLabels[refundAccountIndex] || '请选择'}}</view></picker></view>
+    <view class="field"><text class="field-label">备注</text><input class="field-input" value="{{refundForm.note}}" data-key="note" bindinput="onRefundInput" /></view>
+    <button class="primary-button" disabled="{{busy}}" bindtap="confirmAction">{{busy ? '处理中…' : '预览并确认退款'}}</button>
+  </view>
+
+  <view wx:if="{{mode === 'revoke' || mode === 'revoke-refund'}}" class="card detail-card edit-card">
+    <view class="card-title">{{mode === 'revoke-refund' ? '撤销这笔退款' : '撤销这笔账单'}}</view>
+    <view class="detail-muted">撤销会保留历史审计记录，并恢复对应账户、预算和奖励影响。</view>
+    <button class="danger-button" disabled="{{busy}}" bindtap="confirmAction">{{busy ? '处理中…' : '预览并确认撤销'}}</button>
+  </view>
+</view>
+<view wx:else class="page"><view wx:if="{{error}}" class="error">{{error}}</view></view>

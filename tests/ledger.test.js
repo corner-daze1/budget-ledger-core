@@ -70,9 +70,9 @@ test('recordTransfer preserves total assets while moving money between asset acc
   const after = totals(recordTransfer(freshLedger(), { id: 'transfer-1', date: '2028-01-02', fromAccountId: 'cash', toAccountId: 'bank', amountCents: 5000 }));
   assert.deepEqual(after, before);
 });
-test('recordCreditCardExpense increases card liability and controlled spend', () => {
+test('recordCreditCardExpense records debt as a negative card balance and controlled spend', () => {
   const state = recordExpense(freshLedger(), { id: 'card-expense', date: '2028-01-03', accountId: 'card', amountCents: 7000, budgetPeriodId: 'p1', categoryLevel1: '交通' });
-  assert.equal(state.accounts.find((item) => item.id === 'card').balanceCents, 7000);
+  assert.equal(state.accounts.find((item) => item.id === 'card').balanceCents, -7000);
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 7000);
 });
 test('recordCreditCardRepayment decreases both asset and card liability without budget impact', () => {
@@ -257,7 +257,7 @@ test('totals keep assets, liabilities, net assets and reward balance separate', 
 });
 test('recordExpense rejects an asset payment that would make the account negative', () => assert.throws(() => recordExpense(freshLedger(), { id: 'too-much', date: '2028-01-15', accountId: 'cash', amountCents: 100001, budgetPeriodId: 'p1', categoryLevel1: '超支' }), /insufficient/));
 test('recordTransfer rejects a self transfer instead of inventing a transaction', () => assert.throws(() => recordTransfer(freshLedger(), { id: 'self', date: '2028-01-15', fromAccountId: 'cash', toAccountId: 'cash', amountCents: 1 }), /differ/));
-test('recordCreditCardRepayment rejects a payment larger than card liability', () => assert.throws(() => recordCreditCardRepayment(freshLedger(), { id: 'pay', date: '2028-01-15', fromAccountId: 'cash', creditCardAccountId: 'card', amountCents: 1 }), /exceeds/));
+test('recordCreditCardRepayment allows an overpayment credit balance', () => assert.equal(recordCreditCardRepayment(freshLedger(), { id: 'pay', date: '2028-01-15', fromAccountId: 'cash', creditCardAccountId: 'card', amountCents: 1 }).accounts.find((item) => item.id === 'card').balanceCents, 1));
 test('recordLoanPrincipalRepayment rejects a payment larger than loan liability', () => assert.throws(() => recordLoanPrincipalRepayment(freshLedger(), { id: 'pay', date: '2028-01-15', cashAccountId: 'cash', loanAccountId: 'loan', amountCents: 1 }), /exceeds/));
 test('recordInvestmentTrade rejects selling more than current investment value', () => assert.throws(() => recordInvestmentTrade(freshLedger(), { id: 'sell', date: '2028-01-15', side: 'sell', cashAccountId: 'cash', investmentAccountId: 'fund', amountCents: 50001 }), /insufficient/));
 test('recordExpense cannot use more reward offset than the expense', () => assert.throws(() => recordExpense(freshLedger(), { id: 'bad-offset', date: '2028-01-15', accountId: 'cash', amountCents: 100, rewardOffsetCents: 101, budgetPeriodId: 'p1', categoryLevel1: '奖励' }), /offset/));

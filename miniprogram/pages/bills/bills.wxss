@@ -30,6 +30,16 @@
 .period-meta { color: #9c8f83; font-size: 21rpx; }
 .section-title { margin: 42rpx 0 14rpx; font-size: 36rpx; font-weight: 600; }
 .bill-card { margin: 16rpx 0; padding: 24rpx 26rpx; border-radius: 20rpx; background: #fffdfa; box-shadow: 0 8rpx 24rpx rgba(66, 52, 39, 0.05); }
+.status-switch { display: flex; gap: 12rpx; margin-top: 18rpx; }
+.status-option { flex: 1; margin: 0; padding: 12rpx; border: 1rpx solid #e0d8cf; color: #687168; background: #fffdfa; font-size: 24rpx; line-height: 1.4; }
+.status-option.active { color: #3e725e; border-color: #3e725e; background: #edf4ee; }
+.bill-row-wrap { overflow: hidden; }
+.bill-row-wrap .bill-card { margin-bottom: 0; }
+.bill-action-tray { display: flex; gap: 12rpx; padding: 0 0 16rpx; }
+.swipe-action { flex: 1; margin: 0; border: 0; font-size: 24rpx; line-height: 72rpx; }
+.swipe-action-neutral { color: #52655b; background: #e7efe9; }
+.swipe-action-accent { color: #fff; background: #3e725e; }
+.swipe-action-danger { color: #fff; background: #a34942; }
 .bill-top, .bill-bottom { display: flex; justify-content: space-between; align-items: center; gap: 18rpx; }
 .bill-category { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bill-amount { flex: none; color: #9b4d3a; font-size: 32rpx; font-weight: 600; }

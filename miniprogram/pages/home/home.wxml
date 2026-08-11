@@ -1,4 +1,4 @@
-<view class="page home-page home-mode-{{ledgerMode}}" wx:if="{{model}}">
+<view class="page home-page home-mode-{{ledgerMode}}" wx:if="{{model}}" bindtap="closeSwipeRows">
   <view wx:if="{{ledgerMode === 'overview'}}" class="overview-content">
     <view class="home-header">
       <view class="home-title">用度</view>
@@ -78,13 +78,20 @@
               <text>收入 {{item.incomeText}}</text>
             </view>
           </view>
-          <view wx:for="{{item.transactions}}" wx:for-item="transaction" wx:key="id" class="ledger-row">
-            <view class="ledger-row-main">
-              <view class="ledger-row-category">{{transaction.category}}</view>
+          <view wx:for="{{item.transactions}}" wx:for-item="transaction" wx:key="id" class="ledger-row-wrap {{openLogicalTransactionId === transaction.logicalTransactionId ? 'ledger-row-open' : ''}}" data-id="{{transaction.logicalTransactionId}}" bindtouchstart="onRowTouchStart" bindtouchmove="onRowTouchMove" bindtouchend="onRowTouchEnd" bindtouchcancel="onRowTouchCancel">
+            <view class="ledger-row">
+            <view class="ledger-row-main" catchtap="openTransaction" data-id="{{transaction.logicalTransactionId}}">
+              <view class="ledger-row-category">{{transaction.category}} <text wx:if="{{transaction.statusBadge}}" class="ledger-row-status">{{transaction.statusBadge}}</text></view>
               <view class="home-secondary-text">{{transaction.date}} · {{transaction.typeLabel}} · {{transaction.accountFlow}}</view>
               <view wx:if="{{transaction.note}}" class="home-secondary-text ledger-row-note">{{transaction.note}}</view>
             </view>
             <text class="ledger-amount ledger-amount-{{transaction.amountTone}}">{{transaction.amount}}</text>
+            </view>
+            <view wx:if="{{openLogicalTransactionId === transaction.logicalTransactionId}}" class="ledger-action-tray" catchtap="closeSwipeRows">
+              <button wx:if="{{transaction.actions.refund}}" class="swipe-action swipe-action-neutral" data-id="{{transaction.logicalTransactionId}}" data-mode="refund" catchtap="openTransactionAction">退款</button>
+              <button wx:if="{{transaction.actions.modify}}" class="swipe-action swipe-action-accent" data-id="{{transaction.logicalTransactionId}}" data-mode="modify" catchtap="openTransactionAction">修改</button>
+              <button wx:if="{{transaction.actions.revoke}}" class="swipe-action swipe-action-danger" data-id="{{transaction.logicalTransactionId}}" data-mode="revoke" catchtap="openTransactionAction">撤销</button>
+            </view>
           </view>
         </view>
       </view>

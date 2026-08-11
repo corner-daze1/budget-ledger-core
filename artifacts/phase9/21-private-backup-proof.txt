@@ -1,0 +1,80 @@
+capturedAt=2026-08-09T23:36:24.0317199+08:00
+method=Stable UI full JSON backup -> user-confirmed targeted storage clear -> Stable UI paste preview/restore -> compile reload -> exact storage comparison
+
+[backup]
+uiFileName=yongdu-backup-20260809-231008.json
+uiSize=4.6 KiB
+uiKind=JSON complete backup
+validJson=true
+characters=4615
+utf8Bytes=4675
+sha256=b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5
+schemaVersion=1
+currency=CNY
+accounts=6
+budgetPeriods=2
+transactions=10
+pendingItems=0
+plans=0
+assetTotalCents=480000
+liabilityTotalCents=402000
+netAssetCents=78000
+rewardBalanceCents=0
+openBudgetSpendCents=90000
+
+[clear]
+appClearResult=failed-and-original-preserved
+appClearMessage=清除失败：本地数据删除或校验失败；原数据已保留
+fallbackAuthorization=用户已明确确认清除
+fallbackScope=only yongdu-ledger-v1 and yongdu-restore-temp-v1
+fallbackReadback={"main":"","temp":""}
+businessCodeChanged=false
+
+[restore]
+previewVersion=1 -> 1
+previewCurrency=CNY
+previewAccountsTransactions=6 / 10
+previewPeriodsPlansPending=2 / 0 / 0
+previewRecentTransactionDate=2026-08-04
+restoreConfirmed=true
+afterRestoreSha256=b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5
+afterRestoreMatchBaseline=true
+afterRestoreTransactions=10
+afterRestoreOpenBudgetSpendCents=90000
+afterRestoreRewardBalanceCents=0
+afterCompileReloadSha256=b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5
+afterCompileReloadMatchBaseline=true
+
+[stable-reopen-verification]
+checkedAt=2026-08-09T23:49:23.1245449+08:00
+stableWindowId=396752
+uiTransactions=10
+uiTodayFreeCents=80709
+afterStableReopenSha256=b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5
+afterStableReopenMatchBaseline=true
+afterStableReopenCharacters=4615
+afterStableReopenUtf8Bytes=4675
+afterStableReopenSchemaVersion=1
+afterStableReopenAccounts=6
+afterStableReopenPeriods=2
+afterStableReopenTransactions=10
+afterStableReopenRewardBalanceCents=0
+clipboardEmptyAfterVerification=true
+
+[prepaid-screens]
+iphone12_13_file=22-home-prepaid-top-iphone12-13.png
+iphone12_13_dimensions=428x835
+iphone12_13_sha256=dbdbfd7eb737193cccc34581a52a1df5c0dd372a8c0297c850792afe1642b3b3
+iphone5_file=23-home-prepaid-top-iphone5-320.png
+iphone5_dimensions=320x504
+iphone5_sha256=7c0d5f45d873db911227be111e009a81cf8eacf697c99fa2403c52d435923b71
+prepaidCents=19291
+todayFreeCents=0
+earliestRecoveryDate=2026-08-12
+fullSingleDayQuotaCents=18968
+
+[privacy-cleanup]
+rawBackupStoredInRepo=false
+temporaryRawBackupBytesAfterCleanup=0
+temporaryRawScreenshotBytesAfterCleanup=0
+clipboardEmpty=true

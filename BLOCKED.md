@@ -1,11 +1,22 @@
 # 当前待裁决与限制
 
-更新时间：2026-08-06
+更新时间：2026-08-11
+
+## 阶段十六收尾
+
+- 本任务无新增代码、测试、构建或数据恢复阻塞。视觉取证协议的既有阻塞仍按上文保留，未在本阶段运行或伪装为通过。
+
+## 21–23号证据与状态恢复只读收口（2026-08-11）
+
+- 21号备份证明与22/23号两张真实预支态截图均已存在并通过文件哈希、尺寸复核；未使用空账单截图或占位文件。
+- 备份、恢复后、编译重载后和 Stable 重开后的状态哈希均匹配；本轮只读复核未新增阻塞。
+- 证据为2026-08-09测试账本记录，其中备份为 `schemaVersion=1`；不把它表述为当前 schema v2 代码的重新验收。未重跑自动门禁、未改业务代码、未提交 Git。
 
 ## 现役阻塞
 
 - 无新增代码、测试或构建阻塞；自动截图仍阻塞于 C 盘 Stable/automator 的 `App.captureScreenshot` 一次 SEND 无同 UUID RECV，不能称为自动取证通过，也不能归罪首页。
-- Computer Use 对 Stable NW.js 窗口仍返回所有权矛盾，21–23号真实UI证据与状态恢复因此无法建立可信读取—操作—复核闭环。
+- Computer Use 的 `sky.get_window_state` 对 Stable NW.js 窗口仍返回所有权矛盾；21–23号已改用当前可见 Stable 窗口的 Win32 手工链路完成，但该问题仍阻塞 Computer Use 自动读取。
+- 应用内“清除”当前真实失败并保留原数据：Stable 中 `wx.getStorageSync` 对已删除键读回空字符串，而 `clearLocalLedger` 只把 `undefined/null` 判为删除成功。本轮按“不改业务代码”边界未修，证据中的定向控制台清除不得冒充应用功能通过。
 - 首页第二版仍待产品方视觉审阅。这是产品决策事项，不是实现失败；确认前不铺开另外三页的内容重绘。
 - 唯一下一阶段建议是取得用户另行授权后，用同一空白探针对另一个已核实来源和版本号的 C 盘 Stable 做受控版本对照；未授权前不安装、切换或重跑。
 
@@ -17,13 +28,13 @@
 - 清理核验已覆盖精确 `.visual-qa`/指定诊断副本、CLI/包装进程、`wxfilewatcher_x64.exe`、当前端口和 CLI close；全六态运行的三次 normal 会话均记录 `confirmed:true` 清理，未发现残留自动化进程。
 - 兼容探针本轮三次命令均未通过：每次 `empty-bills` 截图在30秒超时；原始失败保存在 `artifacts/visual-evidence/compatibility/compatibility-error.txt`。前两轮清理各有一次端口/进程未确认，第三轮 watcher 残留被真实记录；没有生成兼容成功 JSON/样图。
 - 全六态命令只运行一轮；`normal-accumulated` 在3个新鲜会话均 `TIMEOUT screenshot ... after 30000ms`，命令退出1。原始 `console.jsonl` 保留，三次清理均真实确认；未生成六张 PNG、`manifest.json` 或 `six-states-green.txt`。
-- 当前阶段阻塞为 Stable/automator 的 `App.captureScreenshot` 请求持续悬挂，不是清理成功判断；禁止增加重试、伪造截图/manifest/green 或把旧证据升格。21–23号状态恢复阻塞仍独立有效。
+- 该阶段当时的阻塞为 Stable/automator 的 `App.captureScreenshot` 请求持续悬挂，不是清理成功判断；禁止增加重试、伪造截图/manifest/green 或把旧证据升格。测试账本21–23号与状态恢复后来已于2026-08-09用手工链路完成，自动截图阻塞仍独立存在。
 
 ## 发布前待完成
 
 - 隔离自动取证不能替代真实账本的数据安全验证。正式发布前需在用户明确授权的环境中完成 JSON 导出、恢复、关闭重开和真机冒烟。
 - 首版尚无正式小程序主体和生产 AppID；当前 `wx9567fb4ff6336d0b` 是测试 ID，不得把自动取证数据写入其中。
-- 旧任务中的 21–23 号真实 UI 证据及状态恢复闭环仍未验证。Computer Use 对 Stable 的 NW.js 窗口持续返回所有权矛盾，无法建立可信的读取—操作—复核闭环；不得用历史截图、旧 `match=true` 或占位文件替代。
+- 测试账本的21–23号证据及恢复闭环已于2026-08-09完成；正式发布环境仍需另做生产数据导出/恢复和真机冒烟，不能由本次测试 AppID 证据替代。
 
 ## 21–23号证据续做记录（2026-08-06）
 
@@ -158,3 +169,11 @@ npm run evidence:visual -- --hash-protected before
 - 当前阻塞仍限定为 C盘 Stable/automator 的截图协议请求无匹配回复；SEND不是DevTools已收到的证明。按任务边界停止，不把该证据扩大为业务/UI结论，不追加实验。
 - 证据完整性限制：`protocol-trace-red.txt`与`protocol-trace-green.txt`仅为人工摘要，原始测试stdout/stderr未留存，不能追溯性地宣称原始红绿日志完整；这不改变`raw-protocol.log`中一次截图SEND、零条同UUID回复及清理确认的协议事实。
 - 唯一下一阶段建议：取得用户另行授权后，用同一空白`touristappid`探针对另一个已核实来源和版本号的C盘Stable做受控版本对照；本轮未安装、切换或重跑。
+
+## 21–23号证据与状态恢复完成（2026-08-09）
+
+- 新鲜 Stable 窗口 ID 为 `396752`；`sky.get_window_state` 仍报同所有者字符串的窗口绑定错误。Win32 手工输入与窗口截屏可用，因此本轮完成了证据，但自动截图协议与 Computer Use 读取阻塞均未被修复或伪装为通过。
+- 备份元数据、定向清除读回、恢复前后精确哈希与隐私清理见 `artifacts/phase9/21-private-backup-proof.txt`；恢复后和普通编译重载后的 SHA-256 均为 `b63cfc0f0dcba7c254c6b103852cd371c7126f2d42eced3a78815ed9d784a8a5`，与原状态一致。
+- Stable 再次重开后，首页仍显示10笔流水与今日可自由花807.09元；存储仍为4615字符/4675字节且同一SHA-256，证明本次测试账本状态跨Stable重开保持一致。核对过程没有把原始JSON写入仓库，剪贴板已清空。
+- 两张新证据为 `22-home-prepaid-top-iphone12-13.png`（428×835）和 `23-home-prepaid-top-iphone5-320.png`（320×504）；均来自当前可见模拟器的真实预支态，未使用空账单、历史图或占位文件。
+- 应用内清除先真实失败并提示原数据已保留；经用户既有明确确认后，才定向移除两个用度键并通过应用 UI 恢复。该缺陷留待后续获准修改业务代码时修复，本轮未修改业务代码、测试或配置，未重跑已完成门禁，未提交 Git。

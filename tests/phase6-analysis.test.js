@@ -182,42 +182,46 @@ test('奖励支付进入全部支出但不进入可控支出', () => {
   assert.equal(getBillAnalysisModel(state, { today: '2026-07-15', scope: 'controlled' }).daily.totalCents, 0);
 });
 
-test('全部支出退款按实际退款日冲减并继承原一级分类', () => {
+test('全部支出退款在原消费日重述净额并继承原一级分类', () => {
   let state = expense(baseState(), { amount: '100', date: '2026-07-02', level1: '购物' });
   state = recordRefund(state, { id: 'refund-1', date: '2026-07-10', originalTransactionId: 'entry-1', amountCents: 4000 });
   const model = getBillAnalysisModel(state, { today: '2026-07-10', scope: 'all' });
-  assert.equal(model.daily.points[1].amountCents, 10000);
-  assert.equal(model.daily.points[9].amountCents, -4000);
+  assert.equal(model.daily.points[1].amountCents, 6000);
+  assert.equal(model.daily.points[9].amountCents, 0);
   assert.equal(model.categories.items[0].name, '购物');
   assert.equal(model.categories.items[0].amountCents, 6000);
 });
 
-test('开放周期退款按真实budgetImpactCents恢复可控净支出', () => {
+test('开放周期退款在原消费日重述可控净支出', () => {
   let state = expense(baseState(), { amount: '100', date: '2026-07-02' });
   state = recordRefund(state, { id: 'refund-1', date: '2026-07-10', originalTransactionId: 'entry-1', amountCents: 4000 });
   const model = getBillAnalysisModel(state, { today: '2026-07-10', scope: 'controlled' });
-  assert.equal(model.daily.points[9].amountCents, -4000);
+  assert.equal(model.daily.points[1].amountCents, 6000);
+  assert.equal(model.daily.points[9].amountCents, 0);
   assert.equal(model.daily.totalCents, 6000);
 });
 
-test('关闭周期退款不改写历史可控支出', () => {
+test('关闭周期退款冻结预算结算但重述历史可控净支出', () => {
   let state = expense(baseState({ date: '2026-06-15' }), { amount: '100', date: '2026-06-15' });
   state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
   state = recordRefund(state, { id: 'refund-closed', date: '2026-07-05', originalTransactionId: 'entry-1', amountCents: 10000 });
   const june = getBillAnalysisModel(state, { today: '2026-06-30', scope: 'controlled' });
   const july = getBillAnalysisModel(state, { today: '2026-07-05', scope: 'controlled' });
-  assert.equal(june.daily.totalCents, 10000);
+  assert.equal(june.daily.totalCents, 0);
   assert.equal(july.daily.totalCents, 0);
+  assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 10000);
   assert.equal(state.transactions.at(-1).budgetImpactCents, 0);
 });
 
-test('跨期退款在全部支出中只记退款发生日不搬回消费日', () => {
+test('跨期退款只重述原消费周期且退款周期不产生负支出', () => {
   let state = expense(baseState({ date: '2026-06-15' }), { amount: '100', date: '2026-06-15', level1: '购物' });
   state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
   state = recordRefund(state, { id: 'refund-cross', date: '2026-07-05', originalTransactionId: 'entry-1', amountCents: 3000 });
+  const june = getBillAnalysisModel(state, { today: '2026-06-30', scope: 'all' });
   const july = getBillAnalysisModel(state, { today: '2026-07-05', scope: 'all' });
-  assert.equal(july.daily.totalCents, -3000);
-  assert.equal(july.daily.points.at(-1).amountCents, -3000);
+  assert.equal(june.daily.totalCents, 7000);
+  assert.equal(july.daily.totalCents, 0);
+  assert.equal(july.daily.points.at(-1).amountCents, 0);
   assert.equal(july.categories.items.length, 0);
 });
 

@@ -17,6 +17,10 @@ const required = [
   'miniprogram/pages/entry/entry.wxml',
   'miniprogram/pages/bills/bills.js',
   'miniprogram/pages/bills/bills.wxml',
+  'miniprogram/pages/transaction-detail/transaction-detail.js',
+  'miniprogram/pages/transaction-detail/transaction-detail.wxml',
+  'miniprogram/pages/transaction-detail/transaction-detail.json',
+  'miniprogram/pages/transaction-detail/transaction-detail.wxss',
   'miniprogram/lib/application.js',
   'miniprogram/lib/build-manifest.json',
 ];
@@ -44,12 +48,12 @@ for (const relative of pageFiles) {
 }
 
 const appConfig = fs.existsSync(path.join(root, 'miniprogram/app.json')) ? JSON.parse(fs.readFileSync(path.join(root, 'miniprogram/app.json'), 'utf8')) : {};
-if (JSON.stringify(appConfig.pages) !== JSON.stringify(['pages/home/home', 'pages/settings/settings', 'pages/entry/entry', 'pages/bills/bills'])) failures.push('app.json must declare the ledger-first four-page order');
+if (JSON.stringify(appConfig.pages) !== JSON.stringify(['pages/home/home', 'pages/settings/settings', 'pages/entry/entry', 'pages/bills/bills', 'pages/transaction-detail/transaction-detail'])) failures.push('app.json must declare the ledger-first five-page order');
 
 if (failures.length) {
   console.error('MINIPROGRAM CHECK FAILED');
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log('MINIPROGRAM CHECK PASSED: four pages, generated application bundle, and source boundary are valid');
+  console.log('MINIPROGRAM CHECK PASSED: five pages, generated application bundle, and source boundary are valid');
 }

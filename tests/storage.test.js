@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLedger, recordIncome } from '../src/domain/ledger.js';
-import { CURRENT_SCHEMA_VERSION, exportTransactionsCsv, migrateSnapshot, restoreBackup, serializeBackup } from '../src/domain/storage.js';
+import { CURRENT_SCHEMA_VERSION, exportTransactionsCsv, restoreBackup, serializeBackup } from '../src/domain/storage.js';
 
 function savedState() {
   return recordIncome(createLedger({ accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceCents: 1000 }], budgetPeriods: [{ id: 'p1', startDate: '2028-01-01', endDate: '2028-01-30', baseBudgetCents: 3000 }] }), { id: 'income-1', date: '2028-01-02', accountId: 'cash', amountCents: 200, source: 'bank,import' });
 }
 
-test('CURRENT_SCHEMA_VERSION is explicitly version one', () => assert.equal(CURRENT_SCHEMA_VERSION, 1));
-test('serializeBackup emits a versioned complete JSON snapshot', () => assert.equal(JSON.parse(serializeBackup(savedState())).schemaVersion, 1));
+test('CURRENT_SCHEMA_VERSION is explicitly version two', () => assert.equal(CURRENT_SCHEMA_VERSION, 2));
+test('serializeBackup emits a versioned complete JSON snapshot', () => assert.equal(JSON.parse(serializeBackup(savedState())).schemaVersion, 2));
 test('restoreBackup round trips account balances, dates and transaction relations exactly', () => {
   const original = savedState();
   const restored = restoreBackup(serializeBackup(original));
@@ -30,7 +30,7 @@ test('restoreBackup returns a clear error for an unsupported schema version and 
   assert.match(result.error, /unsupported schema/);
 });
 test('restoreBackup returns a clear error when required arrays are missing', () => {
-  const raw = JSON.stringify({ schemaVersion: 1, currency: 'CNY', rewardBalanceCents: 0 });
+  const raw = JSON.stringify({ schemaVersion: 2, currency: 'CNY', rewardBalanceCents: 0 });
   const result = restoreBackup(raw);
   assert.equal(result.ok, false);
   assert.match(result.error, /must be an array/);
@@ -41,14 +41,22 @@ test('restoreBackup rejects a non-string backup without inventing an empty ledge
   assert.equal(result.rawData, null);
   assert.match(result.error, /string/);
 });
-test('migrateSnapshot converts version zero account balance to integer cents', () => {
-  const migrated = migrateSnapshot({ schemaVersion: 0, accounts: [{ id: 'cash', name: '现金', type: 'cash', balance: 123 }], budgetPeriods: [], transactions: [], plans: [], pendingItems: [], rewardBalanceCents: 0 });
-  assert.equal(migrated.schemaVersion, 1);
-  assert.equal(migrated.accounts[0].balanceCents, 123);
+for (const schemaVersion of [0, 1]) {
+  test(`restoreBackup rejects obsolete schema version ${schemaVersion} without migration`, () => {
+    const raw = JSON.stringify({ schemaVersion });
+    const result = restoreBackup(raw);
+    assert.equal(result.ok, false);
+    assert.equal(result.rawData, raw);
+    assert.match(result.error, /unsupported schema/);
+  });
+}
+test('restoreBackup rejects an invalid current-version balance', () => {
+  const result = restoreBackup(JSON.stringify({ schemaVersion: 2, currency: 'CNY', accounts: [{ id: 'cash', type: 'cash', balanceCents: -1 }], budgetPeriods: [], transactions: [], plans: [], pendingItems: [], rewardBalanceCents: 0 }));
+  assert.equal(result.ok, false);
+  assert.match(result.error, /invalid balance/);
 });
-test('migrateSnapshot rejects an invalid current-version balance', () => assert.throws(() => migrateSnapshot({ schemaVersion: 1, currency: 'CNY', accounts: [{ id: 'cash', balanceCents: -1 }], budgetPeriods: [], transactions: [], plans: [], pendingItems: [], rewardBalanceCents: 0 }), /invalid balance/));
 test('serializeBackup rejects a ledger with an unsupported currency', () => assert.throws(() => serializeBackup({ ...savedState(), currency: 'USD' }), /CNY/));
-test('CSV export includes a stable header for bill transactions', () => assert.match(exportTransactionsCsv(savedState()), /^id,date,kind,accountId/));
+test('CSV export includes a stable latest-business header for bill transactions', () => assert.match(exportTransactionsCsv(savedState()), /^logicalTransactionId,id,date,kind,businessKind,status,version,accountId/));
 test('CSV export preserves cents and source values', () => {
   const csv = exportTransactionsCsv(savedState());
   assert.match(csv, /income-1/);

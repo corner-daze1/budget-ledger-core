@@ -70,12 +70,22 @@ function drawCategoryPie(page, items) {
   }).exec();
 }
 
+function touchPoint(event) {
+  const point = event?.changedTouches?.[0] || event?.touches?.[0];
+  if (!point) return null;
+  return { x: point.pageX ?? point.clientX ?? point.x, y: point.pageY ?? point.clientY ?? point.y };
+}
+
 Page({
   data: {
     scope: 'controlled',
+    status: 'active',
     model: null,
     flows: [],
     error: '',
+    openLogicalTransactionId: '',
+    rowGesture: null,
+    swipeAxis: null,
   },
 
   onShow() {
@@ -96,9 +106,10 @@ Page({
       ...item,
       color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
     }));
+    const flows = core.listRecentTransactions(app.globalData.state, { status: this.data.status });
     this.setData({
       model,
-      flows: model.flows,
+      flows,
       error: app.globalData.storageError || '',
     }, () => this.drawCharts());
   },
@@ -107,6 +118,78 @@ Page({
     const scope = event.currentTarget.dataset.scope;
     if (scope === this.data.scope) return;
     this.setData({ scope }, () => this.refresh());
+  },
+
+  onStatusTap(event) {
+    const status = event.currentTarget.dataset.status;
+    if (!['active', 'revoked'].includes(status) || status === this.data.status) return;
+    this.setData({ status }, () => this.refresh());
+  },
+
+  closeSwipeRows() {
+    if (this.data.openLogicalTransactionId) this.setData({ openLogicalTransactionId: '', swipeAxis: null });
+  },
+
+  onPageScroll() {
+    this.closeSwipeRows();
+  },
+
+  onRowTouchStart(event) {
+    const point = touchPoint(event);
+    if (!point) return;
+    const logicalTransactionId = event.currentTarget.dataset.id;
+    if (this.data.openLogicalTransactionId && this.data.openLogicalTransactionId !== logicalTransactionId) this.closeSwipeRows();
+    this.setData({ rowGesture: { logicalTransactionId, startX: point.x, startY: point.y, axis: null }, swipeAxis: null });
+  },
+
+  onRowTouchMove(event) {
+    const gesture = this.data.rowGesture;
+    const point = touchPoint(event);
+    if (!gesture || !point) return;
+    const deltaX = point.x - gesture.startX;
+    const deltaY = point.y - gesture.startY;
+    if (!gesture.axis && Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= 8) {
+      gesture.axis = Math.abs(deltaX) > Math.abs(deltaY) ? 'x' : 'y';
+      this.setData({ rowGesture: gesture, swipeAxis: gesture.axis });
+    }
+  },
+
+  onRowTouchEnd(event) {
+    const gesture = this.data.rowGesture;
+    const point = touchPoint(event);
+    this.setData({ rowGesture: null, swipeAxis: null });
+    if (!gesture || !point) return;
+    const deltaX = point.x - gesture.startX;
+    const deltaY = point.y - gesture.startY;
+    if (gesture.axis !== 'x' || Math.abs(deltaX) < Math.abs(deltaY)) {
+      if (gesture.axis === 'y') this.closeSwipeRows();
+      return;
+    }
+    if (deltaX < -48) this.setData({ openLogicalTransactionId: gesture.logicalTransactionId });
+    else if (deltaX > 48) this.closeSwipeRows();
+  },
+
+  onRowTouchCancel() {
+    this.setData({ rowGesture: null, swipeAxis: null });
+  },
+
+  openTransaction(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id) return;
+    this.closeSwipeRows();
+    const app = getApp();
+    app.globalData.transactionReturn = { page: 'bills', scrollTop: 0 };
+    wx.navigateTo({ url: `/pages/transaction-detail/transaction-detail?id=${encodeURIComponent(id)}&mode=view` });
+  },
+
+  openTransactionAction(event) {
+    const id = event.currentTarget.dataset.id;
+    const mode = event.currentTarget.dataset.mode;
+    if (!id || !mode) return;
+    this.closeSwipeRows();
+    const app = getApp();
+    app.globalData.transactionReturn = { page: 'bills', scrollTop: 0 };
+    wx.navigateTo({ url: `/pages/transaction-detail/transaction-detail?id=${encodeURIComponent(id)}&mode=${mode}` });
   },
 
   drawCharts() {

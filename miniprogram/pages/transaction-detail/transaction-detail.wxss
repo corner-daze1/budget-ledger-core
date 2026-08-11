@@ -1,0 +1,29 @@
+.transaction-detail-page { padding-bottom: 48rpx; }
+.detail-header { padding: 24rpx 0 32rpx; text-align: center; }
+.detail-header .link-button { display: block; margin: 0 auto 22rpx; }
+.detail-amount { margin-top: 14rpx; color: #2f3a34; font-size: 64rpx; font-weight: 650; }
+.detail-type { margin-top: 10rpx; color: #737a73; font-size: 26rpx; }
+.status-badge { display: inline-block; margin-top: 16rpx; padding: 8rpx 18rpx; border-radius: 999rpx; color: #6d655d; background: #efe8df; font-size: 23rpx; }
+.detail-card { margin-top: 20rpx; }
+.detail-line, .refund-line, .history-heading { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 18rpx 0; color: #4e574f; font-size: 27rpx; }
+.detail-line > text:last-child { color: #252e28; text-align: right; }
+.impact-section { padding-top: 18rpx; }
+.impact-heading { color: #89918a; font-size: 23rpx; }
+.detail-muted { color: #89918a; font-size: 24rpx; line-height: 1.55; }
+.refund-line { border-top: 1rpx solid #eee8e0; }
+.text-danger { margin: 0; padding: 0 12rpx; color: #a34942; background: transparent; font-size: 24rpx; line-height: 1.8; }
+.history-heading { cursor: pointer; }
+.history-heading text:last-child { color: #738c82; font-size: 24rpx; }
+.history-line { padding: 14rpx 0; color: #69726b; font-size: 24rpx; border-top: 1rpx solid #eee8e0; }
+.action-panel { margin-top: 24rpx; }
+.action-row { display: flex; gap: 16rpx; }
+.action-button { flex: 1; border: 0; font-size: 28rpx; }
+.action-neutral { color: #52655b; background: #e7efe9; }
+.action-accent { color: #fff; background: #3e725e; }
+.action-danger, .danger-button { color: #fff; background: #a34942; }
+.edit-card { padding-bottom: 28rpx; }
+.field { margin-top: 22rpx; }
+.field-label { display: block; margin-bottom: 10rpx; color: #687168; font-size: 24rpx; }
+.field-input { box-sizing: border-box; width: 100%; min-height: 76rpx; padding: 20rpx; border: 1rpx solid #e0d8cf; border-radius: 12rpx; color: #2f3a34; background: #fffdfa; font-size: 27rpx; }
+.picker-value { min-height: 36rpx; line-height: 36rpx; }
+.primary-button, .danger-button { margin-top: 28rpx; border: 0; }

@@ -224,7 +224,7 @@ test('跨年起始日规划保持日期连续并正确处理30日', () => {
   );
 });
 
-test('待生效规则经schemaVersion一存储往返后完整恢复', () => {
+test('待生效规则经schemaVersion二存储往返后完整恢复', () => {
   const storage = memoryStorage();
   const state = changeStartDay(stateWithFlow(), { newStartDay: 10, date: '2026-07-15' });
   savePersisted(storage, state);
@@ -233,7 +233,7 @@ test('待生效规则经schemaVersion一存储往返后完整恢复', () => {
   assert.deepEqual(restored.state.appSettings.pendingStartDayChange, state.appSettings.pendingStartDayChange);
   assert.deepEqual(restored.state.accounts, state.accounts);
   assert.deepEqual(restored.state.transactions, state.transactions);
-  assert.equal(restored.state.schemaVersion, 1);
+  assert.equal(restored.state.schemaVersion, 2);
 });
 
 test('预算修改逐字段保持资产负债投资流水和奖励余额不变', () => {

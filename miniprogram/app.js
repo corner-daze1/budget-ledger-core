@@ -28,8 +28,7 @@ App({
     try {
       const result = core.processDuePlans(this.globalData.state, core.todayIso());
       if (result.changed) {
-        this.globalData.state = result.state;
-        this.saveState();
+        this.commitState(result.state);
       }
       if (result.summary.executed.length || result.summary.pending.length || result.summary.legacy.length) {
         this.globalData.planRunSummary = result.summary;
@@ -61,6 +60,23 @@ App({
       set: (key, value) => wx.setStorageSync(key, value),
       remove: (key) => wx.removeStorageSync(key),
     };
+  },
+
+  commitState(candidateState) {
+    const result = core.commitPreparedState(
+      this.storageAdapter(),
+      this.globalData.state,
+      candidateState,
+    );
+    if (!result.ok) {
+      this.globalData.storageError = result.rollbackError
+        ? `${result.error}；原数据回滚也失败：${result.rollbackError}`
+        : result.error;
+      throw new Error(this.globalData.storageError);
+    }
+    this.globalData.state = result.state;
+    this.globalData.storageError = null;
+    return result;
   },
 
   applyRestoredState(state) {

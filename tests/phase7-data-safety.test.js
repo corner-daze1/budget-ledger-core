@@ -141,7 +141,7 @@ test('CSV export uses the required local timestamp filename', () => {
 
 test('CSV export retains the existing fixed domain columns', () => {
   const header = createTransactionsCsvExport(stateWithData()).content.split('\n')[0];
-  assert.equal(header, 'id,date,kind,accountId,counterpartyAccountId,amountCents,budgetPeriodId,budgetImpactCents,rewardImpactCents,categoryLevel1,categoryLevel2,source,relatedTransactionId');
+  assert.equal(header, 'logicalTransactionId,id,date,kind,businessKind,status,version,accountId,counterpartyAccountId,amountCents,budgetPeriodId,budgetImpactCents,rewardImpactCents,categoryLevel1,categoryLevel2,note,source,refundOfLogicalTransactionId');
 });
 
 test('CSV export explicitly declares that it cannot restore', () => {
@@ -192,7 +192,7 @@ test('backup preview rejects a missing required array with a Chinese field error
   assert.match(result.error, /备份缺少或损坏字段：pendingItems/);
 });
 
-test('schema-one backup preview rejects missing application settings instead of guessing them', () => {
+test('current-schema backup preview rejects missing application settings instead of guessing them', () => {
   const state = stateWithData();
   delete state.appSettings;
   const result = previewBackupRestore(JSON.stringify(state));
@@ -269,20 +269,17 @@ test('backup preview reports file metadata and all required counts', () => {
 
 test('backup preview reports schema, currency, latest transaction date and unknown generated date', () => {
   const preview = validPreview().preview;
-  assert.equal(preview.sourceSchemaVersion, 1);
-  assert.equal(preview.targetSchemaVersion, 1);
+  assert.equal(preview.sourceSchemaVersion, 2);
+  assert.equal(preview.targetSchemaVersion, 2);
   assert.equal(preview.currency, 'CNY');
   assert.equal(preview.latestTransactionDate, '2028-01-02');
   assert.equal(preview.generatedAt, '未知');
 });
 
-test('backup preview migrates a schema zero snapshot without writing storage', () => {
-  const state = stateWithData();
-  delete state.appSettings;
-  const result = previewBackupRestore(JSON.stringify({ ...state, schemaVersion: 0 }));
-  assert.equal(result.ok, true);
-  assert.equal(result.candidate.schemaVersion, 1);
-  assert.deepEqual(result.candidate.appSettings, { startDay: 1, monthlyBudgetCents: 330000 });
+test('backup preview rejects obsolete schemas instead of migrating them', () => {
+  const result = previewBackupRestore(JSON.stringify({ ...stateWithData(), schemaVersion: 0 }));
+  assert.equal(result.ok, false);
+  assert.match(result.error, /不支持的备份版本：0/);
 });
 
 test('restore with the wrong phrase performs zero storage operations', () => {

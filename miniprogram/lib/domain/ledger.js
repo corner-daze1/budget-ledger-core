@@ -3,9 +3,11 @@ const { actualBudgetCents: calculateActualBudget, budgetDebtCents: calculateBudg
 
 const ACCOUNT_TYPES = new Set(['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment']);
 const LIABILITY_TYPES = new Set(['credit_card', 'loan']);
+const EXPENSE_KINDS = new Set(['controlled_expense', 'fixed_expense', 'reward_payment']);
 const PLAN_TYPES = new Set(['fixed_expense', 'credit_card_repayment', 'loan_repayment']);
 const PLAN_RECURRENCES = new Set(['one_time', 'monthly', 'yearly']);
 const REMINDER_DAYS = new Set([0, 1, 3]);
+const CORRECTION_STATUSES = new Set(['active', 'superseded', 'revoked']);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -32,8 +34,22 @@ function assertDate(date) {
   parseDate(date);
 }
 
+function assertNotFuture(date, today) {
+  assertDate(date);
+  if (today !== undefined && today !== null) {
+    assertDate(today);
+    if (date > today) throw new RangeError(`date cannot be in the future: ${date}`);
+  }
+}
+
 function nextTransactionId(state) {
-  return `txn-${state.transactions.length + 1}`;
+  let sequence = state.transactions.length + 1;
+  let id = `txn-${sequence}`;
+  while (state.transactions.some((item) => item.id === id)) {
+    sequence += 1;
+    id = `txn-${sequence}`;
+  }
+  return id;
 }
 
 function account(state, id) {
@@ -49,6 +65,7 @@ function period(state, id) {
 }
 
 function withTransaction(state, transaction) {
+  if (state.transactions.some((item) => item.id === transaction.id)) throw new Error(`duplicate transaction id: ${transaction.id}`);
   const next = clone(state);
   next.transactions.push(transaction);
   return next;
@@ -56,10 +73,15 @@ function withTransaction(state, transaction) {
 
 function transactionBase(state, details) {
   assertDate(details.date);
+  const id = details.id || nextTransactionId(state);
+  const logicalTransactionId = details.logicalTransactionId || id;
+  const operationGroupId = details.operationGroupId || logicalTransactionId;
   return {
-    id: details.id || nextTransactionId(state),
+    id,
     date: details.date,
+    effectiveDate: details.effectiveDate || details.date,
     kind: details.kind,
+    businessKind: details.businessKind || details.kind,
     amountCents: details.amountCents,
     currency: 'CNY',
     accountId: details.accountId ?? null,
@@ -71,24 +93,63 @@ function transactionBase(state, details) {
     budgetImpactCents: details.budgetImpactCents ?? 0,
     rewardImpactCents: details.rewardImpactCents ?? 0,
     source: details.source ?? null,
+    note: details.note ?? null,
     relatedTransactionId: details.relatedTransactionId ?? null,
     refundedCents: details.refundedCents ?? 0,
+    logicalTransactionId,
+    operationGroupId,
+    status: details.status || 'active',
+    version: details.version || 1,
+    supersedesTransactionId: details.supersedesTransactionId ?? null,
+    replacedByTransactionId: details.replacedByTransactionId ?? null,
+    refundOfLogicalTransactionId: details.refundOfLogicalTransactionId ?? null,
+    revokedByTransactionId: details.revokedByTransactionId ?? null,
+    requestId: details.requestId ?? null,
+    accountImpacts: clone(details.accountImpacts || []),
+    businessPayload: clone(details.businessPayload || {}),
+    technical: Boolean(details.technical),
+    userReadable: details.userReadable !== false,
+    affectsStatistics: details.affectsStatistics !== false,
+    planId: details.planId ?? null,
+    dueDate: details.dueDate ?? null,
+    occurrenceKey: details.occurrenceKey ?? null,
   };
+}
+
+function transactionMetadata(details, businessPayload, accountImpacts, businessKind = null) {
+  return {
+    logicalTransactionId: details.logicalTransactionId,
+    operationGroupId: details.operationGroupId,
+    version: details.version,
+    supersedesTransactionId: details.supersedesTransactionId,
+    requestId: details.requestId,
+    note: details.note,
+    planId: details.planId,
+    dueDate: details.dueDate,
+    occurrenceKey: details.occurrenceKey,
+    businessKind: businessKind || details.businessKind,
+    businessPayload,
+    accountImpacts,
+  };
+}
+
+function accountShortfall(id, shortfallCents) {
+  return new Error(`insufficient balance in account: ${id}; shortfallCents=${shortfallCents}`);
 }
 
 function updateAccount(state, id, change) {
   const next = clone(state);
   const target = account(next, id);
   target.balanceCents += change;
-  if (target.balanceCents < 0) throw new Error(`insufficient balance in account: ${id}`);
+  if (target.type !== 'credit_card' && target.balanceCents < 0) throw accountShortfall(id, -target.balanceCents);
   return next;
 }
 
-function updateLiability(state, id, change) {
+function updateLoanLiability(state, id, change) {
   const next = clone(state);
   const target = account(next, id);
   target.balanceCents += change;
-  if (target.balanceCents < 0) throw new Error(`liability cannot be negative: ${id}`);
+  if (target.balanceCents < 0) throw new Error(`loan liability cannot be negative: ${id}; shortfallCents=${-target.balanceCents}`);
   return next;
 }
 
@@ -111,11 +172,13 @@ function createLedger({ accounts = [], budgetPeriods = [], defaultBudgetCents = 
   for (const item of accounts) {
     if (!item.id || ids.has(item.id)) throw new Error(`duplicate account id: ${item.id}`);
     if (!ACCOUNT_TYPES.has(item.type)) throw new Error(`unknown account type: ${item.type}`);
-    nonNegativeCents(item.balanceCents, `account ${item.id} balanceCents`);
+    integer(item.balanceCents, `account ${item.id} balanceCents`);
+    if (item.type !== 'credit_card' && item.balanceCents < 0) throw new RangeError(`account ${item.id} balanceCents must not be negative`);
+    nonNegativeCents(item.costBasisCents ?? 0, `account ${item.id} costBasisCents`);
     ids.add(item.id);
   }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     currency: 'CNY',
     defaultBudgetCents,
     accounts: clone(accounts),
@@ -135,7 +198,8 @@ function createLedger({ accounts = [], budgetPeriods = [], defaultBudgetCents = 
 function addAccount(state, { id, name, type, balanceCents = 0, costBasisCents = 0 }) {
   if (!id || state.accounts.some((item) => item.id === id)) throw new Error(`duplicate account id: ${id}`);
   if (!ACCOUNT_TYPES.has(type)) throw new Error(`unknown account type: ${type}`);
-  nonNegativeCents(balanceCents, 'balanceCents');
+  integer(balanceCents, 'balanceCents');
+  if (type !== 'credit_card' && balanceCents < 0) throw new RangeError('balanceCents must not be negative');
   nonNegativeCents(costBasisCents, 'costBasisCents');
   const next = clone(state);
   next.accounts.push({ id, name: name || id, type, balanceCents, costBasisCents });
@@ -154,14 +218,21 @@ function addBudgetPeriod(state, { id, startDate, endDate, baseBudgetCents, carry
   return next;
 }
 
-function recordIncome(state, { id, date, accountId, amountCents, categoryLevel1 = '收入', categoryLevel2 = null, source = null }) {
+function recordIncome(state, details) {
+  const { id, date, accountId, amountCents, categoryLevel1 = '收入', categoryLevel2 = null, source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, accountId);
   let next = updateAccount(state, accountId, amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'income', amountCents, accountId, categoryLevel1, categoryLevel2, source }));
+  const businessPayload = { date, accountId, amountCents, categoryLevel1, categoryLevel2, source, note: details.note ?? null };
+  const accountImpacts = [{ accountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'income', amountCents, accountId, categoryLevel1, categoryLevel2, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'income'),
+  }));
 }
 
-function recordExpense(state, { id, date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2 = null, rewardOffsetCents = 0, source = null }) {
+function recordExpense(state, details) {
+  const { id, date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2 = null, rewardOffsetCents = 0, source = null } = details;
   positiveCents(amountCents);
   nonNegativeCents(rewardOffsetCents, 'rewardOffsetCents');
   if (rewardOffsetCents > amountCents) throw new RangeError('reward offset cannot exceed expense');
@@ -170,58 +241,96 @@ function recordExpense(state, { id, date, accountId, amountCents, budgetPeriodId
   const budgetImpactCents = amountCents - rewardOffsetCents;
   let next = clone(state);
   const target = account(next, accountId);
-  if (target.type === 'credit_card') target.balanceCents += amountCents;
+  if (target.type === 'credit_card') target.balanceCents -= amountCents;
   else {
     requireAsset(next, accountId);
-    if (target.balanceCents < amountCents) throw new Error(`insufficient balance in account: ${accountId}`);
+    if (target.balanceCents < amountCents) throw accountShortfall(accountId, amountCents - target.balanceCents);
     target.balanceCents -= amountCents;
   }
   next.rewardBalanceCents -= rewardOffsetCents;
   if (next.rewardBalanceCents < 0) throw new Error('reward balance cannot be negative');
   period(next, budgetPeriodId).netBudgetSpendCents += budgetImpactCents;
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'controlled_expense', amountCents, accountId, categoryLevel1, categoryLevel2, expenseKind: 'controlled', budgetPeriodId, budgetImpactCents, rewardImpactCents: -rewardOffsetCents, source }));
+  const businessPayload = { date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2, rewardOffsetCents, expenseKind: 'controlled', source, note: details.note ?? null };
+  const accountImpacts = [{ accountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'controlled_expense', amountCents, accountId, categoryLevel1, categoryLevel2,
+    expenseKind: 'controlled', budgetPeriodId, budgetImpactCents, rewardImpactCents: rewardOffsetCents === 0 ? 0 : -rewardOffsetCents, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'expense'),
+  }));
 }
 
-function recordFixedExpense(state, { id, date, accountId, amountCents, categoryLevel1, categoryLevel2 = null, source = null }) {
+function recordFixedExpense(state, details) {
+  const { id, date, accountId, amountCents, categoryLevel1, categoryLevel2 = null, source = null } = details;
   positiveCents(amountCents);
   let next = clone(state);
   const target = account(next, accountId);
-  if (target.type === 'credit_card') target.balanceCents += amountCents;
+  if (target.type === 'credit_card') target.balanceCents -= amountCents;
   else {
     requireAsset(next, accountId);
-    if (target.balanceCents < amountCents) throw new Error(`insufficient balance in account: ${accountId}`);
+    if (target.balanceCents < amountCents) throw accountShortfall(accountId, amountCents - target.balanceCents);
     target.balanceCents -= amountCents;
   }
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'fixed_expense', amountCents, accountId, categoryLevel1, categoryLevel2, expenseKind: 'fixed', source }));
+  const businessPayload = details.businessPayload || { date, accountId, amountCents, categoryLevel1, categoryLevel2, expenseKind: 'fixed', source, note: details.note ?? null };
+  const accountImpacts = [{ accountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'fixed_expense', amountCents, accountId, categoryLevel1, categoryLevel2, expenseKind: 'fixed', source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, details.businessKind || 'expense'),
+  }));
 }
 
-function recordTransfer(state, { id, date, fromAccountId, toAccountId, amountCents, source = null }) {
+function recordTransfer(state, details) {
+  const { id, date, fromAccountId, toAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   if (fromAccountId === toAccountId) throw new Error('transfer accounts must differ');
   requireAsset(state, fromAccountId);
   requireAsset(state, toAccountId);
   let next = updateAccount(state, fromAccountId, -amountCents);
   next = updateAccount(next, toAccountId, amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'transfer', amountCents, accountId: fromAccountId, counterpartyAccountId: toAccountId, source }));
+  const businessPayload = { date, fromAccountId, toAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = [
+    { accountId: fromAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 },
+    { accountId: toAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 },
+  ];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'transfer', amountCents, accountId: fromAccountId, counterpartyAccountId: toAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'transfer'),
+  }));
 }
 
-function recordCreditCardRepayment(state, { id, date, fromAccountId, creditCardAccountId, amountCents, source = null }) {
+function recordCreditCardRepayment(state, details) {
+  const { id, date, fromAccountId, creditCardAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, fromAccountId);
-  const card = requireLiability(state, creditCardAccountId, 'credit_card');
-  if (card.balanceCents < amountCents) throw new Error('repayment exceeds credit card liability');
+  requireLiability(state, creditCardAccountId, 'credit_card');
   let next = updateAccount(state, fromAccountId, -amountCents);
-  next = updateLiability(next, creditCardAccountId, -amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'credit_card_repayment', amountCents, accountId: fromAccountId, counterpartyAccountId: creditCardAccountId, source }));
+  next = updateAccount(next, creditCardAccountId, amountCents);
+  const businessPayload = { date, fromAccountId, creditCardAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = [
+    { accountId: fromAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 },
+    { accountId: creditCardAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 },
+  ];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'credit_card_repayment', amountCents, accountId: fromAccountId, counterpartyAccountId: creditCardAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'credit_card_repayment'),
+  }));
 }
 
-function recordBorrowing(state, { id, date, cashAccountId, loanAccountId, amountCents, source = null }) {
+function recordBorrowing(state, details) {
+  const { id, date, cashAccountId, loanAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, cashAccountId);
   requireLiability(state, loanAccountId, 'loan');
   let next = updateAccount(state, cashAccountId, amountCents);
   next = updateAccountAllowLiability(next, loanAccountId, amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'borrowing', amountCents, accountId: cashAccountId, counterpartyAccountId: loanAccountId, source }));
+  const businessPayload = { date, cashAccountId, loanAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = [
+    { accountId: cashAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 },
+    { accountId: loanAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 },
+  ];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'borrowing', amountCents, accountId: cashAccountId, counterpartyAccountId: loanAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'borrowing'),
+  }));
 }
 
 function updateAccountAllowLiability(state, id, change) {
@@ -230,86 +339,605 @@ function updateAccountAllowLiability(state, id, change) {
   return next;
 }
 
-function recordLoanPrincipalRepayment(state, { id, date, cashAccountId, loanAccountId, amountCents, source = null }) {
+function recordLoanPrincipalRepayment(state, details) {
+  const { id, date, cashAccountId, loanAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, cashAccountId);
   const loan = requireLiability(state, loanAccountId, 'loan');
-  if (loan.balanceCents < amountCents) throw new Error('principal repayment exceeds loan liability');
+  if (loan.balanceCents < amountCents) throw new Error(`principal repayment exceeds loan liability; shortfallCents=${amountCents - loan.balanceCents}`);
   let next = updateAccount(state, cashAccountId, -amountCents);
-  next = updateLiability(next, loanAccountId, -amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'loan_principal_repayment', amountCents, accountId: cashAccountId, counterpartyAccountId: loanAccountId, source }));
+  next = updateLoanLiability(next, loanAccountId, -amountCents);
+  const businessPayload = details.businessPayload || { date, cashAccountId, loanAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = [
+    { accountId: cashAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 },
+    { accountId: loanAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 },
+  ];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'loan_principal_repayment', amountCents, accountId: cashAccountId, counterpartyAccountId: loanAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, details.businessKind || 'loan_principal_repayment'),
+  }));
 }
 
-function recordLoanInterestPayment(state, { id, date, cashAccountId, loanAccountId = null, amountCents, categoryLevel1 = '利息', source = null }) {
+function recordLoanInterestPayment(state, details) {
+  const { id, date, cashAccountId, loanAccountId = null, amountCents, categoryLevel1 = '利息', source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, cashAccountId);
   if (loanAccountId !== null) requireLiability(state, loanAccountId, 'loan');
-  return recordFixedExpense(state, { id, date, accountId: cashAccountId, amountCents, categoryLevel1, source });
+  const businessPayload = details.businessPayload || {
+    date,
+    cashAccountId,
+    loanAccountId,
+    amountCents,
+    categoryLevel1,
+    source,
+    note: details.note ?? null,
+  };
+  return recordFixedExpense(state, {
+    ...details, id, date, accountId: cashAccountId, amountCents, categoryLevel1, source,
+    businessKind: details.businessKind || 'loan_interest_payment',
+    businessPayload,
+  });
 }
 
-function recordLoanInterestAccrual(state, { id, date, loanAccountId, amountCents, source = null }) {
+function recordLoanRepayment(state, details) {
+  const {
+    id = nextTransactionId(state),
+    date,
+    cashAccountId,
+    loanAccountId,
+    principalCents,
+    interestCents,
+    source = null,
+  } = details;
+  positiveCents(principalCents, 'principalCents');
+  positiveCents(interestCents, 'interestCents');
+  const asset = requireAsset(state, cashAccountId);
+  const loan = requireLiability(state, loanAccountId, 'loan');
+  const totalCents = principalCents + interestCents;
+  if (asset.balanceCents < totalCents) throw accountShortfall(cashAccountId, totalCents - asset.balanceCents);
+  if (loan.balanceCents < principalCents) throw new Error(`principal repayment exceeds loan liability; shortfallCents=${principalCents - loan.balanceCents}`);
+  const logicalTransactionId = details.logicalTransactionId || id;
+  const operationGroupId = details.operationGroupId || logicalTransactionId;
+  const businessPayload = {
+    date, cashAccountId, loanAccountId, principalCents, interestCents, source, note: details.note ?? null,
+  };
+  const common = {
+    logicalTransactionId,
+    operationGroupId,
+    version: details.version,
+    supersedesTransactionId: details.supersedesTransactionId,
+    requestId: details.requestId,
+    note: details.note,
+    planId: details.planId,
+    dueDate: details.dueDate,
+    occurrenceKey: details.occurrenceKey,
+    businessKind: 'loan_repayment',
+    businessPayload,
+  };
+  let next = recordLoanPrincipalRepayment(state, {
+    ...common,
+    id: `${id}-principal`,
+    date,
+    cashAccountId,
+    loanAccountId,
+    amountCents: principalCents,
+    source,
+  });
+  next = recordLoanInterestPayment(next, {
+    ...common,
+    id: `${id}-interest`,
+    date,
+    cashAccountId,
+    loanAccountId,
+    amountCents: interestCents,
+    source,
+  });
+  return next;
+}
+
+function recordLoanInterestAccrual(state, details) {
+  const { id, date, loanAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   requireLiability(state, loanAccountId, 'loan');
   const next = updateAccountAllowLiability(state, loanAccountId, amountCents);
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'loan_interest_accrual', amountCents, accountId: loanAccountId, expenseKind: 'fixed', source }));
+  const businessPayload = { date, loanAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = [{ accountId: loanAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'loan_interest_accrual', amountCents, accountId: loanAccountId, expenseKind: 'fixed', source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'loan_interest_accrual'),
+  }));
 }
 
-function recordInvestmentTrade(state, { id, date, side, cashAccountId, investmentAccountId, amountCents, source = null }) {
+function recordInvestmentTrade(state, details) {
+  const { id, date, side, cashAccountId, investmentAccountId, amountCents, source = null } = details;
   positiveCents(amountCents);
   if (!['buy', 'sell'].includes(side)) throw new RangeError('investment side must be buy or sell');
   requireAsset(state, cashAccountId);
   const investment = account(state, investmentAccountId);
   if (investment.type !== 'investment') throw new Error('target account is not an investment account');
   let next;
+  let investmentCostDeltaCents;
   if (side === 'buy') {
     next = updateAccount(state, cashAccountId, -amountCents);
     next = updateAccount(next, investmentAccountId, amountCents);
     account(next, investmentAccountId).costBasisCents = (account(next, investmentAccountId).costBasisCents || 0) + amountCents;
+    investmentCostDeltaCents = amountCents;
   } else {
     if (investment.balanceCents < amountCents) throw new Error('investment value is insufficient');
     next = updateAccount(state, investmentAccountId, -amountCents);
     next = updateAccount(next, cashAccountId, amountCents);
-    account(next, investmentAccountId).costBasisCents = Math.max(0, (account(next, investmentAccountId).costBasisCents || 0) - amountCents);
+    const priorCost = account(next, investmentAccountId).costBasisCents || 0;
+    investmentCostDeltaCents = -Math.min(priorCost, amountCents);
+    account(next, investmentAccountId).costBasisCents = priorCost + investmentCostDeltaCents;
   }
-  return withTransaction(next, transactionBase(next, { id, date, kind: `investment_${side}`, amountCents, accountId: cashAccountId, counterpartyAccountId: investmentAccountId, source }));
+  const businessPayload = { date, side, cashAccountId, investmentAccountId, amountCents, source, note: details.note ?? null };
+  const accountImpacts = side === 'buy'
+    ? [
+      { accountId: cashAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 },
+      { accountId: investmentAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: investmentCostDeltaCents },
+    ]
+    : [
+      { accountId: investmentAccountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: investmentCostDeltaCents },
+      { accountId: cashAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 },
+    ];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: `investment_${side}`, amountCents, accountId: cashAccountId, counterpartyAccountId: investmentAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'investment_trade'),
+  }));
 }
 
-function setInvestmentValue(state, { id, date, investmentAccountId, currentValueCents, source = 'manual valuation' }) {
+function setInvestmentValue(state, details) {
+  const { id, date, investmentAccountId, currentValueCents, source = 'manual valuation' } = details;
   nonNegativeCents(currentValueCents, 'currentValueCents');
   const investment = account(state, investmentAccountId);
   if (investment.type !== 'investment') throw new Error('target account is not an investment account');
   const next = clone(state);
+  const balanceDeltaCents = currentValueCents - account(next, investmentAccountId).balanceCents;
   account(next, investmentAccountId).balanceCents = currentValueCents;
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'investment_valuation', amountCents: currentValueCents, accountId: investmentAccountId, source }));
+  const businessPayload = { date, investmentAccountId, currentValueCents, source, note: details.note ?? null };
+  const accountImpacts = [{ accountId: investmentAccountId, balanceDeltaCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'investment_valuation', amountCents: currentValueCents, accountId: investmentAccountId, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'investment_valuation'),
+  }));
 }
 
-function recordRewardPayment(state, { id, date, accountId, amountCents, categoryLevel1 = '奖励支付', source = null }) {
+function recordRewardPayment(state, details) {
+  const { id, date, accountId, amountCents, categoryLevel1 = '奖励支付', source = null } = details;
   positiveCents(amountCents);
   requireAsset(state, accountId);
   if (state.rewardBalanceCents < amountCents) throw new Error('reward balance is insufficient');
   let next = updateAccount(state, accountId, -amountCents);
   next.rewardBalanceCents -= amountCents;
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'reward_payment', amountCents, accountId, categoryLevel1, rewardImpactCents: -amountCents, source }));
+  const businessPayload = { date, accountId, amountCents, categoryLevel1, source, note: details.note ?? null };
+  const accountImpacts = [{ accountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 }];
+  return withTransaction(next, transactionBase(next, {
+    id, date, kind: 'reward_payment', amountCents, accountId, categoryLevel1, rewardImpactCents: -amountCents, source,
+    ...transactionMetadata(details, businessPayload, accountImpacts, 'reward_payment'),
+  }));
 }
 
-function recordRefund(state, { id, date, originalTransactionId, amountCents, source = null }) {
-  positiveCents(amountCents);
-  const original = state.transactions.find((item) => item.id === originalTransactionId);
-  if (!original) throw new Error(`unknown transaction: ${originalTransactionId}`);
-  const remaining = original.amountCents - (original.refundedCents || 0);
-  if (amountCents > remaining) throw new Error('refund exceeds original transaction amount');
+function requestWasHandled(state, requestId) {
+  return Boolean(requestId) && state.transactions.some((item) => item.requestId === requestId);
+}
+
+function resolveLogicalTransactionId(state, id) {
+  const direct = state.transactions.find((item) => item.id === id);
+  return direct?.logicalTransactionId || id;
+}
+
+function transactionsForLogicalId(state, logicalTransactionId) {
+  const resolved = resolveLogicalTransactionId(state, logicalTransactionId);
+  return state.transactions.filter((item) => item.logicalTransactionId === resolved && !item.technical);
+}
+
+function representativeForGroup(group) {
+  if (group.length === 0) return null;
+  const sorted = [...group].sort((left, right) => left.id.localeCompare(right.id));
+  const representative = clone(sorted[0]);
+  if (representative.businessKind === 'loan_repayment') {
+    representative.amountCents = group.reduce((sum, item) => sum + item.amountCents, 0);
+    representative.groupTransactionIds = sorted.map((item) => item.id);
+  }
+  return representative;
+}
+
+function getLatestTransaction(state, logicalTransactionId) {
+  const transactions = transactionsForLogicalId(state, logicalTransactionId);
+  if (transactions.length === 0) throw new Error(`unknown logical transaction: ${logicalTransactionId}`);
+  const latestVersion = Math.max(...transactions.map((item) => item.version || 1));
+  const latest = transactions.filter((item) => (item.version || 1) === latestVersion);
+  const active = latest.filter((item) => item.status === 'active');
+  return representativeForGroup(active.length > 0 ? active : latest);
+}
+
+function activeGroup(state, logicalTransactionId) {
+  const transactions = transactionsForLogicalId(state, logicalTransactionId);
+  const active = transactions.filter((item) => item.status === 'active');
+  if (active.length === 0) throw new Error(`transaction is not active: ${logicalTransactionId}`);
+  const latestVersion = Math.max(...active.map((item) => item.version || 1));
+  return active.filter((item) => (item.version || 1) === latestVersion);
+}
+
+function activeRefundsFor(state, originalLogicalTransactionId) {
+  return state.transactions.filter((item) => item.kind === 'refund'
+    && item.status === 'active'
+    && item.refundOfLogicalTransactionId === originalLogicalTransactionId);
+}
+
+function refreshRefundedCents(state, originalLogicalTransactionId) {
+  const next = clone(state);
+  const refundedCents = activeRefundsFor(next, originalLogicalTransactionId).reduce((sum, item) => sum + item.amountCents, 0);
+  for (const transaction of next.transactions) {
+    if (transaction.logicalTransactionId === originalLogicalTransactionId && EXPENSE_KINDS.has(transaction.kind)) {
+      transaction.refundedCents = refundedCents;
+    }
+  }
+  return next;
+}
+
+function applyAccountImpactsInPlace(state, impacts, factor) {
+  for (const impact of impacts || []) {
+    const target = account(state, impact.accountId);
+    const balanceDeltaCents = factor * (impact.balanceDeltaCents || 0);
+    const nextBalance = target.balanceCents + balanceDeltaCents;
+    if (target.type !== 'credit_card' && nextBalance < 0) throw accountShortfall(target.id, -nextBalance);
+    target.balanceCents = nextBalance;
+    const costBasisDeltaCents = factor * (impact.costBasisDeltaCents || 0);
+    const nextCostBasis = (target.costBasisCents || 0) + costBasisDeltaCents;
+    if (nextCostBasis < 0) throw new Error(`investment cost basis cannot be negative: ${target.id}; shortfallCents=${-nextCostBasis}`);
+    target.costBasisCents = nextCostBasis;
+  }
+}
+
+function reverseFinancialEffects(state, group, { allowRewardShortfall = false } = {}) {
+  const next = clone(state);
+  for (const transaction of group) {
+    applyAccountImpactsInPlace(next, transaction.accountImpacts, -1);
+  }
+  const rewardImpactCents = group.reduce((sum, transaction) => sum + (transaction.rewardImpactCents || 0), 0);
+  const nextRewardBalanceCents = next.rewardBalanceCents - rewardImpactCents;
+  if (nextRewardBalanceCents < 0) {
+    if (!allowRewardShortfall) throw new Error(`reward balance is insufficient; shortfallCents=${-nextRewardBalanceCents}`);
+    next.rewardBalanceCents = 0;
+    return { state: next, rewardShortfallCents: -nextRewardBalanceCents };
+  }
+  next.rewardBalanceCents = nextRewardBalanceCents;
+  return { state: next, rewardShortfallCents: 0 };
+}
+
+function budgetImpactMap(group) {
+  const result = new Map();
+  for (const transaction of group) {
+    if (!transaction.budgetPeriodId || !transaction.budgetImpactCents) continue;
+    result.set(transaction.budgetPeriodId, (result.get(transaction.budgetPeriodId) || 0) + transaction.budgetImpactCents);
+  }
+  return result;
+}
+
+function currentOpenPeriod(state, today) {
+  return state.budgetPeriods.find((item) => item.status === 'open' && today && item.startDate <= today && today <= item.endDate) || null;
+}
+
+function applyBudgetDifferences(state, oldGroup, newGroup, correctionDate) {
+  const next = clone(state);
+  const oldMap = budgetImpactMap(oldGroup);
+  const newMap = budgetImpactMap(newGroup);
+  const ids = new Set([...oldMap.keys(), ...newMap.keys()]);
+  const historicalChanges = [];
+  for (const periodId of ids) {
+    const oldImpactCents = oldMap.get(periodId) || 0;
+    const newImpactCents = newMap.get(periodId) || 0;
+    const deltaCents = newImpactCents - oldImpactCents;
+    if (deltaCents === 0) continue;
+    const target = period(next, periodId);
+    if (target.status === 'open') {
+      target.netBudgetSpendCents += deltaCents;
+      if (target.netBudgetSpendCents < 0) throw new Error(`budget restoration exceeds recorded spend: ${periodId}`);
+      continue;
+    }
+    if (deltaCents < 0) {
+      next.rewardBalanceCents += -deltaCents;
+      historicalChanges.push({ periodId, deltaCents, rewardDeltaCents: -deltaCents, currentBudgetDeltaCents: 0 });
+    } else {
+      const open = currentOpenPeriod(next, correctionDate);
+      if (!open) throw new Error('no open budget period for historical adjustment');
+      open.netBudgetSpendCents += deltaCents;
+      historicalChanges.push({ periodId, deltaCents, rewardDeltaCents: 0, currentBudgetDeltaCents: deltaCents, currentBudgetPeriodId: open.id });
+    }
+  }
+  return { state: next, historicalChanges };
+}
+
+function appendTechnicalReversals(state, group, { requestId, date, operationGroupId, status }) {
   let next = clone(state);
-  const target = account(next, original.accountId);
-  if (target.type === 'credit_card') target.balanceCents -= amountCents;
-  else target.balanceCents += amountCents;
-  const originalMutable = next.transactions.find((item) => item.id === originalTransactionId);
-  originalMutable.refundedCents = (originalMutable.refundedCents || 0) + amountCents;
+  const reversalIds = [];
+  for (const original of group) {
+    const id = nextTransactionId(next);
+    reversalIds.push(id);
+    const accountImpacts = (original.accountImpacts || []).map((impact) => ({
+      accountId: impact.accountId,
+      balanceDeltaCents: -(impact.balanceDeltaCents || 0),
+      costBasisDeltaCents: -(impact.costBasisDeltaCents || 0),
+    }));
+    next = withTransaction(next, transactionBase(next, {
+      id,
+      date,
+      kind: 'technical_reversal',
+      businessKind: 'technical_reversal',
+      amountCents: original.amountCents,
+      accountId: original.accountId,
+      counterpartyAccountId: original.counterpartyAccountId,
+      relatedTransactionId: original.id,
+      logicalTransactionId: `technical:${original.id}:${id}`,
+      operationGroupId,
+      requestId,
+      accountImpacts,
+      businessPayload: {
+        reversedTransactionId: original.id,
+        reversedBudgetImpactCents: original.budgetImpactCents || 0,
+        reversedRewardImpactCents: original.rewardImpactCents || 0,
+        resultingStatus: status,
+      },
+      technical: true,
+      userReadable: false,
+      affectsStatistics: false,
+    }));
+  }
+  return { state: next, reversalIds };
+}
+
+function appendHistoricalAdjustment(state, {
+  requestId,
+  date,
+  operationGroupId,
+  logicalTransactionId,
+  oldGroup,
+  newGroup,
+  historicalChanges,
+}) {
+  if (historicalChanges.length === 0) return state;
+  const accountImpactMap = (group) => {
+    const result = new Map();
+    for (const transaction of group) {
+      for (const impact of transaction.accountImpacts || []) {
+        const current = result.get(impact.accountId) || { balanceDeltaCents: 0, costBasisDeltaCents: 0 };
+        current.balanceDeltaCents += impact.balanceDeltaCents || 0;
+        current.costBasisDeltaCents += impact.costBasisDeltaCents || 0;
+        result.set(impact.accountId, current);
+      }
+    }
+    return result;
+  };
+  const beforeAccounts = accountImpactMap(oldGroup);
+  const afterAccounts = accountImpactMap(newGroup);
+  const accountIds = new Set([...beforeAccounts.keys(), ...afterAccounts.keys()]);
+  const accountChanges = [...accountIds].map((accountId) => ({
+    accountId,
+    balanceDeltaCents: (afterAccounts.get(accountId)?.balanceDeltaCents || 0) - (beforeAccounts.get(accountId)?.balanceDeltaCents || 0),
+    costBasisDeltaCents: (afterAccounts.get(accountId)?.costBasisDeltaCents || 0) - (beforeAccounts.get(accountId)?.costBasisDeltaCents || 0),
+  })).filter((item) => item.balanceDeltaCents !== 0 || item.costBasisDeltaCents !== 0);
+  const id = nextTransactionId(state);
+  const amountCents = Math.max(1, historicalChanges.reduce((sum, item) => sum + Math.abs(item.deltaCents), 0));
+  return withTransaction(state, transactionBase(state, {
+    id,
+    date,
+    kind: 'historical_adjustment',
+    businessKind: 'historical_adjustment',
+    amountCents,
+    logicalTransactionId: `adjustment:${logicalTransactionId}:${requestId || id}`,
+    operationGroupId,
+    requestId,
+    relatedTransactionId: oldGroup[0]?.id || null,
+    businessPayload: {
+      originalLogicalTransactionId: logicalTransactionId,
+      originalDate: oldGroup[0]?.date || null,
+      beforeAmountCents: oldGroup.reduce((sum, item) => sum + item.amountCents, 0),
+      afterAmountCents: newGroup.reduce((sum, item) => sum + item.amountCents, 0),
+      accountChanges,
+      changes: historicalChanges,
+    },
+    accountImpacts: [],
+    affectsStatistics: false,
+  }));
+}
+
+const ALLOWED_CHANGE_FIELDS = {
+  expense: new Set(['date', 'accountId', 'amountCents', 'budgetPeriodId', 'categoryLevel1', 'categoryLevel2', 'note', 'expenseKind', 'rewardOffsetCents', 'source']),
+  income: new Set(['date', 'accountId', 'amountCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source']),
+  transfer: new Set(['date', 'fromAccountId', 'toAccountId', 'amountCents', 'note', 'source']),
+  credit_card_repayment: new Set(['date', 'fromAccountId', 'creditCardAccountId', 'amountCents', 'note', 'source']),
+  borrowing: new Set(['date', 'cashAccountId', 'loanAccountId', 'amountCents', 'note', 'source']),
+  loan_repayment: new Set(['date', 'cashAccountId', 'loanAccountId', 'principalCents', 'interestCents', 'note', 'source']),
+  loan_principal_repayment: new Set(['date', 'cashAccountId', 'loanAccountId', 'amountCents', 'note', 'source']),
+  loan_interest_payment: new Set(['date', 'cashAccountId', 'loanAccountId', 'amountCents', 'categoryLevel1', 'note', 'source']),
+  loan_interest_accrual: new Set(['date', 'loanAccountId', 'amountCents', 'note', 'source']),
+  investment_trade: new Set(['date', 'side', 'cashAccountId', 'investmentAccountId', 'amountCents', 'note', 'source']),
+  investment_valuation: new Set(['date', 'investmentAccountId', 'currentValueCents', 'note', 'source']),
+  reward_payment: new Set(['date', 'accountId', 'amountCents', 'categoryLevel1', 'note', 'source']),
+};
+
+function validateModificationChanges(businessKind, changes) {
+  if (Object.prototype.hasOwnProperty.call(changes, 'kind') || Object.prototype.hasOwnProperty.call(changes, 'businessKind')) {
+    throw new Error('modification cannot change business type');
+  }
+  const allowed = ALLOWED_CHANGE_FIELDS[businessKind];
+  if (!allowed) throw new Error(`transaction business type cannot be modified: ${businessKind}`);
+  for (const field of Object.keys(changes)) {
+    if (!allowed.has(field)) throw new Error(`field cannot be modified for ${businessKind}: ${field}`);
+  }
+}
+
+function recordBusinessPayload(state, businessKind, payload, metadata) {
+  const details = { ...payload, ...metadata };
+  if (businessKind === 'expense') {
+    if ((payload.expenseKind || 'controlled') === 'fixed') return recordFixedExpense(state, details);
+    return recordExpense(state, details);
+  }
+  if (businessKind === 'income') return recordIncome(state, details);
+  if (businessKind === 'transfer') return recordTransfer(state, details);
+  if (businessKind === 'credit_card_repayment') return recordCreditCardRepayment(state, details);
+  if (businessKind === 'borrowing') return recordBorrowing(state, details);
+  if (businessKind === 'loan_repayment') return recordLoanRepayment(state, details);
+  if (businessKind === 'loan_principal_repayment') return recordLoanPrincipalRepayment(state, details);
+  if (businessKind === 'loan_interest_payment') return recordLoanInterestPayment(state, details);
+  if (businessKind === 'loan_interest_accrual') return recordLoanInterestAccrual(state, details);
+  if (businessKind === 'investment_trade') return recordInvestmentTrade(state, details);
+  if (businessKind === 'investment_valuation') return setInvestmentValue(state, details);
+  if (businessKind === 'reward_payment') return recordRewardPayment(state, details);
+  throw new Error(`transaction business type cannot be modified: ${businessKind}`);
+}
+
+function setGroupStatusInPlace(state, group, status, relationField, relationId) {
+  for (const original of group) {
+    const mutable = state.transactions.find((item) => item.id === original.id);
+    mutable.status = status;
+    if (relationField) mutable[relationField] = relationId;
+  }
+}
+
+function modifyTransaction(state, {
+  logicalTransactionId,
+  changes,
+  requestId,
+  today,
+}) {
+  if (requestWasHandled(state, requestId)) return clone(state);
+  if (!changes || typeof changes !== 'object' || Array.isArray(changes)) throw new TypeError('changes must be an object');
+  const group = activeGroup(state, logicalTransactionId);
+  const representative = representativeForGroup(group);
+  if (representative.kind === 'historical_adjustment') throw new Error('historical adjustments cannot be modified');
+  if (representative.kind === 'refund') throw new Error('refund records cannot be modified');
+  const refunds = activeRefundsFor(state, representative.logicalTransactionId);
+  if (refunds.length > 0) {
+    const allowedWithRefund = new Set(['categoryLevel1', 'categoryLevel2', 'note']);
+    if (Object.keys(changes).some((field) => !allowedWithRefund.has(field))) {
+      throw new Error('financial modification is blocked by active refunds');
+    }
+  }
+  validateModificationChanges(representative.businessKind, changes);
+  const payload = { ...clone(representative.businessPayload), ...clone(changes) };
+  if (representative.businessKind === 'expense'
+    && (payload.expenseKind || 'controlled') === 'controlled'
+    && Object.prototype.hasOwnProperty.call(changes, 'date')
+    && !Object.prototype.hasOwnProperty.call(changes, 'budgetPeriodId')) {
+    const matchingPeriod = state.budgetPeriods.find((item) => item.startDate <= payload.date && payload.date <= item.endDate);
+    if (!matchingPeriod) throw new Error('no budget period covers modified expense date');
+    payload.budgetPeriodId = matchingPeriod.id;
+  }
+  assertNotFuture(payload.date, today);
+  const version = Math.max(...group.map((item) => item.version || 1)) + 1;
+  const operationGroupId = `${representative.logicalTransactionId}:v${version}:${requestId || 'modify'}`;
+  let { state: next } = reverseFinancialEffects(state, group);
+  const periodSnapshots = next.budgetPeriods.map((item) => ({ id: item.id, status: item.status, netBudgetSpendCents: item.netBudgetSpendCents }));
+  for (const item of next.budgetPeriods) item.status = 'open';
+  const transactionCount = next.transactions.length;
+  next = recordBusinessPayload(next, representative.businessKind, payload, {
+    id: nextTransactionId(next),
+    logicalTransactionId: representative.logicalTransactionId,
+    operationGroupId,
+    version,
+    supersedesTransactionId: group[0].id,
+    requestId,
+    planId: representative.planId,
+    dueDate: representative.dueDate,
+    occurrenceKey: representative.occurrenceKey,
+  });
+  const newGroup = next.transactions.slice(transactionCount);
+  for (const snapshot of periodSnapshots) {
+    const mutable = period(next, snapshot.id);
+    mutable.status = snapshot.status;
+    mutable.netBudgetSpendCents = snapshot.netBudgetSpendCents;
+  }
+  const budgetResult = applyBudgetDifferences(next, group, newGroup, today || payload.date);
+  next = budgetResult.state;
+  setGroupStatusInPlace(next, group, 'superseded', 'replacedByTransactionId', newGroup[0].id);
+  const reversal = appendTechnicalReversals(next, group, {
+    requestId, date: today || payload.date, operationGroupId, status: 'superseded',
+  });
+  next = reversal.state;
+  next = appendHistoricalAdjustment(next, {
+    requestId,
+    date: today || payload.date,
+    operationGroupId,
+    logicalTransactionId: representative.logicalTransactionId,
+    oldGroup: group,
+    newGroup,
+    historicalChanges: budgetResult.historicalChanges,
+  });
+  return refreshRefundedCents(next, representative.logicalTransactionId);
+}
+
+function revokeTransaction(state, {
+  logicalTransactionId,
+  requestId,
+  date,
+  today,
+}) {
+  if (requestWasHandled(state, requestId)) return clone(state);
+  assertNotFuture(date, today);
+  const group = activeGroup(state, logicalTransactionId);
+  const representative = representativeForGroup(group);
+  if (representative.kind === 'historical_adjustment') throw new Error('historical adjustments cannot be revoked');
+  if (representative.kind === 'refund') return revokeRefund(state, { logicalTransactionId, requestId, date, today });
+  if (activeRefundsFor(state, representative.logicalTransactionId).length > 0) {
+    throw new Error('transaction cannot be revoked while it has active refunds');
+  }
+  let { state: next } = reverseFinancialEffects(state, group);
+  const budgetResult = applyBudgetDifferences(next, group, [], date);
+  next = budgetResult.state;
+  const operationGroupId = `${representative.logicalTransactionId}:revoke:${requestId || date}`;
+  setGroupStatusInPlace(next, group, 'revoked', 'revokedByTransactionId', null);
+  const reversal = appendTechnicalReversals(next, group, { requestId, date, operationGroupId, status: 'revoked' });
+  next = reversal.state;
+  for (const original of group) {
+    const mutable = next.transactions.find((item) => item.id === original.id);
+    mutable.revokedByTransactionId = reversal.reversalIds[0];
+  }
+  return appendHistoricalAdjustment(next, {
+    requestId,
+    date,
+    operationGroupId,
+    logicalTransactionId: representative.logicalTransactionId,
+    oldGroup: group,
+    newGroup: [],
+    historicalChanges: budgetResult.historicalChanges,
+  });
+}
+
+function recordRefund(state, details) {
+  const {
+    id = nextTransactionId(state),
+    date,
+    originalTransactionId,
+    amountCents,
+    destinationAccountId = null,
+    source = null,
+    requestId = null,
+    today = null,
+  } = details;
+  if (requestWasHandled(state, requestId)) return clone(state);
+  positiveCents(amountCents);
+  assertNotFuture(date, today);
+  const original = getLatestTransaction(state, originalTransactionId);
+  if (original.status !== 'active' || !EXPENSE_KINDS.has(original.kind)) throw new Error('only an active real expense can be refunded');
+  if (date < original.date) throw new RangeError('refund date cannot be before original expense date');
+  const priorRefunds = activeRefundsFor(state, original.logicalTransactionId);
+  const refundedSoFar = priorRefunds.reduce((sum, item) => sum + item.amountCents, 0);
+  const remainingCents = original.amountCents - refundedSoFar;
+  if (amountCents > remainingCents) throw new Error(`refund exceeds remaining amount: remainingCents=${remainingCents}`);
+  const refundAccountId = destinationAccountId || original.accountId;
+  const refundAccount = account(state, refundAccountId);
+  const originalAccount = account(state, original.accountId);
+  const ordinaryDestination = ['cash', 'bank', 'wallet'].includes(refundAccount.type);
+  const originalCardDestination = originalAccount.type === 'credit_card' && refundAccountId === original.accountId;
+  if (!ordinaryDestination && !originalCardDestination) throw new Error('refund destination must be cash, bank, wallet, or the original credit card');
+  let next = updateAccount(state, refundAccountId, amountCents);
   let budgetImpactCents = 0;
   let rewardImpactCents = 0;
   if (original.kind === 'controlled_expense') {
-    const originalPeriod = original.budgetPeriodId ? period(next, original.budgetPeriodId) : null;
-    if (originalPeriod && originalPeriod.status === 'open') {
-      const priorRefunds = state.transactions.filter((item) => item.kind === 'refund' && item.relatedTransactionId === originalTransactionId);
+    const originalPeriod = period(next, original.budgetPeriodId);
+    if (originalPeriod.status === 'open') {
       const budgetRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, -(item.budgetImpactCents || 0)), 0);
       const rewardRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, item.rewardImpactCents || 0), 0);
       const originalRewardOffsetCents = Math.max(0, original.amountCents - original.budgetImpactCents);
@@ -327,7 +955,122 @@ function recordRefund(state, { id, date, originalTransactionId, amountCents, sou
     rewardImpactCents = amountCents;
   }
   next.rewardBalanceCents += rewardImpactCents;
-  return withTransaction(next, transactionBase(next, { id, date, kind: 'refund', amountCents, accountId: original.accountId, budgetPeriodId: original.budgetPeriodId, budgetImpactCents, rewardImpactCents, source, relatedTransactionId: originalTransactionId }));
+  const logicalTransactionId = details.logicalTransactionId || id;
+  const businessPayload = {
+    date,
+    originalLogicalTransactionId: original.logicalTransactionId,
+    amountCents,
+    destinationAccountId: refundAccountId,
+    source,
+    note: details.note ?? null,
+  };
+  const accountImpacts = [{ accountId: refundAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 }];
+  next = withTransaction(next, transactionBase(next, {
+    id,
+    date,
+    kind: 'refund',
+    businessKind: 'refund',
+    amountCents,
+    accountId: refundAccountId,
+    budgetPeriodId: original.budgetPeriodId,
+    budgetImpactCents,
+    rewardImpactCents,
+    source,
+    note: details.note,
+    relatedTransactionId: original.id,
+    refundOfLogicalTransactionId: original.logicalTransactionId,
+    logicalTransactionId,
+    operationGroupId: details.operationGroupId || logicalTransactionId,
+    requestId,
+    accountImpacts,
+    businessPayload,
+  }));
+  return refreshRefundedCents(next, original.logicalTransactionId);
+}
+
+function revokeRefund(state, {
+  logicalTransactionId,
+  requestId,
+  date,
+  today,
+}) {
+  if (requestWasHandled(state, requestId)) return clone(state);
+  assertNotFuture(date, today);
+  const group = activeGroup(state, logicalTransactionId);
+  const refund = representativeForGroup(group);
+  if (refund.kind !== 'refund') throw new Error('only refund records can use revokeRefund');
+  const reversed = reverseFinancialEffects(state, group, { allowRewardShortfall: true });
+  let next = reversed.state;
+  const budgetResult = applyBudgetDifferences(next, group, [], date);
+  next = budgetResult.state;
+  const historicalChanges = [...budgetResult.historicalChanges];
+  if (reversed.rewardShortfallCents > 0) {
+    const open = currentOpenPeriod(next, date);
+    if (!open) throw new Error('no open budget period for historical adjustment');
+    open.netBudgetSpendCents += reversed.rewardShortfallCents;
+    historicalChanges.push({
+      periodId: refund.budgetPeriodId || open.id,
+      deltaCents: reversed.rewardShortfallCents,
+      rewardDeltaCents: 0,
+      currentBudgetDeltaCents: reversed.rewardShortfallCents,
+      currentBudgetPeriodId: open.id,
+    });
+  }
+  const operationGroupId = `${refund.logicalTransactionId}:revoke:${requestId || date}`;
+  setGroupStatusInPlace(next, group, 'revoked', 'revokedByTransactionId', null);
+  const reversal = appendTechnicalReversals(next, group, { requestId, date, operationGroupId, status: 'revoked' });
+  next = reversal.state;
+  for (const original of group) {
+    next.transactions.find((item) => item.id === original.id).revokedByTransactionId = reversal.reversalIds[0];
+  }
+  next = appendHistoricalAdjustment(next, {
+    requestId,
+    date,
+    operationGroupId,
+    logicalTransactionId: refund.logicalTransactionId,
+    oldGroup: group,
+    newGroup: [],
+    historicalChanges,
+  });
+  return refreshRefundedCents(next, refund.refundOfLogicalTransactionId);
+}
+
+function getTransactionActionAvailability(state, logicalTransactionId) {
+  const latest = getLatestTransaction(state, logicalTransactionId);
+  const none = { refund: false, modify: false, revoke: false, modifyFields: 'none' };
+  if (latest.status !== 'active' || latest.technical || latest.kind === 'historical_adjustment') return none;
+  if (latest.kind === 'refund') return { ...none, revoke: true };
+  if (EXPENSE_KINDS.has(latest.kind)) {
+    const refundedCents = activeRefundsFor(state, latest.logicalTransactionId).reduce((sum, item) => sum + item.amountCents, 0);
+    if (refundedCents <= 0) return { refund: true, modify: true, revoke: true, modifyFields: 'all' };
+    return {
+      refund: refundedCents < latest.amountCents,
+      modify: true,
+      revoke: false,
+      modifyFields: 'category-note',
+    };
+  }
+  return { ...none, modify: true, revoke: true, modifyFields: 'all' };
+}
+
+function listUserTransactions(state, { includeRevoked = false } = {}) {
+  const groups = new Map();
+  for (const transaction of state.transactions) {
+    if (transaction.technical || transaction.userReadable === false) continue;
+    const logicalId = transaction.logicalTransactionId || transaction.id;
+    const current = groups.get(logicalId) || [];
+    current.push(transaction);
+    groups.set(logicalId, current);
+  }
+  const result = [];
+  for (const group of groups.values()) {
+    const latestVersion = Math.max(...group.map((item) => item.version || 1));
+    const latest = group.filter((item) => (item.version || 1) === latestVersion);
+    const representative = representativeForGroup(latest);
+    if (!includeRevoked && representative.status === 'revoked') continue;
+    result.push(representative);
+  }
+  return result.sort((left, right) => right.date.localeCompare(left.date) || right.id.localeCompare(left.id));
 }
 
 function normalizeReminderDays(reminderDays = [1, 0]) {
@@ -478,7 +1221,6 @@ function executionFailureReason(state, plan) {
     ? plan.principalCents + plan.interestCents
     : plan.amountCents;
   if (asset.balanceCents < requiredCents) return 'insufficient_balance';
-  if (plan.type === 'credit_card_repayment' && liability.balanceCents < plan.amountCents) return 'liability_insufficient';
   if (plan.type === 'loan_repayment' && liability.balanceCents < plan.principalCents) return 'liability_insufficient';
   return null;
 }
@@ -539,22 +1281,16 @@ function executePlanOccurrence(state, plan, dueDate, {
     return tagTransactions(next, [id], plan, dueDate, occurrenceKey);
   }
   if (plan.type === 'loan_repayment') {
-    const principalId = `${transactionId || `plan-${occurrenceKey}`}-principal`;
-    const interestId = `${transactionId || `plan-${occurrenceKey}`}-interest`;
-    let next = recordLoanPrincipalRepayment(state, {
-      id: principalId,
+    const baseId = transactionId || `plan-${occurrenceKey}`;
+    const principalId = `${baseId}-principal`;
+    const interestId = `${baseId}-interest`;
+    const next = recordLoanRepayment(state, {
+      id: baseId,
       date: dueDate,
       cashAccountId: plan.accountId,
       loanAccountId: plan.targetLiabilityAccountId,
-      amountCents: plan.principalCents,
-      source,
-    });
-    next = recordLoanInterestPayment(next, {
-      id: interestId,
-      date: dueDate,
-      cashAccountId: plan.accountId,
-      loanAccountId: plan.targetLiabilityAccountId,
-      amountCents: plan.interestCents,
+      principalCents: plan.principalCents,
+      interestCents: plan.interestCents,
       source,
     });
     return tagTransactions(next, [principalId, interestId], plan, dueDate, occurrenceKey);
@@ -675,9 +1411,17 @@ function budgetForPeriod(state, periodId) {
 }
 
 function totals(state) {
-  const totalAssetsCents = state.accounts.filter((item) => !LIABILITY_TYPES.has(item.type)).reduce((sum, item) => sum + item.balanceCents, 0);
-  const totalLiabilitiesCents = state.accounts.filter((item) => LIABILITY_TYPES.has(item.type)).reduce((sum, item) => sum + item.balanceCents, 0);
+  const totalAssetsCents = state.accounts.reduce((sum, item) => {
+    if (item.type === 'credit_card') return sum + Math.max(0, item.balanceCents);
+    if (item.type === 'loan') return sum;
+    return sum + item.balanceCents;
+  }, 0);
+  const totalLiabilitiesCents = state.accounts.reduce((sum, item) => {
+    if (item.type === 'credit_card') return sum + Math.max(0, -item.balanceCents);
+    if (item.type === 'loan') return sum + item.balanceCents;
+    return sum;
+  }, 0);
   return { totalAssetsCents, totalLiabilitiesCents, netAssetsCents: totalAssetsCents - totalLiabilitiesCents, rewardBalanceCents: state.rewardBalanceCents };
 }
 
-module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, recordRewardPayment, recordRefund, createFixedPlan, editFixedPlan, revokeFixedPlan, fixedPlanOccurrenceKey, executeFixedPlan, nextFixedPlanDueDate, advanceFixedPlan, markLegacyPlanPending, retryFixedPlanPending, closeBudgetPeriod, budgetForPeriod, totals };
+module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanRepayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, recordRewardPayment, getLatestTransaction, modifyTransaction, revokeTransaction, recordRefund, revokeRefund, getTransactionActionAvailability, listUserTransactions, createFixedPlan, editFixedPlan, revokeFixedPlan, fixedPlanOccurrenceKey, executeFixedPlan, nextFixedPlanDueDate, advanceFixedPlan, markLegacyPlanPending, retryFixedPlanPending, closeBudgetPeriod, budgetForPeriod, totals };

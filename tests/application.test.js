@@ -168,7 +168,21 @@ test('settlement model survives backup round trip with partial reward offset val
 });
 test('recordEntry preserves note, two-level category and selected account in the transaction', () => {
   const state = recordEntry(readyState(), { amountYuan: '20', date: '2028-01-01', accountId: 'bank', categoryLevel1: '交通', categoryLevel2: '打车', note: '回家', includeControlledBudget: true });
-  assert.deepEqual(state.transactions[0], { id: 'entry-1', date: '2028-01-01', kind: 'controlled_expense', amountCents: 2000, currency: 'CNY', accountId: 'bank', counterpartyAccountId: null, categoryLevel1: '交通', categoryLevel2: '打车', expenseKind: 'controlled', budgetPeriodId: 'period-1', budgetImpactCents: 2000, rewardImpactCents: 0, source: null, relatedTransactionId: null, refundedCents: 0, note: '回家' });
+  assert.deepEqual({
+    id: state.transactions[0].id,
+    date: state.transactions[0].date,
+    kind: state.transactions[0].kind,
+    amountCents: state.transactions[0].amountCents,
+    accountId: state.transactions[0].accountId,
+    categoryLevel1: state.transactions[0].categoryLevel1,
+    categoryLevel2: state.transactions[0].categoryLevel2,
+    note: state.transactions[0].note,
+    logicalTransactionId: state.transactions[0].logicalTransactionId,
+  }, {
+    id: 'entry-1', date: '2028-01-01', kind: 'controlled_expense', amountCents: 2000,
+    accountId: 'bank', categoryLevel1: '交通', categoryLevel2: '打车', note: '回家', logicalTransactionId: 'entry-1',
+  });
+  assert.equal(state.transactions[0].businessPayload.note, '回家');
 });
 test('findPreviousSimilar prefers exact second-level category and returns only amount and date', () => {
   const first = recordEntry(readyState(), { amountYuan: '12', date: '2028-01-01', accountId: 'cash', categoryLevel1: '餐饮', categoryLevel2: '午餐', includeControlledBudget: true });
@@ -198,7 +212,7 @@ test('savePersisted and loadPersisted round trip application state through versi
   const loaded = loadPersisted(storage);
   assert.equal(loaded.ok, true);
   assert.deepEqual(loaded.state, state);
-  assert.equal(JSON.parse(storage.value).schemaVersion, 1);
+  assert.equal(JSON.parse(storage.value).schemaVersion, 2);
 });
 test('loadPersisted preserves corrupted raw storage and returns a user-facing error', () => {
   const rawData = '{not-json';

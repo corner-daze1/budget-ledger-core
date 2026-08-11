@@ -74,6 +74,7 @@ test('app config exposes exactly two tab destinations and keeps bills and entry 
     'pages/settings/settings',
     'pages/entry/entry',
     'pages/bills/bills',
+    'pages/transaction-detail/transaction-detail',
   ]);
   assert.equal(config.tabBar.list.some((item) => item.pagePath === 'pages/bills/bills'), false);
   assert.equal(config.tabBar.list.some((item) => item.pagePath === 'pages/entry/entry'), false);

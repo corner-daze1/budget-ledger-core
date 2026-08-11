@@ -79,7 +79,7 @@ test('income rejects a liability account with a visible Chinese error and no hal
   const state = sixAccountState();
   assert.throws(() => recordIncomeEntry(state, { amountYuan: '100', date: DATE, accountId: 'card' }), /请选择资产账户/);
   assert.equal(state.transactions.length, 0);
-  assert.equal(state.accounts.find((item) => item.id === 'card').balanceCents, 50000);
+  assert.equal(state.accounts.find((item) => item.id === 'card').balanceCents, -50000);
 });
 
 test('transfer moves cash between asset accounts without changing net assets or budget', () => {
@@ -99,7 +99,7 @@ test('transfer rejects the same source and destination without appending a trans
 
 test('credit-card controlled spending increases liability and consumes only controlled budget', () => {
   const after = recordEntry(sixAccountState(), { amountYuan: '120', date: DATE, accountId: 'card', categoryLevel1: '餐饮', categoryLevel2: '晚餐', includeControlledBudget: true });
-  assert.equal(after.accounts.find((item) => item.id === 'card').balanceCents, 62000);
+  assert.equal(after.accounts.find((item) => item.id === 'card').balanceCents, -62000);
   assert.equal(after.budgetPeriods[0].netBudgetSpendCents, 12000);
 });
 
@@ -107,7 +107,7 @@ test('credit-card repayment reduces asset and liability without consuming budget
   const before = sixAccountState();
   const after = repayCreditCard(before, { amountYuan: '200', date: DATE, fromAccountId: 'bank', creditCardAccountId: 'card' });
   assert.equal(after.accounts.find((item) => item.id === 'bank').balanceCents, 180000);
-  assert.equal(after.accounts.find((item) => item.id === 'card').balanceCents, 30000);
+  assert.equal(after.accounts.find((item) => item.id === 'card').balanceCents, -30000);
   assert.equal(after.budgetPeriods[0].netBudgetSpendCents, 0);
 });
 
@@ -171,19 +171,19 @@ test('phase-three nine-step acceptance produces exact assets liabilities net ass
   assert.equal(model.netAssetsCents, 168000);
   assert.equal(model.accounts.find((item) => item.id === 'cash').balanceCents, 175000);
   assert.equal(model.accounts.find((item) => item.id === 'bank').balanceCents, 210000);
-  assert.equal(model.accounts.find((item) => item.id === 'card').balanceCents, 42000);
+  assert.equal(model.accounts.find((item) => item.id === 'card').balanceCents, -42000);
   assert.equal(model.accounts.find((item) => item.id === 'loan').balanceCents, 360000);
   assert.equal(model.accounts.find((item) => item.id === 'fund').balanceCents, 155000);
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 12000);
 });
 
-test('phase-three state round trips through the unchanged schema-version-one storage contract', () => {
+test('phase-three state round trips through the schema-version-two storage contract', () => {
   const memory = new Map();
   const state = finalAcceptanceState();
   savePersisted(memory, state);
   const loaded = loadPersisted(memory);
   assert.equal(loaded.ok, true);
-  assert.equal(loaded.state.schemaVersion, 1);
+  assert.equal(loaded.state.schemaVersion, 2);
   assert.deepEqual(loaded.state.accounts, state.accounts);
   assert.deepEqual(loaded.state.transactions, state.transactions);
   assert.deepEqual(loaded.state.budgetPeriods, state.budgetPeriods);
