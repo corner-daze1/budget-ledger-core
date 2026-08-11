@@ -2,7 +2,7 @@
 
 更新时间：2026-08-11
 
-当前基线：`master` / `7188fd9`
+业务功能基线：`7188fd9`；本轮视觉收口开工点：`65fb7a3`；此前证据发布提交：`f52e5b9`。
 
 ## 现役产品
 
@@ -19,7 +19,7 @@
 - `npm run check`：469 test declarations，退出 0。
 - `npm run check:mini`：退出 0，五页、详情页、生成包和源码边界通过。
 - `git diff --check`：退出 0；仅有工作区换行符转换提示。
-- 自动视觉取证未重跑，也未冒充通过；当前协议阻塞见 `docs/VISUAL_EVIDENCE.md`。
+- 自动视觉取证已在本环境恢复复测；本环境结论、历史失败和发布边界见 `docs/VISUAL_EVIDENCE.md`。
 
 ## 当前功能缺陷
 
@@ -48,3 +48,25 @@
 
 - 当前只有测试 AppID `wx9567fb4ff6336d0b`，没有正式小程序主体和生产 AppID。
 - 正式发布前仍需在明确授权的环境中完成当前 schema v2 JSON 导出/恢复、关闭重开、真机冒烟和产品视觉确认；隔离 fixture 与 2026-08-09 的 schema v1 证据不能替代发布验收。
+
+## 阶段十七视觉证据文档收口（2026-08-11）
+
+- 开工核对：工作区无未提交改动；实际为 `agent/publish-current-progress` / `f52e5b9`，其父提交 `65fb7a3`，相对差异仅含任务书列明的12项视觉证据。
+- 目标：只记录当前环境已恢复的自动截图链路，保留历史失败，不改产品功能、UI或测试逻辑。
+- 顺序：完整性校验 → 现役文档修正 → 非视觉静态门禁与反向校验 → 白名单独立提交。
+- 最大风险：把一次当前环境恢复写成永久修复，或把隔离 fixture 误写成真实账本发布验收。
+- 证据完整性命令已通过：`VISUAL EVIDENCE VERIFIED`。
+
+## 当前视觉基线（2026-08-11）
+
+- 兼容性探针 `1/1`：`ok=true`、390×753、`runtimeErrors=0`；完整六态 `6/6`，六个 fixture 各使用独立会话。
+- 六态 manifest 的应用错误、异常、警告、超时和运行时错误均为0；六次清理均 `confirmed=true`，`six-states-green.txt` 为 `ok=true`、`pngCount=6`。
+- 该结论限定为当前环境恢复，不代表永久修复；隔离证据不替代真实账本导出/恢复、关闭重开和真机发布验收。
+
+## 阶段十七收口验收（2026-08-11）
+
+- `npm test -- --test-reporter=tap`：退出 0；467 tests、467 pass、0 fail、0 skipped、0 todo。
+- `npm run check`：退出 0；469 test declarations、必需规格章节和 domain 边界通过。
+- `npm run check:mini`：退出 0；五页、生成包和源码边界通过。
+- `git diff --check`：退出 0；仅有 Git 的 LF→CRLF 转换提示。
+- 视觉完整性原件校验：`VISUAL EVIDENCE VERIFIED`；内存副本删除一个 capture 后：`REVERSE MUTATION REJECTED`，原件再次 `VISUAL EVIDENCE VERIFIED`；磁盘证据未改动。

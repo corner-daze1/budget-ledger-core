@@ -9,11 +9,16 @@
 - 修复边界：统一规范缺键语义，只删除 `yongdu-ledger-v1`、恢复临时键和本应用生成文件；失败时原子回滚，不得调用全局 `clearStorage`，不得碰无关键。
 - 验收：增加空字符串缺键回归测试，运行完整静态门禁，并在隔离账本中完成一次 Stable 清除验证。真实账本不在自动验收范围内。
 
-## 外部工具阻塞
+## 任务0基线核对（2026-08-11）
 
-- 自动截图仍阻塞于 C 盘 Stable/automator：空白 `touristappid` 只观察到一次 `App.captureScreenshot` SEND，没有同 UUID RECV，冻结分类为 `sent-no-matching-reply`。这不能证明 DevTools 已收到请求，也不能归罪首页。
-- Computer Use 对 Stable NW.js 窗口仍出现所有权矛盾。2026-08-09 的 21–23 号证据使用 Win32 手工链路完成，不代表 Computer Use 或 automator 截图恢复。
-- 截图链路阻塞期间，不重复把 `npm run evidence:visual -- --compat` 或 `npm run evidence:visual` 当作日常门禁。机制与原始证据见 `docs/VISUAL_EVIDENCE.md` 和 `artifacts/visual-evidence/`。
+- 任务书预期开工点为 `master` / `65fb7a3`；实测工作区干净，当前为 `agent/publish-current-progress` / `f52e5b9`。
+- `f52e5b9` 是 `65fb7a3` 的直接子提交，差异正好为任务书列明的12项视觉证据变更；没有额外未提交改动。本轮沿当前已发布历史继续，不重写分支或历史证据。
+
+## 已解除的视觉工具观察项
+
+- 2026-08-11 当前环境恢复复测已通过：兼容性 `1/1`、完整六态 `6/6`、六个独立会话、运行时错误/异常/警告/超时均为0，清理均确认。历史 `sent-no-matching-reply` 诊断完整保留，不改写为成功。
+- Computer Use 已连续两次识别并截图 Stable NW.js 窗口，但仍不作为日常视觉门禁；自动截图结论只限定为“本环境已经恢复”，不写成永久修复或归因于单一更新。
+- 六态隔离证据不替代真实账本和真机发布验收；视觉证据也不加入非视觉功能的日常门禁。机制和原始历史证据见 `docs/VISUAL_EVIDENCE.md` 与 `artifacts/visual-evidence/`。
 
 ## 发布前待完成
 

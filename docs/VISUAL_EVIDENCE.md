@@ -57,3 +57,13 @@ npm run evidence:visual -- --screenshot-diagnostic
 SEND 只证明客户端 automator 日志发出了请求，不证明 DevTools 已收到；本次没有把它写成成功，也没有据此修改业务/UI。原始 worker stdout/stderr、CLI stdout/stderr保存在 `artifacts/visual-evidence/protocol-trace/raw-protocol.log`；结构化结果在 `result.json`，进程恢复在 `process-before.json`、`process-after.json`，事实/推断/未知分开写在 `report.md`。清理确认、`.visual-probe`删除、端口关闭、精确自动化残留0；C盘工具进程30→30，D盘0→0。该实验到此停止，不重试。
 
 该分类的唯一下一阶段建议是：取得用户另行授权后，继续使用同一空白探针，对另一个已核实来源和版本号的 C 盘 Stable 做一次受控版本对照。当前阶段不安装或切换工具版本，也不访问真实 AppID 账本。`protocol-trace-red.txt` 与 `protocol-trace-green.txt` 只保存了人工摘要，原始测试 stdout/stderr 未留存，不得把它们表述为原始红绿日志；协议本身的原始日志仍以 `raw-protocol.log` 为准。
+
+## 恢复复测（2026-08-11）
+
+本节记录当前环境的恢复状态，不把它写成永久修复，也不把原因归结为单一工具或版本更新。历史诊断、红证据和 `sent-no-matching-reply` 结论保持不变。
+
+- 兼容性探针实际为 `1/1`：`ok=true`、`empty-bills`、PNG `390×753`、`runtimeErrors=0`，清理确认；成功时 `compatibility-error.txt` 不存在。
+- 完整六态实际为 `6/6`：`normal-accumulated`、`prepaid-recovery`、`empty-bills`、`cross-budget-period`、`ledger-overview`、`ledger-expanded` 各使用一个独立会话，六次清理均 `confirmed=true`。
+- manifest 的应用 `errors=0`、`exceptions=0`、`warnings=0`、`timeouts=0`，顶层 `runtimeErrors=0`；`six-states-green.txt` 为 `ok=true`、`pngCount=6`。固定形态的无 UUID 协议事件仍原样保留为 `protocolArtifacts`，不冒充应用错误。
+- Computer Use 已连续两次识别并截图 Stable NW.js 窗口，但仍不作为日常门禁；本轮不重复运行截图命令，也不把六态加入非视觉功能门禁。
+- 六态与兼容性产物均来自隔离 `.visual-qa` / `touristappid`，不能替代真实账本导出、恢复、关闭重开和真机发布验收。

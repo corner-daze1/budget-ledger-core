@@ -56,4 +56,4 @@ npm run evidence:visual
 
 `npm run build:mini` 生成 5 个文件并通过；`npm test` 为 467/467，fail/skip/todo 均为 0；`npm run check` 为 469 test declarations；`npm run check:mini` 通过五页、详情页与生成包同步；`git diff --check` 退出 0。详情页和左滑动作只做本地账本操作，未接入网络、AI或云同步。
 
-自动截图仍阻塞于 Stable/automator 的 `App.captureScreenshot` 无匹配回复，本轮没有把它写成通过。当前功能缺陷和后续优先级见 `BLOCKED.md` 与 `PROGRESS.md`。
+自动视觉取证在 2026-08-11 的当前环境复测已恢复：兼容性探针 1/1，完整六态 6/6，六个 fixture 使用独立会话，运行时错误、异常、警告和超时均为 0，清理均已确认。该结论只适用于本环境当前复测，不代表永久修复；隔离证据不替代真实账本与真机发布验收。历史失败诊断仍保留在 `docs/VISUAL_EVIDENCE.md` 和 `artifacts/visual-evidence/`。
