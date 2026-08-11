@@ -2,6 +2,33 @@
 
 更新时间：2026-08-12
 
+## 阶段二十一 schema v3 验收缺陷（2026-08-12）
+
+- 目标：删除旧结算兼容，补严 v3 settlement 恢复校验，完整展示已结算周期历史。
+- 顺序：先写旧参数/旧事件/非法恢复/历史展示红灯 → 删除兼容 → 校验 settlement → 页面历史 → 定向、构建、全量门禁。
+- 约束：只改本轮白名单；schema 保持 v3；不改结算公式、业务调整规则、历史 artifacts、真实 AppID 或 Git 历史。
+- 最大风险：非法备份误恢复或历史记录混入开放周期；其次是旧契约残留造成静默兼容。
+
+## 阶段二十一任务1红灯（2026-08-12）
+
+- 按基线命令运行定向套件：退出 1；152 tests、145 pass、7 fail、0 cancelled、0 skipped、0 todo。
+- 失败证据：旧双 mode 参数未失败；设置模型没有 settlementRecords；设置页没有“周期结算记录/带入下期/空状态”；首页仍暴露两个旧事件；v3 关闭无 settlement 与开放含 settlement 均可恢复；视觉 fixture 仍传旧双 mode 参数。
+- 原始命令：`node --test tests/application.test.js tests/storage.test.js tests/phase4-budget-lifecycle.test.js tests/phase9-home-visual-contract.test.js tests/phase11-home-ledger-sheet.test.js tests/visual-evidence.test.js`。
+
+## 阶段二十一任务2—4定向绿灯与全量结果（2026-08-12）
+
+- 删除 `app-core.js` 双 mode 转换、首页两个旧事件；视觉 fixture 改为 `{ decision: 'carry' }`；定向套件实际 137/137 通过，0失败、0跳过、0todo。
+- v3 恢复校验已覆盖周期结构、唯一 ID、日期连续性、整数金额、状态与 settlement、结果符号/预算计算、决定与带入金额、结算日期和下一周期引用；非法 rawData 原样返回。
+- `npm run build:mini` 实际退出 0；生成 application、storage 和 manifest 已更新且仅在白名单内。
+- 全量 `npm test` 实际为 500/497/3（失败原因已写入 BLOCKED.md），不是通过状态；其余门禁待本轮末复跑并如实记录。
+
+## 阶段二十一最终验收记录（2026-08-12）
+
+- 任务书指定定向命令最终实际退出 0：164 tests、164 pass、0 fail、0 cancelled、0 skipped、0 todo。
+- `npm run check` 实际退出 0：499 test declarations；`npm run check:mini` 实际退出 0；`git diff --check` 实际退出 0，仅有 LF→CRLF 提示。
+- 生产源码、生成包、页面和视觉脚本不含旧双 mode 参数或旧首页事件；设置模型与页面只展示有效关闭周期的结算记录及带入下期金额。
+- 本轮未提交、未推送、未改 HEAD；全量测试仍受 BLOCKED.md 所述 3 个只读历史 fixture 阻塞，不能宣称全量通过。
+
 ## 阶段二十任务0基线（2026-08-12）
 
 - 目标：彻底删除奖励余额，改为周期结余/超支一次性决定是否带入下期，并升级 schema v3。

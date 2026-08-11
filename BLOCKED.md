@@ -2,7 +2,13 @@
 
 更新时间：2026-08-12
 
-本任务无新增待裁决项。
+## 阶段二十一当前阻塞（2026-08-12）
+
+- 全量 `npm test` 实测：500 tests、497 pass、3 fail、0 cancelled、0 skipped、0 todo；失败均在只读 `tests/transaction-corrections.test.js` 的第 473、484、658 行。
+- 三个 fixture 都由 `freshLedger()` 生成 `p0.status='closed'` 且 `p0.settlement` 缺失，随后调用 `serializeBackup`/`restoreBackup`；本轮 v3 硬规则要求关闭周期必须有完整 settlement，因此正确结果是拒绝，而只读测试要求成功。
+- 该测试文件不在本轮白名单；放宽恢复校验或静默补造结算都会违反任务书的数据不可误恢复要求。本轮不改该文件，保留其余修复与证据继续验收。
+
+阶段二十一存在上述一项新增阻塞；阶段二十的“无新增待裁决项”是历史记录，不覆盖本轮结论。
 
 ## 阶段二十当前限制（2026-08-12）
 

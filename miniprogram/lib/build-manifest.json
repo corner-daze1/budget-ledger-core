@@ -3,7 +3,7 @@
   "sources": {
     "src/domain/budget.js": "141d45ca7b1c91370819d0740907b58abfc1012435d3c9a7867bcb31639f4a91",
     "src/domain/ledger.js": "b0cc32e67c294ebe6ee91c947b449709694612587923376669ff54cc3868ca19",
-    "src/domain/storage.js": "62252836172e8eb52439adaa382c4d9d3705e6567424236f09880558e8a2ec2c",
-    "src/application/app-core.js": "4c8b12c2fdd03bbb6262d6a122918958dcee0003505056bc1ae2e97b6ae29491"
+    "src/domain/storage.js": "86ef5d3dd81b4b0d95232ffa97a95c85d330894290e267307ce1d3b953ef7128",
+    "src/application/app-core.js": "c3c215bb0c59219d1035e6df0221edf3cf3ac07409a2e1e7d0640eddbee50fb3"
   }
 }

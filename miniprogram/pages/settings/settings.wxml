@@ -59,14 +59,16 @@
           <view class="fixed-hint">房租、房贷、车贷等固定开支不建议计入可控预算，请在记账时关闭“计入可控预算”。</view>
         </view>
         <view class="card period-history-card">
-          <view class="card-title">预算周期与结算</view>
-          <view wx:for="{{settings.budgetPeriods}}" wx:key="id" class="period-history-item">
+          <view class="card-title">周期结算记录</view>
+          <view wx:if="{{!settings.settlementRecords.length}}" class="empty-state">暂无周期结算记录</view>
+          <view wx:for="{{settings.settlementRecords}}" wx:key="id" class="period-history-item">
             <view class="setting-line"><text>{{item.startDate}} 至 {{item.endDate}}</text><text>{{item.statusLabel}} · {{item.kindLabel}}</text></view>
             <view class="setting-line"><text>实际预算</text><text>{{item.actualBudget}}</text></view>
             <view class="setting-line"><text>净支出</text><text>{{item.netBudgetSpend}}</text></view>
             <view class="setting-line"><text>{{item.resultLabel}}</text><text>{{item.resultAmount}}</text></view>
             <view class="setting-line"><text>结算选择</text><text>{{item.decisionLabel}}</text></view>
-            <view class="hint">{{item.settledAt ? '结算于 ' + item.settledAt : '等待用户选择全部带入或全部不带入'}}</view>
+            <view class="setting-line"><text>带入下期</text><text>{{item.carryAmount}}</text></view>
+            <view class="hint">结算日期：{{item.settledAt}}</view>
           </view>
         </view>
       </view>

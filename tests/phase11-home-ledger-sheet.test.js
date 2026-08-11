@@ -280,6 +280,15 @@ test('首页结算只提供未预选的全量带入或全量不带入', () => {
   assert.doesNotMatch(wxml, /reward|奖励|positiveMode|overspendMode/);
 });
 
+test('设置页周期结算记录只展示已结算周期并显示带入下期金额', () => {
+  const wxml = read('miniprogram/pages/settings/settings.wxml');
+  assert.match(wxml, /周期结算记录/);
+  assert.match(wxml, /settlementRecords/);
+  assert.match(wxml, /带入下期/);
+  assert.match(wxml, /暂无周期结算记录/);
+  assert.doesNotMatch(wxml, /等待用户选择全部带入或全部不带入/);
+});
+
 test('首页账本在320px下允许长文本换行且不使用逐笔卡片', () => {
   const wxss = read('miniprogram/pages/home/home.wxss');
   assert.match(wxss, /@media\s*\(max-width:\s*320px\)/);

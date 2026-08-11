@@ -184,11 +184,12 @@ test('home keeps settlement pending overdue and bills navigation handlers', () =
     'settlePeriod',
     'retryPendingPlan',
     'dismissPlanOverdueBanner',
-    'onPositiveModeChange',
-    'onOverspendModeChange',
+    'onSettlementDecisionChange',
   ]) {
     assert.equal(typeof definition[name], 'function', `missing ${name}`);
   }
+  assert.equal(definition.onPositiveModeChange, undefined);
+  assert.equal(definition.onOverspendModeChange, undefined);
   definition.goBills();
   assert.deepEqual(navigations, [
     ['navigateTo', '/pages/bills/bills'],

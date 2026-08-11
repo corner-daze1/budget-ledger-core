@@ -81,6 +81,15 @@ test('settleCurrentPeriod discards a chosen surplus without creating another bal
   assert.equal(state.budgetPeriods[1].carryCents, 0);
   assert.equal(Object.prototype.hasOwnProperty.call(state, 'rewardBalanceCents'), false);
 });
+test('settleCurrentPeriod rejects obsolete dual-mode options atomically', () => {
+  const state = readyState('2028-01-01');
+  const before = structuredClone(state);
+  assert.throws(
+    () => settleCurrentPeriod(state, '2028-02-01', { positiveMode: 'carry', overspendMode: 'carry' }),
+    /only accepts decision/,
+  );
+  assert.deepEqual(state, before);
+});
 test('recordEntry with controlled budget on reduces the application period budget', () => {
   const state = recordEntry(readyState(), { amountYuan: '20', date: '2028-01-01', accountId: 'cash', categoryLevel1: '餐饮', categoryLevel2: '早餐', includeControlledBudget: true });
   assert.equal(state.budgetPeriods[0].netBudgetSpendCents, 2000);
@@ -224,4 +233,15 @@ test('getSettingsModel exposes the configured budget and all initial accounts', 
   const model = getSettingsModel(readyState());
   assert.equal(model.monthlyBudget, '¥3000.00');
   assert.equal(model.accounts.length, 2);
+});
+test('getSettingsModel exposes only completed settlement records in newest-first order', () => {
+  let state = readyState('2028-01-01');
+  state = settleCurrentPeriod(state, '2028-02-01', { decision: 'carry' });
+  state = settleCurrentPeriod(state, '2028-03-01', { decision: 'discard' });
+  const model = getSettingsModel(state, '2028-03-01');
+  assert.deepEqual(model.settlementRecords.map((item) => item.id), ['period-2', 'period-1']);
+  assert.equal(model.settlementRecords.every((item) => item.status === 'closed'), true);
+  assert.equal(model.settlementRecords[0].settledAt, '2028-03-01');
+  assert.equal(model.settlementRecords[0].carryAmount, '¥0.00');
+  assert.equal(model.settlementRecords[1].carryAmount, '¥3000.00');
 });

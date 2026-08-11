@@ -338,8 +338,6 @@ Page({
     const index = Number(event.detail.value);
     this.setData({ settlementDecisionIndex: index, settlementDecisionSelected: true, settlementDecisionLabel: this.data.settlementDecisionLabels[index] });
   },
-  onPositiveModeChange(event) { this.onSettlementDecisionChange(event); },
-  onOverspendModeChange(event) { this.onSettlementDecisionChange(event); },
   settlePeriod() {
     const settlement = this.data.model?.settlement;
     if (!settlement) return;

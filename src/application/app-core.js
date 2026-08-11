@@ -345,6 +345,7 @@ function chineseBackupError(error) {
     [/backup field ([A-Za-z]+) must be an array/, (match) => `备份缺少或损坏字段：${match[1]}`],
     [/backup root must be an object/, () => '备份根节点必须是对象'],
     [/backup contains an invalid or duplicate account id/, () => '备份包含无效或重复的账户标识'],
+    [/backup contains an invalid or duplicate budget period id/, () => '预算周期存在重复标识'],
     [/backup contains an invalid or duplicate transaction id/, () => '备份包含无效或重复的流水标识'],
     [/defaultBudgetCents must be a non-negative integer/, () => '默认预算金额无效'],
     [/backup contains a removed field/, () => '备份包含已删除字段'],
@@ -748,10 +749,21 @@ function nextPeriodPreview(state, pendingPeriod) {
   return { startDate: cycle.startDate, endDate: cycle.endDate, baseBudgetCents: cycle.baseBudgetCents, kind: 'regular' };
 }
 
+function settlementDecisionFromOptions(options) {
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    throw new TypeError('settleCurrentPeriod options must be an object');
+  }
+  const unknownKey = Object.keys(options).find((key) => key !== 'decision');
+  if (unknownKey) throw new Error(`settleCurrentPeriod only accepts decision; unknown option: ${unknownKey}`);
+  const decision = Object.prototype.hasOwnProperty.call(options, 'decision') ? options.decision : null;
+  if (decision !== null && !['carry', 'discard'].includes(decision)) {
+    throw new Error('settlement decision must be carry, discard, or null');
+  }
+  return decision;
+}
+
 export function settleCurrentPeriod(state, date, options = {}) {
-  let { decision = null } = options;
-  const explicitCarryModes = ['positive', 'overspend'].map((name) => `${name}Mode`).every((key) => options[key] === 'carry');
-  if (decision === null && explicitCarryModes) decision = 'carry';
+  const decision = settlementDecisionFromOptions(options);
   const model = getSettlementModel(state, date);
   if (!model) throw new Error('no budget period is waiting for settlement');
   if (model.decisionRequired && !['carry', 'discard'].includes(decision)) throw new Error('请选择本期结算方式');
@@ -2023,15 +2035,15 @@ function scheduledPlanModel(plan) {
   };
 }
 
-function budgetPeriodSettingsModel(item) {
+function settlementRecordSettingsModel(item) {
   const settled = item.settlement || null;
-  const resultCents = settled?.resultCents ?? 0;
+  const resultCents = settled.resultCents;
   return {
     id: item.id,
     startDate: item.startDate,
     endDate: item.endDate,
-    status: item.status,
-    statusLabel: item.status === 'closed' ? '已关闭' : '进行中',
+    status: 'closed',
+    statusLabel: '已结算',
     kind: item.kind || 'regular',
     kindLabel: item.kind === 'transition' ? '过渡周期' : '预算周期',
     actualBudgetCents: actualBudgetCents(item.baseBudgetCents, item.carryCents),
@@ -2042,12 +2054,27 @@ function budgetPeriodSettingsModel(item) {
     resultLabel: settled ? (settled.result === 'surplus' ? '结余' : (settled.result === 'overspend' ? '超支' : '持平')) : (item.status === 'closed' ? '未记录' : '待结算'),
     resultCents,
     resultAmount: formatCents(Math.abs(resultCents)),
-    decision: settled?.decision || null,
-    decisionLabel: settled?.decision === 'carry' ? '全部带入' : (settled?.decision === 'discard' ? '全部不带入' : '—'),
-    carryCents: settled?.carryCents ?? item.carryCents,
-    carry: formatCents(settled?.carryCents ?? item.carryCents),
-    settledAt: settled?.settledAt || null,
+    decision: settled.decision,
+    decisionLabel: settled.decision === 'carry' ? '全部带入' : (settled.decision === 'discard' ? '全部不带入' : '持平，无需带入'),
+    carryCents: settled.carryCents,
+    carryAmount: formatCents(settled.carryCents),
+    settledAt: settled.settledAt,
+    nextPeriodId: settled.nextPeriodId,
   };
+}
+
+function hasCompletedSettlement(item) {
+  const settlement = item?.settlement;
+  return item?.status === 'closed'
+    && settlement
+    && typeof settlement === 'object'
+    && !Array.isArray(settlement)
+    && typeof settlement.settledAt === 'string'
+    && ['surplus', 'overspend', 'balanced'].includes(settlement.result)
+    && Number.isInteger(settlement.resultCents)
+    && ['carry', 'discard', 'none'].includes(settlement.decision)
+    && Number.isInteger(settlement.carryCents)
+    && typeof settlement.nextPeriodId === 'string';
 }
 
 export function getSettingsModel(state, date = todayIso()) {
@@ -2082,7 +2109,10 @@ export function getSettingsModel(state, date = todayIso()) {
       : '当前没有待生效的起始日修改',
     accounts: assets.accounts,
     assets,
-    budgetPeriods: state.budgetPeriods.map(budgetPeriodSettingsModel),
+    settlementRecords: state.budgetPeriods
+      .filter(hasCompletedSettlement)
+      .sort((left, right) => right.endDate.localeCompare(left.endDate) || right.startDate.localeCompare(left.startDate))
+      .map(settlementRecordSettingsModel),
     plans: state.plans.map(scheduledPlanModel),
     pendingPlanItems: state.pendingItems
       .filter((item) => item.type === 'fixed_plan' && item.status === 'pending')
