@@ -92,10 +92,12 @@ function loadSettingsPage(options = {}) {
     },
     ...options.dataFiles,
   };
+  const modal = { options: null };
   const app = {
     globalData: {
       state: options.state === undefined ? { accounts: [], plans: [] } : options.state,
       storageError: null,
+      planRunSummary: null,
     },
     saveState() {
       calls.save += 1;
@@ -106,10 +108,11 @@ function loadSettingsPage(options = {}) {
   };
   const wx = {
     showActionSheet() {},
-    showModal() {},
+    showModal(options) { modal.options = options; },
     navigateTo() {},
     redirectTo() {},
     reLaunch() {},
+    switchTab() {},
     ...options.wx,
   };
   let definition;
@@ -135,7 +138,7 @@ function loadSettingsPage(options = {}) {
     },
   };
   page._dataFiles = dataFiles;
-  return { page, calls, app, core, settingsModel };
+  return { page, calls, app, core, settingsModel, modal, wx };
 }
 
 test('initialized settings defaults to the budget section and exposes four summary values', () => {
@@ -254,6 +257,75 @@ test('file selection busy lock accepts one trigger and preserves input after fai
   assert.equal(page.data.pastedBackupText, '保留输入');
   assert.deepEqual(page.data.backupPreview, { fileName: '保留预览' });
   assert.equal(page.data.expandedSection, 'data');
+});
+
+test('ledger clear failure keeps settings initialized and skips generated-file deletion', async () => {
+  const { page, calls, app, modal } = loadSettingsPage({
+    core: {
+      clearLocalLedger: () => ({ ok: false, error: '账本清除失败' }),
+    },
+    dataFiles: {
+      async removeGeneratedFiles() {
+        calls.files.push('removeGeneratedFiles');
+      },
+    },
+  });
+  page.onShow();
+  page.data.clearPhrase = '清除';
+  page.requestClearData();
+  await modal.options.success({ confirm: true });
+  assert.deepEqual(calls.files, []);
+  assert.notEqual(app.globalData.state, null);
+  assert.equal(page.data.initialized, true);
+  assert.equal(page.data.error, '账本清除失败');
+});
+
+test('successful ledger clear runs before file cleanup and returns the page to uninitialized state', async () => {
+  const order = [];
+  const { page, app, modal } = loadSettingsPage({
+    core: {
+      clearLocalLedger: () => {
+        order.push('ledger');
+        return { ok: true };
+      },
+    },
+    dataFiles: {
+      async removeGeneratedFiles() {
+        order.push('files');
+      },
+    },
+  });
+  page.onShow();
+  page.data.clearPhrase = '清除';
+  page.requestClearData();
+  await modal.options.success({ confirm: true });
+  assert.deepEqual(order, ['ledger', 'files']);
+  assert.equal(app.globalData.state, null);
+  assert.equal(app.globalData.storageError, null);
+  assert.equal(app.globalData.planRunSummary, null);
+  assert.equal(page.data.initialized, false);
+  assert.equal(page.data.error, '');
+});
+
+test('file cleanup failure keeps the cleared ledger and shows the confirmed partial-success notice', async () => {
+  const { page, app, modal } = loadSettingsPage({
+    core: {
+      clearLocalLedger: () => ({ ok: true }),
+    },
+    dataFiles: {
+      async removeGeneratedFiles() {
+        throw new Error('unlink failed');
+      },
+    },
+  });
+  page.onShow();
+  page.data.clearPhrase = '清除';
+  page.requestClearData();
+  await modal.options.success({ confirm: true });
+  assert.equal(app.globalData.state, null);
+  assert.equal(page.data.initialized, false);
+  assert.equal(page.data.error, '');
+  assert.equal(page.data.notice, '账本已清除，但部分导出文件未删除，请稍后重试清理。');
 });
 
 test('editing a plan automatically opens the plan section without saving', () => {

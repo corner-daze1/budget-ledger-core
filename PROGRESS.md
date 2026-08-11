@@ -26,6 +26,35 @@
 - 应用内“清除本地数据”尚未通过 Stable 实测。微信缺失存储键读回空字符串，而 `clearLocalLedger` 目前只把 `undefined` / `null` 当作删除成功，因此真实删除后会误报失败并尝试回滚。
 - 该缺陷影响用户主动清除这一隐私能力，应先于新增功能修复。修复必须覆盖空字符串缺键语义、只删除本应用键、失败原子回滚和无关键不受影响。
 
+## 阶段十八任务0基线（2026-08-11）
+
+- 基线复核：`agent/publish-current-progress` / `9440d4a`，工作区干净。
+- `npm test -- --test-reporter=tap`：467/467，fail/cancelled/skip/todo 均为 0。
+- `npm run check`：469 个测试声明，通过；`npm run check:mini`：通过。
+- 目标：修复 Stable 空字符串缺键、账本原子清除和生成文件清理闭环。
+- 顺序：先写真实旧实现红灯 → 统一领域存储语义 → 修正页面编排 → 生成包与隔离 Stable 验收 → 完整门禁。
+- 最大风险：账本清除失败时误删文件或回滚不精确；文件清理失败时误恢复已清除账本。
+
+## 阶段十八任务1旧实现红灯（2026-08-11）
+
+- 命令：`node --test tests/phase7-data-safety.test.js tests/phase8-release-readiness.test.js`
+- 实际结果：退出 1；80 tests，72 pass，8 fail，0 cancelled，0 skipped，0 todo。
+- 失败项：5 个 Stable/空字符串缺键与精确回滚测试；3 个“账本先清除、文件后清理/部分成功”页面测试。
+- 结论：旧实现确实在任务书列明的真实缺陷上变红，已保存本次红灯事实，尚未改生产代码。
+
+## 阶段十八任务2领域与页面定向绿灯（2026-08-11）
+
+- 修复：`isMissingStorageValue` 仅把 `undefined`、`null`、`''` 判为缺键，并统一接入四个指定持久化流程；清除回滚只触碰主键和恢复临时键。
+- 页面顺序修复为“先清账本、成功后清内存状态与页面初始化标志、再删生成文件”；文件失败不恢复账本并显示确认文案。
+- 定向命令：`node --test tests/phase7-data-safety.test.js tests/phase8-release-readiness.test.js`。
+- 实际结果：退出 0；80 tests，80 pass，0 fail，0 cancelled，0 skipped，0 todo。
+
+## 阶段十八 Stable 隔离验收准备（2026-08-11）
+
+- 已重建隔离副本：`.visual-qa`，AppID 为 `touristappid`；未读取或写入测试 AppID `wx9567fb4ff6336d0b`。
+- 清除前已准备：主键、恢复临时键、哨兵键 `phase7-isolated-sentinel=keep-this-sentinel`，以及 `yongdu-backup-20260811-213700.json`、`yongdu-transactions-20260811-213700.csv` 和无关文件。
+- 已从真实设置页进入“数据与隐私”，输入“清除”并打开最终确认弹窗；尚未点击破坏性“确认清除”，待动作前确认后继续。
+
 ## 下一步优先级
 
 1. 修复并验收“清除本地数据”的空字符串缺键语义；使用隔离账本做 Stable 验证，不触碰真实账本。

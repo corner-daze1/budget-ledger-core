@@ -7,6 +7,10 @@ const STORAGE_KEY = 'yongdu-ledger-v1';
 const RESTORE_TEMP_KEY = `${STORAGE_KEY}-restore-temp`;
 const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 
+function isMissingStorageValue(value) {
+  return value === undefined || value === null || value === '';
+}
+
 function todayIso(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
@@ -203,7 +207,7 @@ function initializeState({ monthlyBudgetYuan, startDay = 1, nowDate, accounts })
 
 function loadPersisted(storage) {
   const rawData = storage.get(STORAGE_KEY);
-  if (rawData === undefined || rawData === null || rawData === '') return { ok: true, state: null, rawData: null };
+  if (isMissingStorageValue(rawData)) return { ok: true, state: null, rawData: null };
   const restored = restoreBackup(rawData);
   return restored.ok ? { ok: true, state: restored.data, rawData } : restored;
 }
@@ -221,7 +225,7 @@ function commitPreparedState(storage, currentState, candidateState) {
   try {
     candidateRawData = serializeBackup(candidateState);
     oldRawData = storage.get(STORAGE_KEY);
-    hadOldValue = oldRawData !== undefined && oldRawData !== null && oldRawData !== '';
+    hadOldValue = !isMissingStorageValue(oldRawData);
   } catch (error) {
     return { ok: false, state: clone(currentState), error: `保存预检失败：${error.message}` };
   }
@@ -237,7 +241,7 @@ function commitPreparedState(storage, currentState, candidateState) {
       else if (typeof storage.remove === 'function') storage.remove(STORAGE_KEY);
       else storage.set(STORAGE_KEY, oldRawData ?? '');
       const rollbackReadback = storage.get(STORAGE_KEY);
-      const rollbackMatches = hadOldValue ? rollbackReadback === oldRawData : (rollbackReadback === undefined || rollbackReadback === null || rollbackReadback === '');
+      const rollbackMatches = hadOldValue ? rollbackReadback === oldRawData : isMissingStorageValue(rollbackReadback);
       if (!rollbackMatches) throw new Error('原数据回滚读回校验不一致');
     } catch (rollbackFailure) {
       rollbackError = rollbackFailure.message;
@@ -485,7 +489,7 @@ function commitBackupRestore(storage, candidate, { phrase, confirmed } = {}) {
       throw new Error('原数据读取失败');
     }
     oldReadSucceeded = true;
-    hadOldValue = oldRaw !== undefined && oldRaw !== null;
+    hadOldValue = !isMissingStorageValue(oldRaw);
     tempWriteAttempted = true;
     try {
       storage.set(RESTORE_TEMP_KEY, canonicalRawData);
@@ -525,7 +529,7 @@ function commitBackupRestore(storage, candidate, { phrase, confirmed } = {}) {
       if (hadOldValue) storage.set(STORAGE_KEY, oldRaw);
       else storage.remove(STORAGE_KEY);
       const rolledBack = storage.get(STORAGE_KEY);
-      if (hadOldValue ? rolledBack !== oldRaw : rolledBack !== undefined && rolledBack !== null) throw new Error('原数据回滚校验失败');
+      if (hadOldValue ? rolledBack !== oldRaw : !isMissingStorageValue(rolledBack)) throw new Error('原数据回滚校验失败');
     }) : null;
     const cleanupError = tempWriteAttempted ? tryTwice(() => storage.remove(RESTORE_TEMP_KEY)) : null;
     const suffix = [
@@ -555,10 +559,10 @@ function clearLocalLedger(storage, { phrase, confirmed } = {}) {
     deletionAttempted = true;
     storage.remove(STORAGE_KEY);
     const mainAfterRemoval = storage.get(STORAGE_KEY);
-    if (mainAfterRemoval !== undefined && mainAfterRemoval !== null) throw new Error('主数据删除校验失败');
+    if (!isMissingStorageValue(mainAfterRemoval)) throw new Error('主数据删除校验失败');
     storage.remove(RESTORE_TEMP_KEY);
     const tempAfterRemoval = storage.get(RESTORE_TEMP_KEY);
-    if (tempAfterRemoval !== undefined && tempAfterRemoval !== null) throw new Error('临时数据删除校验失败');
+    if (!isMissingStorageValue(tempAfterRemoval)) throw new Error('临时数据删除校验失败');
     return { ok: true, removedKeys: [STORAGE_KEY, RESTORE_TEMP_KEY] };
   } catch (error) {
     const rollbackError = deletionAttempted ? tryTwice(() => {
@@ -568,8 +572,8 @@ function clearLocalLedger(storage, { phrase, confirmed } = {}) {
       else storage.remove(RESTORE_TEMP_KEY);
       const main = storage.get(STORAGE_KEY);
       const temp = storage.get(RESTORE_TEMP_KEY);
-      if (hadMain ? main !== oldMain : main !== undefined && main !== null) throw new Error('主数据恢复校验失败');
-      if (hadTemp ? temp !== oldTemp : temp !== undefined && temp !== null) throw new Error('临时数据恢复校验失败');
+      if (hadMain ? main !== oldMain : !isMissingStorageValue(main)) throw new Error('主数据恢复校验失败');
+      if (hadTemp ? temp !== oldTemp : !isMissingStorageValue(temp)) throw new Error('临时数据恢复校验失败');
     }) : null;
     return {
       ok: false,

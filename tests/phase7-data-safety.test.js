@@ -62,6 +62,16 @@ function storageWith(initial = {}) {
   };
 }
 
+function stableStorageWith(initial = {}) {
+  const storage = storageWith(initial);
+  const normalGet = storage.get.bind(storage);
+  storage.get = (key) => {
+    const value = normalGet(key);
+    return value === undefined ? '' : value;
+  };
+  return storage;
+}
+
 function validPreview() {
   const state = stateWithData();
   const result = previewBackupRestore(JSON.stringify(state), { fileName: 'backup.json' });
@@ -555,6 +565,89 @@ test('clear failure on the temporary key rolls back both specified keys and keep
   assert.equal(result.ok, false);
   assert.equal(storage.values.get(STORAGE_KEY), 'main');
   assert.equal(storage.values.get(RESTORE_TEMP_KEY), 'temp');
+  assert.equal(storage.values.get('unrelated'), 'keep');
+});
+
+test('stable missing-key reads let confirmed clear remove existing main and temporary keys', () => {
+  const storage = stableStorageWith({ [STORAGE_KEY]: 'main', [RESTORE_TEMP_KEY]: 'temp', unrelated: 'keep' });
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, true);
+  assert.equal(storage.values.has(STORAGE_KEY), false);
+  assert.equal(storage.values.has(RESTORE_TEMP_KEY), false);
+  assert.equal(storage.values.get('unrelated'), 'keep');
+});
+
+test('stable missing keys remain absent after clear without creating empty-string target values', () => {
+  const storage = stableStorageWith({ unrelated: 'keep' });
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, true);
+  assert.equal(storage.values.has(STORAGE_KEY), false);
+  assert.equal(storage.values.has(RESTORE_TEMP_KEY), false);
+  assert.deepEqual(
+    storage.calls.filter(([operation]) => operation === 'set' || operation === 'remove'),
+    [['remove', STORAGE_KEY], ['remove', RESTORE_TEMP_KEY]],
+  );
+});
+
+test('stable clear reaches a temporary deletion failure and restores both original keys exactly', () => {
+  const storage = stableStorageWith({ [STORAGE_KEY]: 'main', [RESTORE_TEMP_KEY]: 'temp', unrelated: 'keep' });
+  const normalRemove = storage.remove.bind(storage);
+  const removals = [];
+  let failed = false;
+  storage.remove = (key) => {
+    removals.push(key);
+    if (key === RESTORE_TEMP_KEY && !failed) {
+      failed = true;
+      throw new Error('temporary remove failed');
+    }
+    normalRemove(key);
+  };
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, false);
+  assert.deepEqual(removals, [STORAGE_KEY, RESTORE_TEMP_KEY]);
+  assert.equal(storage.values.get(STORAGE_KEY), 'main');
+  assert.equal(storage.values.get(RESTORE_TEMP_KEY), 'temp');
+  assert.equal(storage.values.get('unrelated'), 'keep');
+  assert.doesNotMatch(result.error, /原数据回滚失败/);
+});
+
+test('restore rollback keeps a stable missing main key absent without reporting a false rollback failure', () => {
+  const storage = stableStorageWith({ unrelated: 'keep' });
+  const normalGet = storage.get.bind(storage);
+  let mainReads = 0;
+  storage.get = (key) => {
+    if (key === STORAGE_KEY) {
+      mainReads += 1;
+      if (mainReads === 2) return '{"bad":true}';
+    }
+    return normalGet(key);
+  };
+  const result = commitBackupRestore(storage, validPreview().candidate, { phrase: '恢复', confirmed: true });
+  assert.equal(result.ok, false);
+  assert.equal(storage.values.has(STORAGE_KEY), false);
+  assert.equal(storage.values.has(RESTORE_TEMP_KEY), false);
+  assert.equal(storage.values.get('unrelated'), 'keep');
+  assert.doesNotMatch(result.error, /原数据回滚失败/);
+});
+
+test('stable clear treats whitespace storage values as present while recognizing exact empty readback as missing', () => {
+  const storage = stableStorageWith({ [STORAGE_KEY]: '  ', [RESTORE_TEMP_KEY]: '\t', unrelated: 'keep' });
+  const normalRemove = storage.remove.bind(storage);
+  const removals = [];
+  let failed = false;
+  storage.remove = (key) => {
+    removals.push(key);
+    if (key === RESTORE_TEMP_KEY && !failed) {
+      failed = true;
+      throw new Error('temporary remove failed');
+    }
+    normalRemove(key);
+  };
+  const result = clearLocalLedger(storage, { phrase: '清除', confirmed: true });
+  assert.equal(result.ok, false);
+  assert.deepEqual(removals, [STORAGE_KEY, RESTORE_TEMP_KEY]);
+  assert.equal(storage.values.get(STORAGE_KEY), '  ');
+  assert.equal(storage.values.get(RESTORE_TEMP_KEY), '\t');
   assert.equal(storage.values.get('unrelated'), 'keep');
 });
 
