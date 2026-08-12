@@ -18,7 +18,6 @@ import {
   recordInvestmentTrade,
   recordLoanRepayment,
   recordRefund,
-  recordRewardPayment,
   recordTransfer,
   revokeRefund,
   revokeTransaction,
@@ -53,10 +52,23 @@ function freshLedger(overrides = {}) {
       { id: 'fund', name: '投资', type: 'investment', balanceCents: 50000, costBasisCents: 50000 },
     ],
     budgetPeriods: [
-      { id: 'p0', startDate: '2026-07-01', endDate: '2026-07-31', baseBudgetCents: 100000, status: 'closed' },
+      {
+        id: 'p0',
+        startDate: '2026-07-01',
+        endDate: '2026-07-31',
+        baseBudgetCents: 100000,
+        status: 'closed',
+        settlement: {
+          settledAt: '2026-08-01',
+          result: 'surplus',
+          resultCents: 100000,
+          decision: 'discard',
+          carryCents: 0,
+          nextPeriodId: 'p1',
+        },
+      },
       { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-31', baseBudgetCents: 100000, status: 'open' },
     ],
-    rewardBalanceCents: 10000,
     ...overrides,
   });
 }
@@ -77,7 +89,9 @@ function openExpense(state = freshLedger(), details = {}) {
 
 function closedExpense(details = {}) {
   const opened = freshLedger();
-  opened.budgetPeriods.find((item) => item.id === 'p0').status = 'open';
+  const period = opened.budgetPeriods.find((item) => item.id === 'p0');
+  period.status = 'open';
+  period.settlement = null;
   const spent = recordExpense(opened, {
     id: 'closed-expense',
     date: '2026-07-20',
@@ -87,15 +101,22 @@ function closedExpense(details = {}) {
     categoryLevel1: '餐饮',
     ...details,
   });
-  return closeBudgetPeriod(spent, 'p0');
+  return closeBudgetPeriod(spent, 'p0', {
+    settledAt: '2026-08-01',
+    result: 'surplus',
+    resultCents: 90000,
+    decision: 'discard',
+    carryCents: 0,
+    nextPeriodId: 'p1',
+  });
 }
 
-test('schema v2 ledger uses negative credit-card balances for debt', () => {
+test('schema v3 ledger uses negative credit-card balances for debt', () => {
   const state = recordExpense(freshLedger(), {
     id: 'card-spend', date: '2026-08-02', accountId: 'card', amountCents: 7000,
     budgetPeriodId: 'p1', categoryLevel1: '交通',
   });
-  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.schemaVersion, 3);
   assert.equal(accountBalance(state, 'card'), -7000);
   assert.equal(totals(state).totalLiabilitiesCents, 27000);
 });
@@ -118,7 +139,7 @@ test('obsolete correction backup is rejected without partial conversion', () => 
   const raw = JSON.stringify({
     schemaVersion: 1, currency: 'CNY', defaultBudgetCents: 0,
     accounts: [{ id: 'card', type: 'credit_card', balanceCents: '7000' }],
-    budgetPeriods: [], transactions: [], plans: [], pendingItems: [], rewardBalanceCents: 0,
+    budgetPeriods: [], transactions: [], plans: [], pendingItems: [],
   });
   const result = restoreBackup(raw);
   assert.equal(result.ok, false);
@@ -205,7 +226,7 @@ test('revoking an open expense leaves audit records and restores account and bud
 test('revoking income fails atomically when later spending leaves an asset shortfall', () => {
   let state = freshLedger({
     accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceCents: 0 }],
-    budgetPeriods: [], rewardBalanceCents: 0,
+    budgetPeriods: [],
   });
   state = recordIncome(state, { id: 'income', date: '2026-08-01', accountId: 'cash', amountCents: 1000 });
   state = recordFixedExpense(state, { id: 'spent-income', date: '2026-08-02', accountId: 'cash', amountCents: 1000, categoryLevel1: '房租' });
@@ -216,8 +237,8 @@ test('revoking income fails atomically when later spending leaves an asset short
   assert.deepEqual(state, snapshot);
 });
 
-test('multiple mixed-payment refunds restore the exact original budget and reward portions', () => {
-  const spent = openExpense(freshLedger(), { amountCents: 10000, rewardOffsetCents: 3000 });
+test('multiple ordinary refunds restore the exact original budget cumulatively', () => {
+  const spent = openExpense(freshLedger(), { amountCents: 10000 });
   const first = recordRefund(spent, {
     id: 'refund-1', date: '2026-08-03', originalTransactionId: 'expense-1', amountCents: 6000,
     requestId: 'refund-request-1', today: TODAY,
@@ -227,8 +248,7 @@ test('multiple mixed-payment refunds restore the exact original budget and rewar
     requestId: 'refund-request-2', today: TODAY,
   });
   assert.equal(periodSpend(second, 'p1'), 0);
-  assert.equal(second.rewardBalanceCents, 10000);
-  assert.deepEqual(second.transactions.filter((item) => item.kind === 'refund').map((item) => [item.budgetImpactCents, item.rewardImpactCents]), [[-6000, 0], [-1000, 3000]]);
+  assert.deepEqual(second.transactions.filter((item) => item.kind === 'refund').map((item) => item.budgetImpactCents), [-6000, -4000]);
 });
 
 test('refund may be deposited into a different ordinary asset account', () => {
@@ -241,7 +261,7 @@ test('refund may be deposited into a different ordinary asset account', () => {
   assert.equal(refunded.transactions.at(-1).accountId, 'bank');
 });
 
-test('credit-card expense refund increases the original card balance under v2 signs', () => {
+test('credit-card expense refund increases the original card balance under schema v3 signs', () => {
   const spent = openExpense(freshLedger(), { id: 'card-expense', accountId: 'card', amountCents: 8000 });
   const refunded = recordRefund(spent, {
     id: 'card-refund', date: '2026-08-03', originalTransactionId: 'card-expense', amountCents: 3000,
@@ -300,8 +320,8 @@ test('active refund limits original expense modification to category and note', 
   assert.equal(getLatestTransaction(categorized, 'expense-1').note, '只改备注');
 });
 
-test('revoking a refund restores its account, budget and reward effects exactly', () => {
-  const spent = openExpense(freshLedger(), { amountCents: 10000, rewardOffsetCents: 3000 });
+test('revoking a refund restores its account and budget effects exactly', () => {
+  const spent = openExpense(freshLedger(), { amountCents: 10000 });
   const refunded = recordRefund(spent, {
     id: 'refund', date: '2026-08-03', originalTransactionId: 'expense-1', amountCents: 8000,
     requestId: 'refund-request', today: TODAY,
@@ -311,7 +331,6 @@ test('revoking a refund restores its account, budget and reward effects exactly'
   });
   assert.equal(accountBalance(revoked, 'cash'), accountBalance(spent, 'cash'));
   assert.equal(periodSpend(revoked, 'p1'), periodSpend(spent, 'p1'));
-  assert.equal(revoked.rewardBalanceCents, spent.rewardBalanceCents);
   assert.equal(getLatestTransaction(revoked, 'refund').status, 'revoked');
 });
 
@@ -325,42 +344,38 @@ test('original expense cannot be revoked while it has an active refund', () => {
   }), /active refunds/);
 });
 
-test('closed-period refund leaves settlement untouched and moves the refund to reward balance', () => {
+test('closed-period refund leaves the closed period untouched and changes the current open budget', () => {
   const spent = closedExpense();
   const refunded = recordRefund(spent, {
     id: 'closed-refund', date: '2026-08-02', originalTransactionId: 'closed-expense', amountCents: 4000,
     requestId: 'closed-refund-request', today: TODAY,
   });
   assert.equal(periodSpend(refunded, 'p0'), 10000);
-  assert.equal(refunded.rewardBalanceCents, 14000);
+  assert.equal(periodSpend(refunded, 'p1'), -4000);
 });
 
-test('revoking a closed-period refund charges the current budget when its reward has been spent', () => {
+test('revoking a closed-period refund reverses only the current open budget adjustment', () => {
   const refunded = recordRefund(closedExpense(), {
     id: 'closed-refund', date: '2026-08-02', originalTransactionId: 'closed-expense', amountCents: 4000,
     requestId: 'closed-refund-request', today: TODAY,
   });
-  const rewardSpent = recordRewardPayment(refunded, {
-    id: 'reward-spend', date: '2026-08-03', accountId: 'cash', amountCents: 14000,
-  });
-  const revoked = revokeRefund(rewardSpent, {
+  const revoked = revokeRefund(refunded, {
     logicalTransactionId: 'closed-refund', requestId: 'closed-refund-revoke', date: TODAY, today: TODAY,
   });
-  assert.equal(revoked.rewardBalanceCents, 0);
   assert.equal(periodSpend(revoked, 'p0'), 10000);
-  assert.equal(periodSpend(revoked, 'p1'), 4000);
+  assert.equal(periodSpend(revoked, 'p1'), 0);
   assert.equal(getLatestTransaction(revoked, 'closed-refund').status, 'revoked');
-  const adjustment = revoked.transactions.find((item) => item.kind === 'historical_adjustment');
+  const adjustment = revoked.transactions.filter((item) => item.kind === 'historical_adjustment').at(-1);
   assert.equal(adjustment.businessPayload.changes[0].currentBudgetDeltaCents, 4000);
 });
 
-test('reducing a closed-period expense preserves settlement and credits the difference to reward', () => {
+test('reducing a closed-period expense preserves the closed period and credits the difference to the current open budget', () => {
   const modified = modifyTransaction(closedExpense(), {
     logicalTransactionId: 'closed-expense', requestId: 'closed-less', today: TODAY,
     changes: { amountCents: 7000 },
   });
   assert.equal(periodSpend(modified, 'p0'), 10000);
-  assert.equal(modified.rewardBalanceCents, 13000);
+  assert.equal(periodSpend(modified, 'p1'), -3000);
   assert.equal(modified.transactions.filter((item) => item.kind === 'historical_adjustment').length, 1);
 });
 
@@ -371,7 +386,6 @@ test('increasing a closed-period expense preserves settlement and charges the cu
   });
   assert.equal(periodSpend(modified, 'p0'), 10000);
   assert.equal(periodSpend(modified, 'p1'), 3000);
-  assert.equal(modified.rewardBalanceCents, 10000);
   assert.equal(modified.transactions.filter((item) => item.kind === 'historical_adjustment').length, 1);
 });
 
@@ -388,7 +402,7 @@ test('historical undercharge fails atomically when no open period covers the cor
   assert.equal(periodSpend(state, 'p1'), 0);
 });
 
-test('closed fixed-expense modification never changes controlled budget or reward balance', () => {
+test('closed fixed-expense modification never changes controlled budget', () => {
   const state = recordFixedExpense(freshLedger(), {
     id: 'fixed', date: '2026-07-20', accountId: 'cash', amountCents: 5000, categoryLevel1: '房租',
   });
@@ -398,7 +412,6 @@ test('closed fixed-expense modification never changes controlled budget or rewar
   });
   assert.equal(periodSpend(modified, 'p0'), 0);
   assert.equal(periodSpend(modified, 'p1'), 0);
-  assert.equal(modified.rewardBalanceCents, 10000);
 });
 
 test('loan repayment records principal and interest as one atomic logical operation group', () => {
@@ -480,13 +493,13 @@ test('user transaction listing hides technical reversals and returns only the la
   assert.equal(visible.find((item) => item.logicalTransactionId === 'expense-1').amountCents, 9000);
 });
 
-test('schema v2 backup round trip preserves complete correction audit relations', () => {
+test('schema v3 backup round trip preserves complete correction audit relations', () => {
   const modified = modifyTransaction(openExpense(), {
     logicalTransactionId: 'expense-1', requestId: 'modify-backup', today: TODAY,
     changes: { amountCents: 9000 },
   });
   const restored = restoreBackup(serializeBackup(modified));
-  assert.equal(CURRENT_SCHEMA_VERSION, 2);
+  assert.equal(CURRENT_SCHEMA_VERSION, 3);
   assert.equal(restored.ok, true);
   assert.deepEqual(restored.data, modified);
 });
@@ -543,7 +556,7 @@ test('transfer modification restores old accounts before applying the new route'
   assert.equal(accountBalance(modified, 'bank'), 53000);
 });
 
-test('credit-card repayment modification preserves v2 debt signs and may switch payment account', () => {
+test('credit-card repayment modification preserves schema v3 debt signs and may switch payment account', () => {
   const state = freshLedger();
   state.accounts.find((item) => item.id === 'card').balanceCents = -10000;
   const repaid = recordCreditCardRepayment(state, {
@@ -587,7 +600,7 @@ test('expense modification may change fixed spending into controlled for an expl
   });
   const modified = modifyTransaction(fixed, {
     logicalTransactionId: 'fixed', requestId: 'fixed-to-controlled', today: TODAY,
-    changes: { expenseKind: 'controlled', budgetPeriodId: 'p1', rewardOffsetCents: 0 },
+    changes: { expenseKind: 'controlled', budgetPeriodId: 'p1' },
   });
   assert.equal(getLatestTransaction(modified, 'fixed').kind, 'controlled_expense');
   assert.equal(periodSpend(modified, 'p1'), 5000);
@@ -671,5 +684,5 @@ test('current backup round trip preserves application settings and audit metadat
   const restored = restoreBackup(serializeBackup(source));
   assert.equal(restored.ok, true);
   assert.deepEqual(restored.data.appSettings, source.appSettings);
-  assert.equal(restored.data.schemaVersion, 2);
+  assert.equal(restored.data.schemaVersion, 3);
 });

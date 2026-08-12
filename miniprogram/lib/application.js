@@ -7,6 +7,10 @@ const STORAGE_KEY = 'yongdu-ledger-v1';
 const RESTORE_TEMP_KEY = `${STORAGE_KEY}-restore-temp`;
 const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 
+function isMissingStorageValue(value) {
+  return value === undefined || value === null || value === '';
+}
+
 function todayIso(now = new Date()) {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
@@ -46,7 +50,6 @@ const TRANSACTION_TYPE_LABELS = {
   investment_sell: '投资卖出',
   investment_valuation: '手工估值',
   refund: '退款',
-  reward_payment: '奖励支付',
   loan_interest_accrual: '利息计提',
   historical_adjustment: '历史账单调整',
 };
@@ -82,6 +85,7 @@ function chineseOperationError(error) {
     [/investment value is insufficient/, '投资现值不足'],
     [/target account is not an investment account/, '请选择投资账户'],
     [/liability cannot be negative/, '负债余额不能为负'],
+    [/no open budget period for historical adjustment/, '本期待结算，请先完成本期结算'],
   ];
   const translated = rules.find(([pattern]) => pattern.test(message));
   return translated ? translated[1] : (/[一-龥]/.test(message) ? message : '操作失败，请检查账户和金额');
@@ -203,7 +207,7 @@ function initializeState({ monthlyBudgetYuan, startDay = 1, nowDate, accounts })
 
 function loadPersisted(storage) {
   const rawData = storage.get(STORAGE_KEY);
-  if (rawData === undefined || rawData === null || rawData === '') return { ok: true, state: null, rawData: null };
+  if (isMissingStorageValue(rawData)) return { ok: true, state: null, rawData: null };
   const restored = restoreBackup(rawData);
   return restored.ok ? { ok: true, state: restored.data, rawData } : restored;
 }
@@ -221,7 +225,7 @@ function commitPreparedState(storage, currentState, candidateState) {
   try {
     candidateRawData = serializeBackup(candidateState);
     oldRawData = storage.get(STORAGE_KEY);
-    hadOldValue = oldRawData !== undefined && oldRawData !== null && oldRawData !== '';
+    hadOldValue = !isMissingStorageValue(oldRawData);
   } catch (error) {
     return { ok: false, state: clone(currentState), error: `保存预检失败：${error.message}` };
   }
@@ -237,7 +241,7 @@ function commitPreparedState(storage, currentState, candidateState) {
       else if (typeof storage.remove === 'function') storage.remove(STORAGE_KEY);
       else storage.set(STORAGE_KEY, oldRawData ?? '');
       const rollbackReadback = storage.get(STORAGE_KEY);
-      const rollbackMatches = hadOldValue ? rollbackReadback === oldRawData : (rollbackReadback === undefined || rollbackReadback === null || rollbackReadback === '');
+      const rollbackMatches = hadOldValue ? rollbackReadback === oldRawData : isMissingStorageValue(rollbackReadback);
       if (!rollbackMatches) throw new Error('原数据回滚读回校验不一致');
     } catch (rollbackFailure) {
       rollbackError = rollbackFailure.message;
@@ -294,12 +298,14 @@ function chineseBackupError(error) {
     [/backup field ([A-Za-z]+) must be an array/, (match) => `备份缺少或损坏字段：${match[1]}`],
     [/backup root must be an object/, () => '备份根节点必须是对象'],
     [/backup contains an invalid or duplicate account id/, () => '备份包含无效或重复的账户标识'],
+    [/backup contains an invalid or duplicate budget period id/, () => '预算周期存在重复标识'],
     [/backup contains an invalid or duplicate transaction id/, () => '备份包含无效或重复的流水标识'],
     [/defaultBudgetCents must be a non-negative integer/, () => '默认预算金额无效'],
-    [/rewardBalanceCents must be a non-negative integer/, () => '奖励余额金额无效'],
+    [/backup contains a removed field/, () => '备份包含已删除字段'],
+    [/transaction contains a removed field/, () => '流水包含已删除字段'],
     [/invalid balance for account/, () => '账户余额无效'],
     [/invalid transaction amount/, () => '流水金额无效'],
-    [/invalid transaction impact/, () => '流水预算或奖励影响金额无效'],
+    [/invalid transaction impact/, () => '流水预算影响金额无效'],
     [/backup data must be a string/, () => '备份内容必须是文本'],
   ];
   for (const [pattern, translate] of rules) {
@@ -485,7 +491,7 @@ function commitBackupRestore(storage, candidate, { phrase, confirmed } = {}) {
       throw new Error('原数据读取失败');
     }
     oldReadSucceeded = true;
-    hadOldValue = oldRaw !== undefined && oldRaw !== null;
+    hadOldValue = !isMissingStorageValue(oldRaw);
     tempWriteAttempted = true;
     try {
       storage.set(RESTORE_TEMP_KEY, canonicalRawData);
@@ -525,7 +531,7 @@ function commitBackupRestore(storage, candidate, { phrase, confirmed } = {}) {
       if (hadOldValue) storage.set(STORAGE_KEY, oldRaw);
       else storage.remove(STORAGE_KEY);
       const rolledBack = storage.get(STORAGE_KEY);
-      if (hadOldValue ? rolledBack !== oldRaw : rolledBack !== undefined && rolledBack !== null) throw new Error('原数据回滚校验失败');
+      if (hadOldValue ? rolledBack !== oldRaw : !isMissingStorageValue(rolledBack)) throw new Error('原数据回滚校验失败');
     }) : null;
     const cleanupError = tempWriteAttempted ? tryTwice(() => storage.remove(RESTORE_TEMP_KEY)) : null;
     const suffix = [
@@ -548,17 +554,17 @@ function clearLocalLedger(storage, { phrase, confirmed } = {}) {
   } catch {
     return { ok: false, error: '清除失败：无法读取现有本地数据，未执行删除' };
   }
-  const hadMain = oldMain !== undefined && oldMain !== null;
-  const hadTemp = oldTemp !== undefined && oldTemp !== null;
+  const hadMain = !isMissingStorageValue(oldMain);
+  const hadTemp = !isMissingStorageValue(oldTemp);
   let deletionAttempted = false;
   try {
     deletionAttempted = true;
     storage.remove(STORAGE_KEY);
     const mainAfterRemoval = storage.get(STORAGE_KEY);
-    if (mainAfterRemoval !== undefined && mainAfterRemoval !== null) throw new Error('主数据删除校验失败');
+    if (!isMissingStorageValue(mainAfterRemoval)) throw new Error('主数据删除校验失败');
     storage.remove(RESTORE_TEMP_KEY);
     const tempAfterRemoval = storage.get(RESTORE_TEMP_KEY);
-    if (tempAfterRemoval !== undefined && tempAfterRemoval !== null) throw new Error('临时数据删除校验失败');
+    if (!isMissingStorageValue(tempAfterRemoval)) throw new Error('临时数据删除校验失败');
     return { ok: true, removedKeys: [STORAGE_KEY, RESTORE_TEMP_KEY] };
   } catch (error) {
     const rollbackError = deletionAttempted ? tryTwice(() => {
@@ -568,8 +574,8 @@ function clearLocalLedger(storage, { phrase, confirmed } = {}) {
       else storage.remove(RESTORE_TEMP_KEY);
       const main = storage.get(STORAGE_KEY);
       const temp = storage.get(RESTORE_TEMP_KEY);
-      if (hadMain ? main !== oldMain : main !== undefined && main !== null) throw new Error('主数据恢复校验失败');
-      if (hadTemp ? temp !== oldTemp : temp !== undefined && temp !== null) throw new Error('临时数据恢复校验失败');
+      if (hadMain ? main !== oldMain : !isMissingStorageValue(main)) throw new Error('主数据恢复校验失败');
+      if (hadTemp ? temp !== oldTemp : !isMissingStorageValue(temp)) throw new Error('临时数据恢复校验失败');
     }) : null;
     return {
       ok: false,
@@ -634,14 +640,11 @@ function getHomeModel(state, date, planSummary = null) {
 function getSettlementModel(state, date) {
   const pendingPeriod = openPeriodWaitingForSettlement(state, date);
   if (!pendingPeriod) return null;
+  const nextPreview = nextPeriodPreview(state, pendingPeriod);
   const settlement = settleBudgetCycle({
     baseBudgetCents: pendingPeriod.baseBudgetCents,
     carryCents: pendingPeriod.carryCents,
     netBudgetSpendCents: pendingPeriod.netBudgetSpendCents,
-    positiveMode: 'carry',
-    overspendMode: 'carry',
-    rewardBalanceCents: state.rewardBalanceCents,
-    rewardOffsetCents: 0,
   });
   return {
     periodId: pendingPeriod.id,
@@ -658,98 +661,144 @@ function getSettlementModel(state, date) {
     positiveSurplus: formatCents(settlement.positiveSurplusCents),
     grossDebtCents: settlement.grossDebtCents,
     grossDebt: formatCents(settlement.grossDebtCents),
-    rewardBalanceCents: state.rewardBalanceCents,
-    rewardBalance: formatCents(state.rewardBalanceCents),
-    rewardOffsetCents: Math.min(state.rewardBalanceCents, settlement.grossDebtCents),
-    rewardOffset: formatCents(Math.min(state.rewardBalanceCents, settlement.grossDebtCents)),
-    remainingDebtCents: Math.max(0, settlement.grossDebtCents - Math.min(state.rewardBalanceCents, settlement.grossDebtCents)),
-    remainingDebt: formatCents(Math.max(0, settlement.grossDebtCents - Math.min(state.rewardBalanceCents, settlement.grossDebtCents))),
-    positiveChoiceRequired: settlement.positiveSurplusCents > 0,
-    overspendChoiceRequired: settlement.grossDebtCents > 0,
-    rewardCanOffsetDebt: state.rewardBalanceCents >= settlement.grossDebtCents,
+    overspendCents: settlement.overspendCents,
+    overspend: formatCents(settlement.overspendCents),
+    resultCents: settlement.resultCents,
+    result: settlement.result,
+    resultAmount: formatCents(Math.abs(settlement.resultCents)),
+    decisionRequired: settlement.decisionRequired,
+    decisionOptions: settlement.decisionRequired
+      ? [{ value: 'carry', label: '全部带入' }, { value: 'discard', label: '全部不带入' }]
+      : [],
+    nextPeriodStartDate: nextPreview.startDate,
+    nextPeriodEndDate: nextPreview.endDate,
+    nextPeriodKind: nextPreview.kind,
+    nextPeriodBaseBudgetCents: nextPreview.baseBudgetCents,
+    nextPeriodBaseBudget: formatCents(nextPreview.baseBudgetCents),
+    nextActualBudgetIfCarryCents: actualBudgetCents(nextPreview.baseBudgetCents, settlement.resultCents),
+    nextActualBudgetIfCarry: formatCents(actualBudgetCents(nextPreview.baseBudgetCents, settlement.resultCents)),
+    nextActualBudgetIfDiscardCents: nextPreview.baseBudgetCents,
+    nextActualBudgetIfDiscard: formatCents(nextPreview.baseBudgetCents),
   };
 }
 
-function settleCurrentPeriod(state, date, { positiveMode = null, overspendMode = null } = {}) {
+function nextPeriodPreview(state, pendingPeriod) {
+  const pending = state.appSettings?.pendingStartDayChange;
+  if (pending?.stage === 'transition' && pending.transitionPeriodId === pendingPeriod.id) {
+    const cycle = cycleForDate(pending.regularStartDate, pending.newStartDay, state.defaultBudgetCents);
+    return { startDate: pending.regularStartDate, endDate: cycle.endDate, baseBudgetCents: state.defaultBudgetCents, kind: 'regular' };
+  }
+  if (pending?.stage === 'pending' && pending.appliesAfterPeriodId === pendingPeriod.id) {
+    const planned = planStartDayTransition({
+      currentPeriodEndDate: pendingPeriod.endDate,
+      newStartDay: pending.newStartDay,
+      defaultMonthlyBudgetCents: state.defaultBudgetCents,
+    });
+    if (planned.transition) return { ...planned.transition, kind: 'transition' };
+    return { startDate: planned.nextCycle.startDate, endDate: planned.nextCycle.endDate, baseBudgetCents: state.defaultBudgetCents, kind: 'regular' };
+  }
+  const nextStartDate = addDays(pendingPeriod.endDate, 1);
+  const cycle = cycleForDate(nextStartDate, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
+  return { startDate: cycle.startDate, endDate: cycle.endDate, baseBudgetCents: cycle.baseBudgetCents, kind: 'regular' };
+}
+
+function settlementDecisionFromOptions(options) {
+  if (!options || typeof options !== 'object' || Array.isArray(options)) {
+    throw new TypeError('settleCurrentPeriod options must be an object');
+  }
+  const unknownKey = Object.keys(options).find((key) => key !== 'decision');
+  if (unknownKey) throw new Error(`settleCurrentPeriod only accepts decision; unknown option: ${unknownKey}`);
+  const decision = Object.prototype.hasOwnProperty.call(options, 'decision') ? options.decision : null;
+  if (decision !== null && !['carry', 'discard'].includes(decision)) {
+    throw new Error('settlement decision must be carry, discard, or null');
+  }
+  return decision;
+}
+
+function settleCurrentPeriod(state, date, options = {}) {
+  const decision = settlementDecisionFromOptions(options);
   const model = getSettlementModel(state, date);
   if (!model) throw new Error('no budget period is waiting for settlement');
-  if (model.positiveChoiceRequired && !['carry', 'reward'].includes(positiveMode)) throw new Error('请选择结余处理方式');
-  if (model.overspendChoiceRequired && !['carry', 'reward'].includes(overspendMode)) throw new Error('请选择超支处理方式');
-  const selectedPositiveMode = model.positiveChoiceRequired ? positiveMode : 'carry';
-  const selectedOverspendMode = model.overspendChoiceRequired ? overspendMode : 'carry';
+  if (model.decisionRequired && !['carry', 'discard'].includes(decision)) throw new Error('请选择本期结算方式');
+  const selectedDecision = model.decisionRequired ? decision : 'discard';
   const result = settleBudgetCycle({
     baseBudgetCents: model.baseBudgetCents,
     carryCents: model.carryCents,
     netBudgetSpendCents: model.netBudgetSpendCents,
-    positiveMode: selectedPositiveMode,
-    overspendMode: selectedOverspendMode === 'reward' ? 'carry' : selectedOverspendMode,
-    rewardBalanceCents: state.rewardBalanceCents,
-    rewardOffsetCents: selectedOverspendMode === 'reward' ? model.rewardOffsetCents : 0,
+    decision: selectedDecision,
   });
-  const closed = closeBudgetPeriod(state, model.periodId);
-  closed.rewardBalanceCents = result.rewardBalanceAfterCents;
+  const settlementRecord = {
+    settledAt: date,
+    result: result.result,
+    resultCents: result.resultCents,
+    decision: result.decision,
+    carryCents: result.nextCarryCents,
+    nextPeriodId: null,
+  };
+  const closed = closeBudgetPeriod(state, model.periodId, settlementRecord);
   const pending = state.appSettings?.pendingStartDayChange;
   if (pending?.stage === 'transition' && pending.transitionPeriodId === model.periodId) {
-    const nextCycle = cycleForDate(pending.regularStartDate, pending.newStartDay, closed.defaultBudgetCents);
     let next = addBudgetPeriod(closed, {
       id: nextBudgetPeriodId(closed),
-      startDate: pending.regularStartDate,
-      endDate: nextCycle.endDate,
-      baseBudgetCents: closed.defaultBudgetCents,
+      startDate: model.nextPeriodStartDate,
+      endDate: model.nextPeriodEndDate,
+      baseBudgetCents: model.nextPeriodBaseBudgetCents,
       carryCents: result.nextCarryCents,
       status: 'open',
     });
+    next.budgetPeriods.find((item) => item.id === model.periodId).settlement.nextPeriodId = next.budgetPeriods[next.budgetPeriods.length - 1].id;
     next.appSettings = { ...next.appSettings, startDay: pending.newStartDay };
     delete next.appSettings.pendingStartDayChange;
     return next;
   }
   if (pending?.stage === 'pending' && pending.appliesAfterPeriodId === model.periodId) {
-    const planned = planStartDayTransition({
-      currentPeriodEndDate: model.periodEndDate,
-      newStartDay: pending.newStartDay,
-      defaultMonthlyBudgetCents: closed.defaultBudgetCents,
-    });
-    if (planned.transition) {
+    if (model.nextPeriodKind === 'transition') {
       const transitionPeriodId = nextBudgetPeriodId(closed);
       let next = addBudgetPeriod(closed, {
         id: transitionPeriodId,
-        startDate: planned.transition.startDate,
-        endDate: planned.transition.endDate,
-        baseBudgetCents: planned.transition.baseBudgetCents,
+        startDate: model.nextPeriodStartDate,
+        endDate: model.nextPeriodEndDate,
+        baseBudgetCents: model.nextPeriodBaseBudgetCents,
         carryCents: result.nextCarryCents,
         status: 'open',
       });
+      next.budgetPeriods.find((item) => item.id === model.periodId).settlement.nextPeriodId = transitionPeriodId;
       next.budgetPeriods.find((item) => item.id === transitionPeriodId).kind = 'transition';
       next.appSettings.pendingStartDayChange = {
         ...pending,
         stage: 'transition',
         transitionPeriodId,
-        regularStartDate: planned.nextCycle.startDate,
+        regularStartDate: planStartDayTransition({
+          currentPeriodEndDate: model.periodEndDate,
+          newStartDay: pending.newStartDay,
+          defaultMonthlyBudgetCents: closed.defaultBudgetCents,
+        }).nextCycle.startDate,
       };
       return next;
     }
     let next = addBudgetPeriod(closed, {
       id: nextBudgetPeriodId(closed),
-      startDate: planned.nextCycle.startDate,
-      endDate: planned.nextCycle.endDate,
-      baseBudgetCents: closed.defaultBudgetCents,
+      startDate: model.nextPeriodStartDate,
+      endDate: model.nextPeriodEndDate,
+      baseBudgetCents: model.nextPeriodBaseBudgetCents,
       carryCents: result.nextCarryCents,
       status: 'open',
     });
+    next.budgetPeriods.find((item) => item.id === model.periodId).settlement.nextPeriodId = next.budgetPeriods[next.budgetPeriods.length - 1].id;
     next.appSettings = { ...next.appSettings, startDay: pending.newStartDay };
     delete next.appSettings.pendingStartDayChange;
     return next;
   }
-  const nextPeriodStartDate = addDays(model.periodEndDate, 1);
-  const nextCycle = cycleForDate(nextPeriodStartDate, state.appSettings.startDay, state.appSettings.monthlyBudgetCents);
-  return addBudgetPeriod(closed, {
+  const next = addBudgetPeriod(closed, {
     id: nextBudgetPeriodId(closed),
-    startDate: nextCycle.startDate,
-    endDate: nextCycle.endDate,
-    baseBudgetCents: nextCycle.baseBudgetCents,
+    startDate: model.nextPeriodStartDate,
+    endDate: model.nextPeriodEndDate,
+    baseBudgetCents: model.nextPeriodBaseBudgetCents,
     carryCents: result.nextCarryCents,
     status: 'open',
   });
+  next.budgetPeriods.find((item) => item.id === model.periodId).settlement.nextPeriodId = next.budgetPeriods[next.budgetPeriods.length - 1].id;
+  return next;
 }
 
 function changeBudgetSettings(state, { newBudgetYuan, scope, date }) {
@@ -916,8 +965,6 @@ function getAssetsModel(state) {
     totalLiabilities: formatCents(summary.totalLiabilitiesCents),
     netAssetsCents: summary.netAssetsCents,
     netAssets: formatCents(summary.netAssetsCents),
-    rewardBalanceCents: summary.rewardBalanceCents,
-    rewardBalance: formatCents(summary.rewardBalanceCents),
     accounts: state.accounts.map((item) => ({
       id: item.id,
       name: item.name,
@@ -1330,7 +1377,6 @@ function historicalAdjustmentModel(state, item) {
   const before = payload.beforeAmountCents || 0;
   const after = payload.afterAmountCents || 0;
   const budgetDeltaCents = (payload.changes || []).reduce((sum, change) => sum + (change.currentBudgetDeltaCents || 0), 0);
-  const rewardDeltaCents = (payload.changes || []).reduce((sum, change) => sum + (change.rewardDeltaCents || 0), 0);
   const accountChanges = (payload.accountChanges || []).map((change) => ({
     accountId: change.accountId,
     accountName: accountName(state, change.accountId),
@@ -1355,12 +1401,10 @@ function historicalAdjustmentModel(state, item) {
     accountFlow: '不改变账户流水统计',
     category: `历史账单调整 · 原账 ${payload.originalDate || '未知日期'}`,
     budgetType: '不计收入、支出和分类统计',
-    note: `原金额 ${formatCents(before)} → ${formatCents(after)}；账户影响 ${accountChanges.map((change) => `${change.accountName} ${change.balanceDelta}`).join('、') || '无'}；预算影响 ${formatCents(budgetDeltaCents)}；奖励影响 ${formatCents(rewardDeltaCents)}`,
+    note: `原金额 ${formatCents(before)} → ${formatCents(after)}；账户影响 ${accountChanges.map((change) => `${change.accountName} ${change.balanceDelta}`).join('、') || '无'}；本期预算 ${signedCents(budgetDeltaCents)}`,
     accountImpacts: accountChanges,
     budgetImpactCents: budgetDeltaCents,
     budgetImpact: formatCents(budgetDeltaCents),
-    rewardImpactCents: rewardDeltaCents,
-    rewardImpact: formatCents(rewardDeltaCents),
     actions: { refund: false, modify: false, revoke: false, modifyFields: 'none', ordered: [] },
     canSwipe: false,
     affectsStatistics: false,
@@ -1381,7 +1425,7 @@ function transactionListItem(state, item) {
     ? `${originalCategory || '原支出'}退款`
     : transactionCategory(item, typeLabel);
   const budgetType = item.kind === 'refund'
-    ? ((item.budgetImpactCents || 0) < 0 ? '恢复预算' : ((item.rewardImpactCents || 0) > 0 ? '退回奖励' : '退款'))
+    ? ((item.budgetImpactCents || 0) < 0 ? '恢复预算' : '退款')
     : (item.kind === 'controlled_expense' ? '计入预算' : '不计预算');
   return {
     id: item.id,
@@ -1533,10 +1577,6 @@ function editableFieldsFor(state, latest, modifyFields) {
   } else if (latest.businessKind === 'investment_valuation') {
     addDate(); addAmount('currentValueYuan', payload.currentValueCents, '当前现值');
     fields.push(accountField(state, 'investmentAccountId', '投资账户', payload.investmentAccountId, ['investment']));
-  } else if (latest.businessKind === 'reward_payment') {
-    addDate(); addAmount();
-    fields.push(accountField(state, 'accountId', '付款账户', payload.accountId, cashTypes));
-    fields.push(textField('categoryLevel1', '分类', payload.categoryLevel1));
   }
   fields.push(textField('note', '备注', payload.note));
   return fields;
@@ -1597,8 +1637,6 @@ function getTransactionDetailModel(state, logicalTransactionId) {
     accountImpacts: accountImpactModels(state, group),
     budgetImpactCents: sumImpacts(group, 'budgetImpactCents'),
     budgetImpact: formatCents(sumImpacts(group, 'budgetImpactCents')),
-    rewardImpactCents: sumImpacts(group, 'rewardImpactCents'),
-    rewardImpact: formatCents(sumImpacts(group, 'rewardImpactCents')),
     refunds,
     refundedCents,
     refunded: formatCents(refundedCents),
@@ -1620,13 +1658,12 @@ function normalizeModificationChanges(state, latest, supplied) {
     ['principalYuan', 'principalCents'],
     ['interestYuan', 'interestCents'],
     ['currentValueYuan', 'currentValueCents'],
-    ['rewardOffsetYuan', 'rewardOffsetCents'],
   ];
   for (const [yuanField, centsField] of moneyFields) {
     if (!Object.prototype.hasOwnProperty.call(changes, yuanField)) continue;
     changes[centsField] = parseYuanToCents(changes[yuanField]);
     if (['amountCents', 'principalCents'].includes(centsField) && changes[centsField] <= 0) throw new Error('金额必须大于0');
-    if (['interestCents', 'currentValueCents', 'rewardOffsetCents'].includes(centsField) && changes[centsField] < 0) throw new Error('金额不能为负');
+    if (['interestCents', 'currentValueCents'].includes(centsField) && changes[centsField] < 0) throw new Error('金额不能为负');
     delete changes[yuanField];
   }
   if (Object.prototype.hasOwnProperty.call(changes, 'note')) changes.note = String(changes.note || '').trim();
@@ -1716,17 +1753,13 @@ function buildStateImpactPreview(currentState, candidateState) {
       netSpendDelta: signedCents(netSpendDeltaCents),
     };
   }).filter((item) => item.netSpendDeltaCents !== 0);
-  const rewardDeltaCents = candidateState.rewardBalanceCents - currentState.rewardBalanceCents;
   const parts = [
     ...accounts.map((item) => `账户“${item.accountName}” ${item.balanceDelta}`),
     ...budgets.map((item) => `预算净支出 ${item.netSpendDelta}`),
-    ...(rewardDeltaCents ? [`奖励余额 ${signedCents(rewardDeltaCents)}`] : []),
   ];
   return {
     accounts,
     budgets,
-    rewardDeltaCents,
-    rewardDelta: signedCents(rewardDeltaCents),
     summary: parts.length ? parts.join('；') : '账面金额不变，仅更新分类或备注。',
   };
 }
@@ -1734,7 +1767,6 @@ function buildStateImpactPreview(currentState, candidateState) {
 const ALL_EXPENSE_KINDS = new Set([
   'controlled_expense',
   'fixed_expense',
-  'reward_payment',
   'loan_interest_accrual',
 ]);
 
@@ -1956,6 +1988,48 @@ function scheduledPlanModel(plan) {
   };
 }
 
+function settlementRecordSettingsModel(item) {
+  const settled = item.settlement || null;
+  const resultCents = settled.resultCents;
+  return {
+    id: item.id,
+    startDate: item.startDate,
+    endDate: item.endDate,
+    status: 'closed',
+    statusLabel: '已结算',
+    kind: item.kind || 'regular',
+    kindLabel: item.kind === 'transition' ? '过渡周期' : '预算周期',
+    actualBudgetCents: actualBudgetCents(item.baseBudgetCents, item.carryCents),
+    actualBudget: formatCents(actualBudgetCents(item.baseBudgetCents, item.carryCents)),
+    netBudgetSpendCents: item.netBudgetSpendCents,
+    netBudgetSpend: formatCents(item.netBudgetSpendCents),
+    result: settled?.result || (item.status === 'closed' ? 'unknown' : 'pending'),
+    resultLabel: settled ? (settled.result === 'surplus' ? '结余' : (settled.result === 'overspend' ? '超支' : '持平')) : (item.status === 'closed' ? '未记录' : '待结算'),
+    resultCents,
+    resultAmount: formatCents(Math.abs(resultCents)),
+    decision: settled.decision,
+    decisionLabel: settled.decision === 'carry' ? '全部带入' : (settled.decision === 'discard' ? '全部不带入' : '持平，无需带入'),
+    carryCents: settled.carryCents,
+    carryAmount: formatCents(settled.carryCents),
+    settledAt: settled.settledAt,
+    nextPeriodId: settled.nextPeriodId,
+  };
+}
+
+function hasCompletedSettlement(item) {
+  const settlement = item?.settlement;
+  return item?.status === 'closed'
+    && settlement
+    && typeof settlement === 'object'
+    && !Array.isArray(settlement)
+    && typeof settlement.settledAt === 'string'
+    && ['surplus', 'overspend', 'balanced'].includes(settlement.result)
+    && Number.isInteger(settlement.resultCents)
+    && ['carry', 'discard', 'none'].includes(settlement.decision)
+    && Number.isInteger(settlement.carryCents)
+    && typeof settlement.nextPeriodId === 'string';
+}
+
 function getSettingsModel(state, date = todayIso()) {
   const assets = getAssetsModel(state);
   const activePeriod = activePeriodForDate(state, date);
@@ -1988,6 +2062,10 @@ function getSettingsModel(state, date = todayIso()) {
       : '当前没有待生效的起始日修改',
     accounts: assets.accounts,
     assets,
+    settlementRecords: state.budgetPeriods
+      .filter(hasCompletedSettlement)
+      .sort((left, right) => right.endDate.localeCompare(left.endDate) || right.startDate.localeCompare(left.startDate))
+      .map(settlementRecordSettingsModel),
     plans: state.plans.map(scheduledPlanModel),
     pendingPlanItems: state.pendingItems
       .filter((item) => item.type === 'fixed_plan' && item.status === 'pending')

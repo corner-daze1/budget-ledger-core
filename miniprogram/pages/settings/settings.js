@@ -650,12 +650,22 @@ Page({
         }
         if (!this.startBusy('clear-data', 'data')) return;
         try {
-          await this.dataFiles().removeGeneratedFiles();
           const result = core.clearLocalLedger(getApp().storageAdapter(), { phrase: '清除', confirmed: true });
-          if (!result.ok) throw new Error(result.error);
-          getApp().globalData.state = null;
-          getApp().globalData.storageError = null;
-          getApp().globalData.planRunSummary = null;
+          if (!result.ok) {
+            this.showSectionFeedback('data', { error: result.error });
+            return;
+          }
+          const app = getApp();
+          app.globalData.state = null;
+          app.globalData.storageError = null;
+          app.globalData.planRunSummary = null;
+          this.setData({ initialized: false });
+          try {
+            await this.dataFiles().removeGeneratedFiles();
+          } catch {
+            this.showSectionFeedback('data', { notice: '账本已清除，但部分导出文件未删除，请稍后重试清理。' });
+            return;
+          }
           wx.switchTab({ url: '/pages/settings/settings' });
         } catch (error) {
           this.showSectionFeedback('data', { error: error.message });

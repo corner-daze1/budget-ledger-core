@@ -24,7 +24,6 @@
       <view wx:if="{{!model.accountImpacts.length}}" class="detail-muted">账户余额不变</view>
     </view>
     <view class="impact-section"><view class="impact-heading">预算影响</view><view class="detail-line"><text>本期预算净支出</text><text>{{model.budgetImpact}}</text></view></view>
-    <view class="impact-section"><view class="impact-heading">奖励影响</view><view class="detail-line"><text>奖励余额</text><text>{{model.rewardImpact}}</text></view></view>
   </view>
 
   <view wx:if="{{model.refunds.length}}" class="card detail-card">
@@ -73,7 +72,7 @@
 
   <view wx:if="{{mode === 'revoke' || mode === 'revoke-refund'}}" class="card detail-card edit-card">
     <view class="card-title">{{mode === 'revoke-refund' ? '撤销这笔退款' : '撤销这笔账单'}}</view>
-    <view class="detail-muted">撤销会保留历史审计记录，并恢复对应账户、预算和奖励影响。</view>
+    <view class="detail-muted">撤销会保留历史审计记录，并恢复对应账户和预算影响。</view>
     <button class="danger-button" disabled="{{busy}}" bindtap="confirmAction">{{busy ? '处理中…' : '预览并确认撤销'}}</button>
   </view>
 </view>

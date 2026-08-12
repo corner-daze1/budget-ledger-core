@@ -68,7 +68,6 @@ function loadHomePage(state = null) {
 function richState() {
   let state = createLedger({
     defaultBudgetCents: 300000,
-    rewardBalanceCents: 5000,
     accounts: [
       { id: 'cash', name: '现金', type: 'cash', balanceCents: 100000 },
       { id: 'bank', name: '储蓄卡', type: 'bank', balanceCents: 50000 },
@@ -267,6 +266,27 @@ test('首页账本保持提醒结算和空状态可达', () => {
   for (const token of ['model.needsSettlement', 'model.showPlanOverdueBanner', 'model.planPendingItems.length', 'ledger-empty', '还没有流水']) {
     assert.match(wxml, new RegExp(token.replace('.', '\\.')));
   }
+});
+
+test('首页结算只提供未预选的全量带入或全量不带入', () => {
+  const js = read('miniprogram/pages/home/home.js');
+  const wxml = read('miniprogram/pages/home/home.wxml');
+  assert.match(js, /settlementDecisionLabels:\s*\['全部带入', '全部不带入'\]/);
+  assert.match(js, /decisionRequired/);
+  assert.match(js, /请先选择本期结算方式/);
+  assert.match(wxml, /settlementDecisionLabels/);
+  assert.match(wxml, /settlementDecisionSelected \? settlementDecisionIndex : ''/);
+  assert.doesNotMatch(js, /reward|奖励|positiveMode|overspendMode/);
+  assert.doesNotMatch(wxml, /reward|奖励|positiveMode|overspendMode/);
+});
+
+test('设置页周期结算记录只展示已结算周期并显示带入下期金额', () => {
+  const wxml = read('miniprogram/pages/settings/settings.wxml');
+  assert.match(wxml, /周期结算记录/);
+  assert.match(wxml, /settlementRecords/);
+  assert.match(wxml, /带入下期/);
+  assert.match(wxml, /暂无周期结算记录/);
+  assert.doesNotMatch(wxml, /等待用户选择全部带入或全部不带入/);
 });
 
 test('首页账本在320px下允许长文本换行且不使用逐笔卡片', () => {

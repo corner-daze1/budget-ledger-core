@@ -291,7 +291,7 @@ test('停用计划只阻止未来发生期且保留历史', () => {
   assert.equal(later.plans[0].active, false);
 });
 
-test('旧计划迁移至schemaVersion二后无到期日只标记待补充且幂等', () => {
+test('旧计划缺少到期日时只标记待补充且幂等', () => {
   const state = baseState();
   state.plans.push({ id: 'legacy', name: '旧计划', amountCents: 1000, accountId: 'cash', categoryLevel1: '固定支出', active: true });
   const first = processDuePlans(state, '2028-01-20');
@@ -299,7 +299,7 @@ test('旧计划迁移至schemaVersion二后无到期日只标记待补充且幂�
   assert.equal(second.state.pendingItems.length, 1);
   assert.equal(second.state.pendingItems[0].reasonText, '待补充计划信息');
   assert.equal(second.state.transactions.length, 0);
-  assert.equal(second.state.schemaVersion, 2);
+  assert.equal(second.state.schemaVersion, 3);
 });
 
 test('编辑旧计划补充到期信息后解除待补充标记', () => {
@@ -349,7 +349,7 @@ test('成功自动执行只显示已自动记账且不显示逾期', () => {
   assert.equal(home.showPlanOverdueBanner, false);
 });
 
-test('计划待处理提醒和发生期键经schemaVersion二备份完整恢复', () => {
+test('计划待处理提醒和发生期键经schemaVersion三备份完整恢复', () => {
   const store = storage();
   const state = processDuePlans(addPlan(baseState(), { amountYuan: '', nextDueDate: '2028-01-20', reminderDays: [3, 1, 0] }), '2028-01-20').state;
   savePersisted(store, state);
@@ -357,7 +357,7 @@ test('计划待处理提醒和发生期键经schemaVersion二备份完整恢复'
   assert.equal(restored.ok, true);
   assert.deepEqual(restored.state.plans, state.plans);
   assert.deepEqual(restored.state.pendingItems, state.pendingItems);
-  assert.equal(restored.state.schemaVersion, 2);
+  assert.equal(restored.state.schemaVersion, 3);
 });
 
 test('三类自动计划的预算净支出始终保持原值', () => {

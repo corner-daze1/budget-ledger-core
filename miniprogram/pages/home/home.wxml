@@ -10,18 +10,15 @@
     <view wx:if="{{model.needsSettlement}}" class="settlement-card budget-card">
       <view class="card-kicker">本期已结束</view>
       <view class="card-title">先结算，再看今天能花多少</view>
-      <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，系统不会替你决定结余或超支怎么处理。</view>
+      <view class="home-secondary-text">上期截至 {{model.settlement.periodEndDate}}，结余或超支必须由你明确选择是否全部带入下期。</view>
       <view class="settlement-line"><text>本期可控预算</text><text class="settlement-value">{{model.settlement.actualBudget}}</text></view>
       <view class="settlement-line"><text>本期净支出</text><text class="settlement-value">{{model.settlement.netBudgetSpend}}</text></view>
-      <view wx:if="{{model.settlement.positiveChoiceRequired}}" class="field settlement-field">
-        <text class="field-label">结余 {{model.settlement.positiveSurplus}}</text>
-        <picker class="field-input" range="{{positiveModeLabels}}" value="{{positiveModeIndex}}" bindchange="onPositiveModeChange"><view class="picker-value">{{positiveModeLabel}}</view></picker>
+      <view class="settlement-line"><text>{{model.settlement.result === 'surplus' ? '本期结余' : model.settlement.result === 'overspend' ? '本期超支' : '本期平衡'}}</text><text class="settlement-value">{{model.settlement.resultAmount}}</text></view>
+      <view wx:if="{{model.settlement.decisionRequired}}" class="field settlement-field">
+        <text class="field-label">结算处理方式</text>
+        <picker class="field-input" range="{{settlementDecisionLabels}}" value="{{settlementDecisionSelected ? settlementDecisionIndex : ''}}" bindchange="onSettlementDecisionChange"><view class="picker-value">{{settlementDecisionLabel}}</view></picker>
       </view>
-      <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="field settlement-field">
-        <text class="field-label">超支 {{model.settlement.grossDebt}}</text>
-        <picker class="field-input" range="{{overspendModeLabels}}" value="{{overspendModeIndex}}" bindchange="onOverspendModeChange"><view class="picker-value">{{overspendModeLabel}}</view></picker>
-      </view>
-      <view wx:if="{{model.settlement.overspendChoiceRequired}}" class="home-secondary-text">选择奖励抵扣：使用 {{model.settlement.rewardOffset}}，剩余 {{model.settlement.remainingDebt}} 带入下期。</view>
+      <view wx:if="{{model.settlement.decisionRequired}}" class="home-secondary-text">全部带入后下期实际预算 {{model.settlement.nextActualBudgetIfCarry}}；全部不带入后为 {{model.settlement.nextActualBudgetIfDiscard}}。</view>
       <button class="primary-button home-primary-cta" bindtap="settlePeriod">确认结算并进入下期</button>
     </view>
 

@@ -994,7 +994,7 @@ function makeFixture(name, nowDate) {
       amountYuan: '30.00', date: previousPeriodEndDate, accountId: 'qa-cash', categoryLevel1: '餐饮', categoryLevel2: '晚餐',
       note: '隔离跨预算周期上一期账单', includeControlledBudget: true,
     });
-    state = settleCurrentPeriod(state, nowDate, { positiveMode: 'carry', overspendMode: 'carry' });
+    state = settleCurrentPeriod(state, nowDate, { decision: 'carry' });
   } else if (name === 'ledger-overview' || name === 'ledger-expanded') {
     state = makeLedgerFixtureState(nowDate);
   } else {

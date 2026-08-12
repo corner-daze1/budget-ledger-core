@@ -141,7 +141,7 @@ test('应用层撤销入口保留账单审计但恢复账户与预算', () => {
   assert.equal(getTransactionDetailModel(candidate, logicalTransactionId).status, 'revoked');
 });
 
-test('账单详情始终读取逻辑账单最新版本并提供账户预算奖励影响', () => {
+test('账单详情始终读取逻辑账单最新版本并提供账户预算影响', () => {
   let state = expense();
   const logicalTransactionId = latestId(state);
   state = modifyTransactionEntry(state, {
@@ -155,7 +155,6 @@ test('账单详情始终读取逻辑账单最新版本并提供账户预算奖�
   assert.equal(detail.category, '餐饮 · 晚餐');
   assert.equal(detail.accountImpacts[0].accountName, '现金');
   assert.equal(detail.budgetImpactCents, 12000);
-  assert.equal(detail.rewardImpactCents, 0);
   assert.equal(detail.changeHistory.length, 2);
 });
 
@@ -232,7 +231,7 @@ test('分析只统计修改后的历史事实而不重复统计旧版本和技�
 test('已结算历史调整可读但不进入收入支出或分类统计', () => {
   let state = expense(baseState('2026-06-15'), { amountYuan: '100', date: '2026-06-15' });
   const logicalTransactionId = latestId(state);
-  state = settleCurrentPeriod(state, '2026-07-01', { positiveMode: 'carry' });
+  state = settleCurrentPeriod(state, '2026-07-01', { decision: 'carry' });
   state = modifyTransactionEntry(state, {
     logicalTransactionId,
     changes: { amountYuan: '80' },
@@ -315,7 +314,6 @@ test('详情页按逻辑账单ID重读状态并有只读修改退款撤销模式
   assert.match(js, /revokeRefundEntry/);
   assert.match(wxml, /账户影响/);
   assert.match(wxml, /预算影响/);
-  assert.match(wxml, /奖励影响/);
   assert.match(wxml, /退款明细/);
   assert.match(wxml, /变更记录/);
 });

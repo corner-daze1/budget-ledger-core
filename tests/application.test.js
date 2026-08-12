@@ -64,19 +64,31 @@ test('getHomeModel returns 50 yuan on day three after 50 yuan then 200 yuan cont
 test('getHomeModel enters an explicit settlement state after the open period ends', () => {
   const model = getHomeModel(readyState('2028-01-01'), '2028-02-01');
   assert.equal(model.needsSettlement, true);
-  assert.equal(model.settlement.positiveChoiceRequired, true);
+  assert.equal(model.settlement.decisionRequired, true);
   assert.equal(model.settlement.positiveSurplusCents, 300000);
+  assert.equal(model.settlement.nextActualBudgetIfCarryCents, 600000);
+  assert.equal(model.settlement.nextActualBudgetIfDiscardCents, 300000);
 });
 test('settleCurrentPeriod carries a chosen surplus into the next period', () => {
-  const state = settleCurrentPeriod(readyState('2028-01-01'), '2028-02-01', { positiveMode: 'carry' });
+  const state = settleCurrentPeriod(readyState('2028-01-01'), '2028-02-01', { decision: 'carry' });
   assert.equal(state.budgetPeriods[0].status, 'closed');
   assert.equal(state.budgetPeriods[1].carryCents, 300000);
+  assert.equal(state.budgetPeriods[0].settlement.decision, 'carry');
   assert.equal(getHomeModel(state, '2028-02-01').needsSettlement, undefined);
 });
-test('settleCurrentPeriod moves a chosen surplus to reward balance', () => {
-  const state = settleCurrentPeriod(readyState('2028-01-01'), '2028-02-01', { positiveMode: 'reward' });
-  assert.equal(state.rewardBalanceCents, 300000);
+test('settleCurrentPeriod discards a chosen surplus without creating another balance', () => {
+  const state = settleCurrentPeriod(readyState('2028-01-01'), '2028-02-01', { decision: 'discard' });
   assert.equal(state.budgetPeriods[1].carryCents, 0);
+  assert.equal(Object.prototype.hasOwnProperty.call(state, 'rewardBalanceCents'), false);
+});
+test('settleCurrentPeriod rejects obsolete dual-mode options atomically', () => {
+  const state = readyState('2028-01-01');
+  const before = structuredClone(state);
+  assert.throws(
+    () => settleCurrentPeriod(state, '2028-02-01', { positiveMode: 'carry', overspendMode: 'carry' }),
+    /only accepts decision/,
+  );
+  assert.deepEqual(state, before);
 });
 test('recordEntry with controlled budget on reduces the application period budget', () => {
   const state = recordEntry(readyState(), { amountYuan: '20', date: '2028-01-01', accountId: 'cash', categoryLevel1: '餐饮', categoryLevel2: '早餐', includeControlledBudget: true });
@@ -100,71 +112,67 @@ test('recordEntry asks for settlement instead of exposing a missing-period error
 test('settleCurrentPeriod carries an explicit overspend debt when the user chooses carry', () => {
   const state = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '5000' }] });
   const spent = recordEntry(state, { amountYuan: '4000', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const settled = settleCurrentPeriod(spent, '2028-02-01', { overspendMode: 'carry' });
+  const settled = settleCurrentPeriod(spent, '2028-02-02', { decision: 'carry' });
   assert.equal(settled.budgetPeriods[1].carryCents, -100000);
-  assert.equal(settled.rewardBalanceCents, 0);
+  assert.equal(settled.budgetPeriods[0].settlement.result, 'overspend');
 });
-test('settleCurrentPeriod uses reward balance only when the user chooses reward offset', () => {
-  const surplus = settleCurrentPeriod(initializeState({
+test('settleCurrentPeriod discards a surplus and requires no second balance to absorb it', () => {
+  const discarded = settleCurrentPeriod(initializeState({
     monthlyBudgetYuan: '3000',
     nowDate: '2028-01-01',
     accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '5000' }],
-  }), '2028-02-01', { positiveMode: 'reward' });
-  const spent = recordEntry(surplus, { amountYuan: '4000', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const settled = settleCurrentPeriod(spent, '2028-03-01', { overspendMode: 'reward' });
-  assert.equal(settled.budgetPeriods[2].carryCents, 0);
-  assert.equal(settled.rewardBalanceCents, 200000);
+  }), '2028-02-01', { decision: 'discard' });
+  assert.equal(discarded.budgetPeriods[1].carryCents, 0);
+  assert.equal(discarded.budgetPeriods[0].settlement.decision, 'discard');
 });
-test('settleCurrentPeriod uses all available reward balance when it fully covers overspend debt', () => {
+test('settleCurrentPeriod carries the entire overspend instead of allowing a partial settlement', () => {
   const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
   const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { decision: 'carry' });
   const spent = recordEntry(surplus, { amountYuan: '3200', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const settled = settleCurrentPeriod(spent, '2028-03-01', { overspendMode: 'reward' });
-  assert.equal(settled.rewardBalanceCents, 0);
+  const settled = settleCurrentPeriod(spent, '2028-03-01', { decision: 'carry' });
   assert.equal(settled.budgetPeriods[2].carryCents, 0);
 });
-test('settleCurrentPeriod partially offsets overspend with insufficient reward and carries the remainder', () => {
+test('settleCurrentPeriod discards an overspend only when the user explicitly chooses discard', () => {
   const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
   const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { decision: 'carry' });
   const spent = recordEntry(surplus, { amountYuan: '3500', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
   const model = getSettlementModel(spent, '2028-03-01');
-  assert.equal(model.rewardOffsetCents, 20000);
-  assert.equal(model.remainingDebtCents, 30000);
-  const settled = settleCurrentPeriod(spent, '2028-03-01', { overspendMode: 'reward' });
-  assert.equal(settled.rewardBalanceCents, 0);
-  assert.equal(settled.budgetPeriods[2].carryCents, -30000);
+  assert.equal(model.overspendCents, 30000);
+  assert.equal(model.decisionRequired, true);
+  const settled = settleCurrentPeriod(spent, '2028-03-01', { decision: 'discard' });
+  assert.equal(settled.budgetPeriods[2].carryCents, 0);
 });
-test('settleCurrentPeriod keeps overspend as debt when reward balance is zero', () => {
+test('settleCurrentPeriod requires a decision for overspend even when no other balance exists', () => {
   const state = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '5000' }] });
   const spent = recordEntry(state, { amountYuan: '3500', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const settled = settleCurrentPeriod(spent, '2028-02-01', { overspendMode: 'reward' });
-  assert.equal(settled.rewardBalanceCents, 0);
+  assert.throws(() => settleCurrentPeriod(spent, '2028-02-01'), /请选择本期结算方式/);
+  const settled = settleCurrentPeriod(spent, '2028-02-01', { decision: 'carry' });
   assert.equal(settled.budgetPeriods[1].carryCents, -50000);
 });
-test('settleCurrentPeriod applies reward offset after inherited debt is included', () => {
+test('settleCurrentPeriod carries inherited debt beyond the next base budget until a later discard', () => {
   const state = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '15000' }] });
   const firstSpent = recordEntry(state, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const rewardState = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
-  const overspent = recordEntry(rewardState, { amountYuan: '8000', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const first = settleCurrentPeriod(overspent, '2028-03-01', { overspendMode: 'carry' });
+  const carriedState = settleCurrentPeriod(firstSpent, '2028-02-01', { decision: 'carry' });
+  const overspent = recordEntry(carriedState, { amountYuan: '8000', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
+  const first = settleCurrentPeriod(overspent, '2028-03-01', { decision: 'carry' });
   const secondSpent = recordEntry(first, { amountYuan: '3200', date: '2028-03-01', accountId: 'cash', categoryLevel1: '餐饮', categoryLevel2: '早餐', includeControlledBudget: true });
-  const settled = settleCurrentPeriod(secondSpent, '2028-04-01', { overspendMode: 'reward' });
-  assert.equal(settled.rewardBalanceCents, 0);
+  const settled = settleCurrentPeriod(secondSpent, '2028-04-01', { decision: 'carry' });
   assert.equal(settled.budgetPeriods[3].carryCents, -500000);
 });
-test('settlement model survives backup round trip with partial reward offset values', () => {
+test('settlement model survives schema v3 backup round trip with both next-budget previews', () => {
   const storage = memoryStorage();
   const initial = initializeState({ monthlyBudgetYuan: '3000', nowDate: '2028-01-01', accounts: [{ id: 'cash', name: '现金', type: 'cash', balanceYuan: '7000' }] });
   const firstSpent = recordEntry(initial, { amountYuan: '2800', date: '2028-01-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
-  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { positiveMode: 'reward' });
+  const surplus = settleCurrentPeriod(firstSpent, '2028-02-01', { decision: 'carry' });
   const spent = recordEntry(surplus, { amountYuan: '3500', date: '2028-02-01', accountId: 'cash', categoryLevel1: '购物', categoryLevel2: '数码', includeControlledBudget: true });
   savePersisted(storage, spent);
   const restored = loadPersisted(storage);
   const model = getSettlementModel(restored.state, '2028-03-01');
-  assert.equal(model.rewardOffsetCents, 20000);
-  assert.equal(model.remainingDebtCents, 30000);
+  assert.equal(model.overspendCents, 30000);
+  assert.equal(model.nextActualBudgetIfCarryCents, 270000);
+  assert.equal(model.nextActualBudgetIfDiscardCents, 300000);
 });
 test('recordEntry preserves note, two-level category and selected account in the transaction', () => {
   const state = recordEntry(readyState(), { amountYuan: '20', date: '2028-01-01', accountId: 'bank', categoryLevel1: '交通', categoryLevel2: '打车', note: '回家', includeControlledBudget: true });
@@ -212,7 +220,7 @@ test('savePersisted and loadPersisted round trip application state through versi
   const loaded = loadPersisted(storage);
   assert.equal(loaded.ok, true);
   assert.deepEqual(loaded.state, state);
-  assert.equal(JSON.parse(storage.value).schemaVersion, 2);
+  assert.equal(JSON.parse(storage.value).schemaVersion, 3);
 });
 test('loadPersisted preserves corrupted raw storage and returns a user-facing error', () => {
   const rawData = '{not-json';
@@ -225,4 +233,15 @@ test('getSettingsModel exposes the configured budget and all initial accounts', 
   const model = getSettingsModel(readyState());
   assert.equal(model.monthlyBudget, '¥3000.00');
   assert.equal(model.accounts.length, 2);
+});
+test('getSettingsModel exposes only completed settlement records in newest-first order', () => {
+  let state = readyState('2028-01-01');
+  state = settleCurrentPeriod(state, '2028-02-01', { decision: 'carry' });
+  state = settleCurrentPeriod(state, '2028-03-01', { decision: 'discard' });
+  const model = getSettingsModel(state, '2028-03-01');
+  assert.deepEqual(model.settlementRecords.map((item) => item.id), ['period-2', 'period-1']);
+  assert.equal(model.settlementRecords.every((item) => item.status === 'closed'), true);
+  assert.equal(model.settlementRecords[0].settledAt, '2028-03-01');
+  assert.equal(model.settlementRecords[0].carryAmount, '¥0.00');
+  assert.equal(model.settlementRecords[1].carryAmount, '¥3000.00');
 });

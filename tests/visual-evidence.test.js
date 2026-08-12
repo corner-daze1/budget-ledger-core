@@ -146,6 +146,12 @@ test('visual evidence fixtures include a real cross-budget-period state', () => 
   assert.equal(fixture.expected.billCount, 1);
 });
 
+test('cross-budget fixture uses only the v3 settlement decision parameter', async () => {
+  const script = await fs.readFile(new URL('../scripts/visual-evidence.mjs', import.meta.url), 'utf8');
+  assert.match(script, /settleCurrentPeriod\(state, nowDate, \{ decision: 'carry' \}\)/);
+  assert.doesNotMatch(script, /positiveMode|overspendMode/);
+});
+
 test('ledger visual fixtures contain three dates and expense income refund transfer in both docked modes', () => {
   for (const [name, captureMode] of [['ledger-overview', 'overview'], ['ledger-expanded', 'expanded']]) {
     const fixture = makeFixture(name, '2026-08-04');

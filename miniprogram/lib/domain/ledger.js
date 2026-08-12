@@ -3,7 +3,7 @@ const { actualBudgetCents: calculateActualBudget, budgetDebtCents: calculateBudg
 
 const ACCOUNT_TYPES = new Set(['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment']);
 const LIABILITY_TYPES = new Set(['credit_card', 'loan']);
-const EXPENSE_KINDS = new Set(['controlled_expense', 'fixed_expense', 'reward_payment']);
+const EXPENSE_KINDS = new Set(['controlled_expense', 'fixed_expense']);
 const PLAN_TYPES = new Set(['fixed_expense', 'credit_card_repayment', 'loan_repayment']);
 const PLAN_RECURRENCES = new Set(['one_time', 'monthly', 'yearly']);
 const REMINDER_DAYS = new Set([0, 1, 3]);
@@ -91,7 +91,6 @@ function transactionBase(state, details) {
     expenseKind: details.expenseKind ?? null,
     budgetPeriodId: details.budgetPeriodId ?? null,
     budgetImpactCents: details.budgetImpactCents ?? 0,
-    rewardImpactCents: details.rewardImpactCents ?? 0,
     source: details.source ?? null,
     note: details.note ?? null,
     relatedTransactionId: details.relatedTransactionId ?? null,
@@ -165,9 +164,16 @@ function requireLiability(state, id, expectedType = null) {
   return found;
 }
 
-function createLedger({ accounts = [], budgetPeriods = [], defaultBudgetCents = 0, rewardBalanceCents = 0, plans = [], pendingItems = [] } = {}) {
+function createLedger(options = {}) {
+  if (Object.prototype.hasOwnProperty.call(options, 'rewardBalanceCents')) throw new Error('removed field: rewardBalanceCents');
+  const {
+    accounts = [],
+    budgetPeriods = [],
+    defaultBudgetCents = 0,
+    plans = [],
+    pendingItems = [],
+  } = options;
   nonNegativeCents(defaultBudgetCents, 'defaultBudgetCents');
-  nonNegativeCents(rewardBalanceCents, 'rewardBalanceCents');
   const ids = new Set();
   for (const item of accounts) {
     if (!item.id || ids.has(item.id)) throw new Error(`duplicate account id: ${item.id}`);
@@ -178,7 +184,7 @@ function createLedger({ accounts = [], budgetPeriods = [], defaultBudgetCents = 
     ids.add(item.id);
   }
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     currency: 'CNY',
     defaultBudgetCents,
     accounts: clone(accounts),
@@ -186,9 +192,9 @@ function createLedger({ accounts = [], budgetPeriods = [], defaultBudgetCents = 
       status: 'open',
       carryCents: 0,
       netBudgetSpendCents: 0,
+      settlement: null,
       ...item,
     })),
-    rewardBalanceCents,
     plans: clone(plans),
     pendingItems: clone(pendingItems),
     transactions: [],
@@ -214,7 +220,7 @@ function addBudgetPeriod(state, { id, startDate, endDate, baseBudgetCents, carry
   integer(carryCents, 'carryCents');
   if (!['open', 'closed'].includes(status)) throw new RangeError('unknown budget period status');
   const next = clone(state);
-  next.budgetPeriods.push({ id, startDate, endDate, baseBudgetCents, carryCents, status, netBudgetSpendCents: 0 });
+  next.budgetPeriods.push({ id, startDate, endDate, baseBudgetCents, carryCents, status, netBudgetSpendCents: 0, settlement: null });
   return next;
 }
 
@@ -232,13 +238,11 @@ function recordIncome(state, details) {
 }
 
 function recordExpense(state, details) {
-  const { id, date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2 = null, rewardOffsetCents = 0, source = null } = details;
+  if (Object.prototype.hasOwnProperty.call(details, 'rewardOffsetCents')) throw new Error('removed field: rewardOffsetCents');
+  const { id, date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2 = null, source = null } = details;
   positiveCents(amountCents);
-  nonNegativeCents(rewardOffsetCents, 'rewardOffsetCents');
-  if (rewardOffsetCents > amountCents) throw new RangeError('reward offset cannot exceed expense');
   const periodTarget = period(state, budgetPeriodId);
   if (periodTarget.status !== 'open') throw new Error('budget period is closed');
-  const budgetImpactCents = amountCents - rewardOffsetCents;
   let next = clone(state);
   const target = account(next, accountId);
   if (target.type === 'credit_card') target.balanceCents -= amountCents;
@@ -247,14 +251,12 @@ function recordExpense(state, details) {
     if (target.balanceCents < amountCents) throw accountShortfall(accountId, amountCents - target.balanceCents);
     target.balanceCents -= amountCents;
   }
-  next.rewardBalanceCents -= rewardOffsetCents;
-  if (next.rewardBalanceCents < 0) throw new Error('reward balance cannot be negative');
-  period(next, budgetPeriodId).netBudgetSpendCents += budgetImpactCents;
-  const businessPayload = { date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2, rewardOffsetCents, expenseKind: 'controlled', source, note: details.note ?? null };
+  period(next, budgetPeriodId).netBudgetSpendCents += amountCents;
+  const businessPayload = { date, accountId, amountCents, budgetPeriodId, categoryLevel1, categoryLevel2, expenseKind: 'controlled', source, note: details.note ?? null };
   const accountImpacts = [{ accountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 }];
   return withTransaction(next, transactionBase(next, {
     id, date, kind: 'controlled_expense', amountCents, accountId, categoryLevel1, categoryLevel2,
-    expenseKind: 'controlled', budgetPeriodId, budgetImpactCents, rewardImpactCents: rewardOffsetCents === 0 ? 0 : -rewardOffsetCents, source,
+    expenseKind: 'controlled', budgetPeriodId, budgetImpactCents: amountCents, source,
     ...transactionMetadata(details, businessPayload, accountImpacts, 'expense'),
   }));
 }
@@ -502,21 +504,6 @@ function setInvestmentValue(state, details) {
   }));
 }
 
-function recordRewardPayment(state, details) {
-  const { id, date, accountId, amountCents, categoryLevel1 = '奖励支付', source = null } = details;
-  positiveCents(amountCents);
-  requireAsset(state, accountId);
-  if (state.rewardBalanceCents < amountCents) throw new Error('reward balance is insufficient');
-  let next = updateAccount(state, accountId, -amountCents);
-  next.rewardBalanceCents -= amountCents;
-  const businessPayload = { date, accountId, amountCents, categoryLevel1, source, note: details.note ?? null };
-  const accountImpacts = [{ accountId, balanceDeltaCents: -amountCents, costBasisDeltaCents: 0 }];
-  return withTransaction(next, transactionBase(next, {
-    id, date, kind: 'reward_payment', amountCents, accountId, categoryLevel1, rewardImpactCents: -amountCents, source,
-    ...transactionMetadata(details, businessPayload, accountImpacts, 'reward_payment'),
-  }));
-}
-
 function requestWasHandled(state, requestId) {
   return Boolean(requestId) && state.transactions.some((item) => item.requestId === requestId);
 }
@@ -590,20 +577,12 @@ function applyAccountImpactsInPlace(state, impacts, factor) {
   }
 }
 
-function reverseFinancialEffects(state, group, { allowRewardShortfall = false } = {}) {
+function reverseFinancialEffects(state, group) {
   const next = clone(state);
   for (const transaction of group) {
     applyAccountImpactsInPlace(next, transaction.accountImpacts, -1);
   }
-  const rewardImpactCents = group.reduce((sum, transaction) => sum + (transaction.rewardImpactCents || 0), 0);
-  const nextRewardBalanceCents = next.rewardBalanceCents - rewardImpactCents;
-  if (nextRewardBalanceCents < 0) {
-    if (!allowRewardShortfall) throw new Error(`reward balance is insufficient; shortfallCents=${-nextRewardBalanceCents}`);
-    next.rewardBalanceCents = 0;
-    return { state: next, rewardShortfallCents: -nextRewardBalanceCents };
-  }
-  next.rewardBalanceCents = nextRewardBalanceCents;
-  return { state: next, rewardShortfallCents: 0 };
+  return next;
 }
 
 function budgetImpactMap(group) {
@@ -636,15 +615,28 @@ function applyBudgetDifferences(state, oldGroup, newGroup, correctionDate) {
       if (target.netBudgetSpendCents < 0) throw new Error(`budget restoration exceeds recorded spend: ${periodId}`);
       continue;
     }
-    if (deltaCents < 0) {
-      next.rewardBalanceCents += -deltaCents;
-      historicalChanges.push({ periodId, deltaCents, rewardDeltaCents: -deltaCents, currentBudgetDeltaCents: 0 });
-    } else {
-      const open = currentOpenPeriod(next, correctionDate);
-      if (!open) throw new Error('no open budget period for historical adjustment');
-      open.netBudgetSpendCents += deltaCents;
-      historicalChanges.push({ periodId, deltaCents, rewardDeltaCents: 0, currentBudgetDeltaCents: deltaCents, currentBudgetPeriodId: open.id });
-    }
+    const open = currentOpenPeriod(next, correctionDate);
+    if (!open) throw new Error('no open budget period for historical adjustment');
+    open.netBudgetSpendCents += deltaCents;
+    historicalChanges.push({ periodId, deltaCents, currentBudgetDeltaCents: deltaCents, currentBudgetPeriodId: open.id });
+  }
+  return { state: next, historicalChanges };
+}
+
+function reverseHistoricalBudgetAdjustments(state, changes, correctionDate) {
+  const next = clone(state);
+  const historicalChanges = [];
+  for (const change of changes) {
+    const open = currentOpenPeriod(next, correctionDate);
+    if (!open) throw new Error('no open budget period for historical adjustment');
+    const deltaCents = -(change.currentBudgetDeltaCents ?? change.deltaCents ?? 0);
+    open.netBudgetSpendCents += deltaCents;
+    historicalChanges.push({
+      periodId: change.periodId,
+      deltaCents: -(change.deltaCents ?? 0),
+      currentBudgetDeltaCents: deltaCents,
+      currentBudgetPeriodId: open.id,
+    });
   }
   return { state: next, historicalChanges };
 }
@@ -676,7 +668,6 @@ function appendTechnicalReversals(state, group, { requestId, date, operationGrou
       businessPayload: {
         reversedTransactionId: original.id,
         reversedBudgetImpactCents: original.budgetImpactCents || 0,
-        reversedRewardImpactCents: original.rewardImpactCents || 0,
         resultingStatus: status,
       },
       technical: true,
@@ -743,7 +734,7 @@ function appendHistoricalAdjustment(state, {
 }
 
 const ALLOWED_CHANGE_FIELDS = {
-  expense: new Set(['date', 'accountId', 'amountCents', 'budgetPeriodId', 'categoryLevel1', 'categoryLevel2', 'note', 'expenseKind', 'rewardOffsetCents', 'source']),
+  expense: new Set(['date', 'accountId', 'amountCents', 'budgetPeriodId', 'categoryLevel1', 'categoryLevel2', 'note', 'expenseKind', 'source']),
   income: new Set(['date', 'accountId', 'amountCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source']),
   transfer: new Set(['date', 'fromAccountId', 'toAccountId', 'amountCents', 'note', 'source']),
   credit_card_repayment: new Set(['date', 'fromAccountId', 'creditCardAccountId', 'amountCents', 'note', 'source']),
@@ -754,7 +745,6 @@ const ALLOWED_CHANGE_FIELDS = {
   loan_interest_accrual: new Set(['date', 'loanAccountId', 'amountCents', 'note', 'source']),
   investment_trade: new Set(['date', 'side', 'cashAccountId', 'investmentAccountId', 'amountCents', 'note', 'source']),
   investment_valuation: new Set(['date', 'investmentAccountId', 'currentValueCents', 'note', 'source']),
-  reward_payment: new Set(['date', 'accountId', 'amountCents', 'categoryLevel1', 'note', 'source']),
 };
 
 function validateModificationChanges(businessKind, changes) {
@@ -784,7 +774,6 @@ function recordBusinessPayload(state, businessKind, payload, metadata) {
   if (businessKind === 'loan_interest_accrual') return recordLoanInterestAccrual(state, details);
   if (businessKind === 'investment_trade') return recordInvestmentTrade(state, details);
   if (businessKind === 'investment_valuation') return setInvestmentValue(state, details);
-  if (businessKind === 'reward_payment') return recordRewardPayment(state, details);
   throw new Error(`transaction business type cannot be modified: ${businessKind}`);
 }
 
@@ -828,7 +817,7 @@ function modifyTransaction(state, {
   assertNotFuture(payload.date, today);
   const version = Math.max(...group.map((item) => item.version || 1)) + 1;
   const operationGroupId = `${representative.logicalTransactionId}:v${version}:${requestId || 'modify'}`;
-  let { state: next } = reverseFinancialEffects(state, group);
+  let next = reverseFinancialEffects(state, group);
   const periodSnapshots = next.budgetPeriods.map((item) => ({ id: item.id, status: item.status, netBudgetSpendCents: item.netBudgetSpendCents }));
   for (const item of next.budgetPeriods) item.status = 'open';
   const transactionCount = next.transactions.length;
@@ -883,7 +872,7 @@ function revokeTransaction(state, {
   if (activeRefundsFor(state, representative.logicalTransactionId).length > 0) {
     throw new Error('transaction cannot be revoked while it has active refunds');
   }
-  let { state: next } = reverseFinancialEffects(state, group);
+  let next = reverseFinancialEffects(state, group);
   const budgetResult = applyBudgetDifferences(next, group, [], date);
   next = budgetResult.state;
   const operationGroupId = `${representative.logicalTransactionId}:revoke:${requestId || date}`;
@@ -934,27 +923,24 @@ function recordRefund(state, details) {
   if (!ordinaryDestination && !originalCardDestination) throw new Error('refund destination must be cash, bank, wallet, or the original credit card');
   let next = updateAccount(state, refundAccountId, amountCents);
   let budgetImpactCents = 0;
-  let rewardImpactCents = 0;
+  let historicalChanges = [];
   if (original.kind === 'controlled_expense') {
     const originalPeriod = period(next, original.budgetPeriodId);
     if (originalPeriod.status === 'open') {
-      const budgetRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, -(item.budgetImpactCents || 0)), 0);
-      const rewardRestoredSoFar = priorRefunds.reduce((sum, item) => sum + Math.max(0, item.rewardImpactCents || 0), 0);
-      const originalRewardOffsetCents = Math.max(0, original.amountCents - original.budgetImpactCents);
-      const remainingBudgetToRestore = Math.max(0, original.budgetImpactCents - budgetRestoredSoFar);
-      const remainingRewardToRestore = Math.max(0, originalRewardOffsetCents - rewardRestoredSoFar);
-      const budgetRestoreCents = Math.min(amountCents, remainingBudgetToRestore);
-      const rewardRestoreCents = Math.min(amountCents - budgetRestoreCents, remainingRewardToRestore);
-      budgetImpactCents = -budgetRestoreCents;
+      budgetImpactCents = -amountCents;
       originalPeriod.netBudgetSpendCents += budgetImpactCents;
-      rewardImpactCents = rewardRestoreCents;
     } else {
-      rewardImpactCents = amountCents;
+      const open = currentOpenPeriod(next, date);
+      if (!open) throw new Error('no open budget period for historical adjustment');
+      open.netBudgetSpendCents -= amountCents;
+      historicalChanges = [{
+        periodId: originalPeriod.id,
+        deltaCents: -amountCents,
+        currentBudgetDeltaCents: -amountCents,
+        currentBudgetPeriodId: open.id,
+      }];
     }
-  } else if (original.kind === 'reward_payment') {
-    rewardImpactCents = amountCents;
   }
-  next.rewardBalanceCents += rewardImpactCents;
   const logicalTransactionId = details.logicalTransactionId || id;
   const businessPayload = {
     date,
@@ -964,6 +950,7 @@ function recordRefund(state, details) {
     source,
     note: details.note ?? null,
   };
+  if (historicalChanges.length > 0) businessPayload.historicalChanges = clone(historicalChanges);
   const accountImpacts = [{ accountId: refundAccountId, balanceDeltaCents: amountCents, costBasisDeltaCents: 0 }];
   next = withTransaction(next, transactionBase(next, {
     id,
@@ -974,7 +961,6 @@ function recordRefund(state, details) {
     accountId: refundAccountId,
     budgetPeriodId: original.budgetPeriodId,
     budgetImpactCents,
-    rewardImpactCents,
     source,
     note: details.note,
     relatedTransactionId: original.id,
@@ -985,6 +971,17 @@ function recordRefund(state, details) {
     accountImpacts,
     businessPayload,
   }));
+  if (historicalChanges.length > 0) {
+    next = appendHistoricalAdjustment(next, {
+      requestId,
+      date,
+      operationGroupId: details.operationGroupId || logicalTransactionId,
+      logicalTransactionId: original.logicalTransactionId,
+      oldGroup: [original],
+      newGroup: [original],
+      historicalChanges,
+    });
+  }
   return refreshRefundedCents(next, original.logicalTransactionId);
 }
 
@@ -999,23 +996,12 @@ function revokeRefund(state, {
   const group = activeGroup(state, logicalTransactionId);
   const refund = representativeForGroup(group);
   if (refund.kind !== 'refund') throw new Error('only refund records can use revokeRefund');
-  const reversed = reverseFinancialEffects(state, group, { allowRewardShortfall: true });
-  let next = reversed.state;
-  const budgetResult = applyBudgetDifferences(next, group, [], date);
+  let next = reverseFinancialEffects(state, group);
+  const budgetResult = refund.businessPayload?.historicalChanges?.length
+    ? reverseHistoricalBudgetAdjustments(next, refund.businessPayload.historicalChanges, date)
+    : applyBudgetDifferences(next, group, [], date);
   next = budgetResult.state;
   const historicalChanges = [...budgetResult.historicalChanges];
-  if (reversed.rewardShortfallCents > 0) {
-    const open = currentOpenPeriod(next, date);
-    if (!open) throw new Error('no open budget period for historical adjustment');
-    open.netBudgetSpendCents += reversed.rewardShortfallCents;
-    historicalChanges.push({
-      periodId: refund.budgetPeriodId || open.id,
-      deltaCents: reversed.rewardShortfallCents,
-      rewardDeltaCents: 0,
-      currentBudgetDeltaCents: reversed.rewardShortfallCents,
-      currentBudgetPeriodId: open.id,
-    });
-  }
   const operationGroupId = `${refund.logicalTransactionId}:revoke:${requestId || date}`;
   setGroupStatusInPlace(next, group, 'revoked', 'revokedByTransactionId', null);
   const reversal = appendTechnicalReversals(next, group, { requestId, date, operationGroupId, status: 'revoked' });
@@ -1396,9 +1382,11 @@ function retryFixedPlanPending(state, {
   return next;
 }
 
-function closeBudgetPeriod(state, periodId) {
+function closeBudgetPeriod(state, periodId, settlement = null) {
   const next = clone(state);
-  period(next, periodId).status = 'closed';
+  const target = period(next, periodId);
+  target.status = 'closed';
+  if (settlement !== null) target.settlement = clone(settlement);
   return next;
 }
 
@@ -1421,7 +1409,7 @@ function totals(state) {
     if (item.type === 'loan') return sum + item.balanceCents;
     return sum;
   }, 0);
-  return { totalAssetsCents, totalLiabilitiesCents, netAssetsCents: totalAssetsCents - totalLiabilitiesCents, rewardBalanceCents: state.rewardBalanceCents };
+  return { totalAssetsCents, totalLiabilitiesCents, netAssetsCents: totalAssetsCents - totalLiabilitiesCents };
 }
 
-module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanRepayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, recordRewardPayment, getLatestTransaction, modifyTransaction, revokeTransaction, recordRefund, revokeRefund, getTransactionActionAvailability, listUserTransactions, createFixedPlan, editFixedPlan, revokeFixedPlan, fixedPlanOccurrenceKey, executeFixedPlan, nextFixedPlanDueDate, advanceFixedPlan, markLegacyPlanPending, retryFixedPlanPending, closeBudgetPeriod, budgetForPeriod, totals };
+module.exports = { createLedger, addAccount, addBudgetPeriod, recordIncome, recordExpense, recordFixedExpense, recordTransfer, recordCreditCardRepayment, recordBorrowing, recordLoanPrincipalRepayment, recordLoanInterestPayment, recordLoanRepayment, recordLoanInterestAccrual, recordInvestmentTrade, setInvestmentValue, getLatestTransaction, modifyTransaction, revokeTransaction, recordRefund, revokeRefund, getTransactionActionAvailability, listUserTransactions, createFixedPlan, editFixedPlan, revokeFixedPlan, fixedPlanOccurrenceKey, executeFixedPlan, nextFixedPlanDueDate, advanceFixedPlan, markLegacyPlanPending, retryFixedPlanPending, closeBudgetPeriod, budgetForPeriod, totals };

@@ -1,4 +1,6 @@
-const CURRENT_SCHEMA_VERSION = 2;
+import { addDays, dateDistance, parseDate, settleBudgetCycle } from './budget.js';
+
+const CURRENT_SCHEMA_VERSION = 3;
 
 const ACCOUNT_TYPES = new Set(['cash', 'bank', 'wallet', 'credit_card', 'loan', 'investment']);
 const TRANSACTION_STATUSES = new Set(['active', 'superseded', 'revoked']);
@@ -11,15 +13,91 @@ function isInteger(value) {
   return Number.isInteger(value);
 }
 
+function validateBudgetPeriods(periods) {
+  const periodIds = new Set();
+  for (let index = 0; index < periods.length; index += 1) {
+    const item = periods[index];
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`invalid budget period at index ${index}`);
+    if (typeof item.id !== 'string' || !item.id || periodIds.has(item.id)) throw new Error('backup contains an invalid or duplicate budget period id');
+    if (typeof item.startDate !== 'string' || typeof item.endDate !== 'string') throw new Error(`invalid budget period dates: ${item.id}`);
+    try {
+      parseDate(item.startDate);
+      parseDate(item.endDate);
+    } catch (error) {
+      throw new Error(`invalid budget period dates: ${item.id}: ${error.message}`);
+    }
+    if (item.startDate > item.endDate) throw new Error(`budget period starts after it ends: ${item.id}`);
+    if (!isInteger(item.baseBudgetCents) || item.baseBudgetCents < 0) throw new Error(`invalid base budget: ${item.id}`);
+    if (!isInteger(item.carryCents)) throw new Error(`invalid carry cents: ${item.id}`);
+    if (!isInteger(item.netBudgetSpendCents)) throw new Error(`invalid budget spend: ${item.id}`);
+    if (!['open', 'closed'].includes(item.status)) throw new Error(`invalid budget period status: ${item.id}`);
+    if (item.kind !== undefined && !['regular', 'transition'].includes(item.kind)) throw new Error(`invalid budget period kind: ${item.id}`);
+    const totalDays = item.totalDays;
+    if (totalDays !== undefined && (!isInteger(totalDays) || totalDays !== dateDistance(item.startDate, item.endDate) + 1)) {
+      throw new Error(`invalid budget period day count: ${item.id}`);
+    }
+    if (index > 0) {
+      const previous = periods[index - 1];
+      if (item.startDate !== addDays(previous.endDate, 1)) throw new Error(`budget periods are out of order or not contiguous: ${item.id}`);
+    }
+    periodIds.add(item.id);
+  }
+
+  for (let index = 0; index < periods.length; index += 1) {
+    const item = periods[index];
+    if (item.status === 'open') {
+      if (item.settlement !== null) throw new Error(`open budget period cannot contain settlement: ${item.id}`);
+      continue;
+    }
+    const settlement = item.settlement;
+    if (!settlement || typeof settlement !== 'object' || Array.isArray(settlement)) {
+      throw new Error(`closed budget period must contain settlement: ${item.id}`);
+    }
+    const requiredFields = ['settledAt', 'result', 'resultCents', 'decision', 'carryCents', 'nextPeriodId'];
+    for (const field of requiredFields) {
+      if (!Object.prototype.hasOwnProperty.call(settlement, field)) throw new Error(`settlement field ${field} is required: ${item.id}`);
+    }
+    if (typeof settlement.settledAt !== 'string') throw new Error(`invalid settlement date: ${item.id}`);
+    try {
+      parseDate(settlement.settledAt);
+    } catch (error) {
+      throw new Error(`invalid settlement date: ${item.id}: ${error.message}`);
+    }
+    if (settlement.settledAt < item.endDate) throw new Error(`settlement date is before period end: ${item.id}`);
+    if (!['surplus', 'overspend', 'balanced'].includes(settlement.result)) throw new Error(`invalid settlement result: ${item.id}`);
+    if (!isInteger(settlement.resultCents)) throw new Error(`invalid settlement result cents: ${item.id}`);
+    if (!isInteger(settlement.carryCents)) throw new Error(`invalid settlement carry cents: ${item.id}`);
+    if (!['carry', 'discard', 'none'].includes(settlement.decision)) throw new Error(`invalid settlement decision: ${item.id}`);
+    const signResult = settlement.resultCents > 0 ? 'surplus' : (settlement.resultCents < 0 ? 'overspend' : 'balanced');
+    if (settlement.result !== signResult) throw new Error(`settlement result sign mismatch: ${item.id}`);
+    const expected = settleBudgetCycle({
+      baseBudgetCents: item.baseBudgetCents,
+      carryCents: item.carryCents,
+      netBudgetSpendCents: item.netBudgetSpendCents,
+      decision: settlement.resultCents === 0 ? null : settlement.decision,
+    });
+    if (settlement.resultCents !== expected.resultCents || settlement.result !== expected.result) {
+      throw new Error(`settlement result does not match budget calculation: ${item.id}`);
+    }
+    if (settlement.resultCents === 0 && settlement.decision !== 'none') throw new Error(`balanced settlement must use decision none: ${item.id}`);
+    if (settlement.resultCents !== 0 && !['carry', 'discard'].includes(settlement.decision)) throw new Error(`non-zero settlement requires carry or discard: ${item.id}`);
+    const expectedCarry = settlement.decision === 'carry' ? settlement.resultCents : 0;
+    if (settlement.carryCents !== expectedCarry) throw new Error(`settlement carry does not match decision: ${item.id}`);
+    const nextPeriod = periods[index + 1];
+    if (!nextPeriod || settlement.nextPeriodId !== nextPeriod.id) throw new Error(`settlement nextPeriodId must reference the next period: ${item.id}`);
+  }
+}
+
 function validateState(state) {
   if (!state || typeof state !== 'object' || Array.isArray(state)) throw new Error('backup root must be an object');
   if (state.schemaVersion !== CURRENT_SCHEMA_VERSION) throw new Error(`unsupported schema version: ${state.schemaVersion}`);
   if (state.currency !== 'CNY') throw new Error('only CNY backups are supported');
+  if (Object.prototype.hasOwnProperty.call(state, 'rewardBalanceCents')) throw new Error('backup contains a removed field');
   if (state.defaultBudgetCents !== undefined && (!isInteger(state.defaultBudgetCents) || state.defaultBudgetCents < 0)) throw new Error('defaultBudgetCents must be a non-negative integer');
   for (const field of ['accounts', 'budgetPeriods', 'transactions', 'plans', 'pendingItems']) {
     if (!Array.isArray(state[field])) throw new Error(`backup field ${field} must be an array`);
   }
-  if (!isInteger(state.rewardBalanceCents) || state.rewardBalanceCents < 0) throw new Error('rewardBalanceCents must be a non-negative integer');
+  validateBudgetPeriods(state.budgetPeriods);
   const accountIds = new Set();
   for (const item of state.accounts) {
     if (!item || typeof item.id !== 'string' || accountIds.has(item.id)) throw new Error('backup contains an invalid or duplicate account id');
@@ -32,7 +110,8 @@ function validateState(state) {
   for (const item of state.transactions) {
     if (!item || typeof item.id !== 'string' || transactionIds.has(item.id)) throw new Error('backup contains an invalid or duplicate transaction id');
     if (!isInteger(item.amountCents) || item.amountCents <= 0) throw new Error(`invalid transaction amount: ${item.id}`);
-    if (!isInteger(item.budgetImpactCents) || !isInteger(item.rewardImpactCents)) throw new Error(`invalid transaction impact: ${item.id}`);
+    if (Object.prototype.hasOwnProperty.call(item, 'rewardImpactCents')) throw new Error(`transaction contains a removed field: ${item.id}`);
+    if (!isInteger(item.budgetImpactCents)) throw new Error(`invalid transaction impact: ${item.id}`);
     if (typeof item.logicalTransactionId !== 'string' || !item.logicalTransactionId) throw new Error(`invalid logical transaction id: ${item.id}`);
     if (typeof item.operationGroupId !== 'string' || !item.operationGroupId) throw new Error(`invalid operation group id: ${item.id}`);
     if (!TRANSACTION_STATUSES.has(item.status)) throw new Error(`invalid transaction status: ${item.id}`);
@@ -70,7 +149,7 @@ function csvCell(value) {
 
 export function exportTransactionsCsv(state) {
   validateState(clone(state));
-  const columns = ['logicalTransactionId', 'id', 'date', 'kind', 'businessKind', 'status', 'version', 'accountId', 'counterpartyAccountId', 'amountCents', 'budgetPeriodId', 'budgetImpactCents', 'rewardImpactCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source', 'refundOfLogicalTransactionId'];
+  const columns = ['logicalTransactionId', 'id', 'date', 'kind', 'businessKind', 'status', 'version', 'accountId', 'counterpartyAccountId', 'amountCents', 'budgetPeriodId', 'budgetImpactCents', 'categoryLevel1', 'categoryLevel2', 'note', 'source', 'refundOfLogicalTransactionId'];
   const rows = [columns.join(',')];
   const grouped = new Map();
   for (const transaction of state.transactions) {
@@ -90,7 +169,6 @@ export function exportTransactionsCsv(state) {
     if (representative.businessKind === 'loan_repayment') representative.kind = 'loan_repayment';
     representative.amountCents = ordered.reduce((sum, item) => sum + item.amountCents, 0);
     representative.budgetImpactCents = ordered.reduce((sum, item) => sum + item.budgetImpactCents, 0);
-    representative.rewardImpactCents = ordered.reduce((sum, item) => sum + item.rewardImpactCents, 0);
     exported.push(representative);
   }
   exported.sort((left, right) => right.date.localeCompare(left.date) || right.id.localeCompare(left.id));
