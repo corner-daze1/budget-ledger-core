@@ -2,13 +2,14 @@
 
 更新时间：2026-08-12
 
-## 阶段二十一当前阻塞（2026-08-12）
+## 阶段二十一阻塞（已解除，2026-08-12）
 
-- 全量 `npm test` 实测：500 tests、497 pass、3 fail、0 cancelled、0 skipped、0 todo；失败均在只读 `tests/transaction-corrections.test.js` 的第 473、484、658 行。
-- 三个 fixture 都由 `freshLedger()` 生成 `p0.status='closed'` 且 `p0.settlement` 缺失，随后调用 `serializeBackup`/`restoreBackup`；本轮 v3 硬规则要求关闭周期必须有完整 settlement，因此正确结果是拒绝，而只读测试要求成功。
-- 该测试文件不在本轮白名单；放宽恢复校验或静默补造结算都会违反任务书的数据不可误恢复要求。本轮不改该文件，保留其余修复与证据继续验收。
-
-阶段二十一存在上述一项新增阻塞；阶段二十的“无新增待裁决项”是历史记录，不覆盖本轮结论。
+- 修复前全量 `npm test` 实测：500 tests、497 pass、3 fail、0 cancelled、0 skipped、0 todo；失败均在只读 `tests/transaction-corrections.test.js` 的第 473、484、658 行。
+- 根因是三个 `freshLedger()` 夹具生成了缺少 settlement 的关闭 p0；严格 v3 校验拒绝该非法状态是正确行为。
+- 本轮仅修正测试夹具的合法 v3 settlement 与生命周期，未放宽、绕过或修改生产校验；此前 497/500 明确保留为修复前事实。
+- 修复后实测：`tests/transaction-corrections.test.js` 为 46/46，`npm test` 为 500/500，失败/取消/跳过/todo 均为 0。
+- `npm run check` 通过 499 条声明，`npm run check:mini` 与 `git diff --check` 均退出 0；阶段二十一该阻塞已解除。
+- 本轮无新增阻塞。
 
 ## 阶段二十当前限制（2026-08-12）
 

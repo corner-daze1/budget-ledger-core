@@ -2,6 +2,15 @@
 
 更新时间：2026-08-12
 
+## 阶段二十二 schema v3 测试夹具收口（2026-08-12）
+
+- 目标：只修正 `tests/transaction-corrections.test.js` 的非法关闭周期夹具，使严格 v3 校验通过全量门禁。
+- 基线：HEAD `dbaee87`，仅 `BLOCKED.md` 有已知改动；修复前定向夹具套件 46 项、43 通过、3 失败，全量为 500/497/3。
+- 修改点：为 `freshLedger()` 的 p0 写入结余 100000 分的 discard settlement；`closedExpense()` 重开时清空旧记录，重关时写入 90000 分 settlement。
+- 结果：修复后定向 46/46、全量 `npm test` 500/500，失败/取消/跳过/todo 均为 0。
+- 门禁：`npm run check` 通过 499 条声明，`npm run check:mini` 与 `git diff --check` 均退出 0；生产实现未修改。
+- 最大风险：夹具 settlement 与预算计算、周期日期或下一周期引用不一致，导致测试掩盖真实 v3 校验问题。
+
 ## 阶段二十一 schema v3 验收缺陷（2026-08-12）
 
 - 目标：删除旧结算兼容，补严 v3 settlement 恢复校验，完整展示已结算周期历史。

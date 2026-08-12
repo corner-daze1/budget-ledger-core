@@ -52,7 +52,21 @@ function freshLedger(overrides = {}) {
       { id: 'fund', name: '投资', type: 'investment', balanceCents: 50000, costBasisCents: 50000 },
     ],
     budgetPeriods: [
-      { id: 'p0', startDate: '2026-07-01', endDate: '2026-07-31', baseBudgetCents: 100000, status: 'closed' },
+      {
+        id: 'p0',
+        startDate: '2026-07-01',
+        endDate: '2026-07-31',
+        baseBudgetCents: 100000,
+        status: 'closed',
+        settlement: {
+          settledAt: '2026-08-01',
+          result: 'surplus',
+          resultCents: 100000,
+          decision: 'discard',
+          carryCents: 0,
+          nextPeriodId: 'p1',
+        },
+      },
       { id: 'p1', startDate: '2026-08-01', endDate: '2026-08-31', baseBudgetCents: 100000, status: 'open' },
     ],
     ...overrides,
@@ -75,7 +89,9 @@ function openExpense(state = freshLedger(), details = {}) {
 
 function closedExpense(details = {}) {
   const opened = freshLedger();
-  opened.budgetPeriods.find((item) => item.id === 'p0').status = 'open';
+  const period = opened.budgetPeriods.find((item) => item.id === 'p0');
+  period.status = 'open';
+  period.settlement = null;
   const spent = recordExpense(opened, {
     id: 'closed-expense',
     date: '2026-07-20',
@@ -85,7 +101,14 @@ function closedExpense(details = {}) {
     categoryLevel1: '餐饮',
     ...details,
   });
-  return closeBudgetPeriod(spent, 'p0');
+  return closeBudgetPeriod(spent, 'p0', {
+    settledAt: '2026-08-01',
+    result: 'surplus',
+    resultCents: 90000,
+    decision: 'discard',
+    carryCents: 0,
+    nextPeriodId: 'p1',
+  });
 }
 
 test('schema v3 ledger uses negative credit-card balances for debt', () => {
