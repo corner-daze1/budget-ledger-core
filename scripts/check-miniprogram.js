@@ -29,6 +29,8 @@ const failures = [];
 for (const relative of required) if (!fs.existsSync(path.join(root, relative))) failures.push(`missing required file: ${relative}`);
 const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8');
 if (!/project\.private\.config\.json/.test(gitignore)) failures.push('project.private.config.json must be ignored');
+const projectConfig = JSON.parse(fs.readFileSync(path.join(root, 'project.config.json'), 'utf8'));
+if (/\bwx[a-zA-Z0-9]{16}\b/.test(projectConfig.appid ?? '')) failures.push('public project.config.json must not contain a WeChat AppID; use project.private.config.json');
 
 for (const [relative, expected] of generatedOutputs()) {
   const actualPath = path.join(root, relative);
