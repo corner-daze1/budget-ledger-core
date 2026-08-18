@@ -30,7 +30,7 @@
 - 根因已修复：`undefined`、`null`、`''` 统一视为缺键；空白字符串及其他无效值不视为缺键。
 - 领域层已覆盖账本清除失败的精确回滚；页面编排为先清账本、成功后清内存状态和页面初始化标志、再清理生成文件，文件失败不恢复账本。
 - 隔离 Stable 实测已通过：主键和临时键读回 `''`，哨兵 `phase7-isolated-sentinel=keep-this-sentinel` 保持不变，用度 JSON/CSV 不存在，无关文件保留，页面未初始化。
-- 证据文件：`artifacts/phase7/local-clear-stable.txt`；真实账本和测试 AppID `wx9567fb4ff6336d0b` 未触碰。
+- 证据文件：`artifacts/phase7/local-clear-stable.txt`；真实账本和测试 AppID `[REDACTED_TEST_APP_ID]` 未触碰。
 
 ## 任务0基线核对（2026-08-11）
 
@@ -45,7 +45,7 @@
 
 ## 发布前待完成
 
-- 当前没有正式小程序主体和生产 AppID；`wx9567fb4ff6336d0b` 只是测试 ID。
+- 当前没有正式小程序主体和生产 AppID；`[REDACTED_TEST_APP_ID]` 只是测试 ID。
 - 正式发布前需在用户明确授权的环境中完成 schema v3 JSON 导出/恢复、关闭重开、真机冒烟和产品视觉确认。
 - 隔离自动取证不能替代真实账本的数据安全验证；2026-08-09 的 21–23 号证据使用 schema v1，只能作为历史记录。
 
