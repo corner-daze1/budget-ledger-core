@@ -22,6 +22,8 @@ import {
 } from '../scripts/visual-evidence.mjs';
 import * as visualEvidence from '../scripts/visual-evidence.mjs';
 
+const WECHAT_APP_ID_PATTERN = /\bwx[a-zA-Z0-9]{16}\b/;
+
 async function pathExists(filePath) {
   try {
     await fs.access(filePath);
@@ -78,13 +80,13 @@ test('visual evidence CLI arguments use the isolated project and never pass an a
   const args = buildCliArguments({ projectPath, port: 45_321 });
   assert.deepEqual(args, ['auto', '--project', projectPath, '--auto-port', '45321', '--trust-project']);
   assert.equal(args.includes('--auto-account'), false);
-  assert.equal(args.some((value) => value.includes('wx9567fb4ff6336d0b')), false);
+  assert.equal(args.some((value) => WECHAT_APP_ID_PATTERN.test(value)), false);
   const command = buildCliCommand('C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat', args);
   assert.match(command, /--project/);
   assert.match(command, /--auto-port/);
   assert.match(command, /--trust-project/);
   assert.doesNotMatch(command, /--auto-account/);
-  assert.doesNotMatch(command, /wx9567fb4ff6336d0b/);
+  assert.doesNotMatch(command, WECHAT_APP_ID_PATTERN);
 });
 
 test('visual evidence CLI argument builder rejects a non-absolute project path or invalid port', () => {
@@ -830,7 +832,8 @@ test('strict single-instance entry fixes the C-drive CLI and bundled Node for a 
   assert.equal(config.projectPath, projectPath);
   assert.equal(config.appid, 'touristappid');
   assert.deepEqual(config.cliArguments, ['auto', '--project', projectPath, '--auto-port', '61001', '--trust-project']);
-  assert.doesNotMatch(JSON.stringify(config), /--auto-account|wx9567fb4ff6336d0b/);
+  assert.doesNotMatch(JSON.stringify(config), /--auto-account/);
+  assert.doesNotMatch(JSON.stringify(config), WECHAT_APP_ID_PATTERN);
 });
 
 test('strict single-instance outputs use distinct session paths and never overwrite the old diagnostic result or log', () => {
