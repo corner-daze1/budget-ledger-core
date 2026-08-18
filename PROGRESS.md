@@ -121,13 +121,13 @@
 
 ## 阶段十八 Stable 隔离验收准备（2026-08-11）
 
-- 已重建隔离副本：`.visual-qa`，AppID 为 `touristappid`；未读取或写入测试 AppID `wx9567fb4ff6336d0b`。
+- 已重建隔离副本：`.visual-qa`，AppID 为 `touristappid`；未读取或写入测试 AppID `[REDACTED_TEST_APP_ID]`。
 - 清除前已准备：主键、恢复临时键、哨兵键 `phase7-isolated-sentinel=keep-this-sentinel`，以及 `yongdu-backup-20260811-213700.json`、`yongdu-transactions-20260811-213700.csv` 和无关文件。
 - 已从真实设置页进入“数据与隐私”，输入“清除”并打开最终确认弹窗；本节只记录准备过程，最终结果见下一节。
 
 ## 阶段十八 Stable 隔离验收完成（2026-08-11）
 
-- 真实设置页确认动作已在 `.visual-qa` / `touristappid` 隔离 fixture 执行；未触碰测试 AppID `wx9567fb4ff6336d0b` 或真实账本。
+- 真实设置页确认动作已在 `.visual-qa` / `touristappid` 隔离 fixture 执行；未触碰测试 AppID `[REDACTED_TEST_APP_ID]` 或真实账本。
 - 清除后主键、恢复临时键均读回 `''`；`phase7-isolated-sentinel` 仍为 `keep-this-sentinel`；生成 JSON/CSV 不存在，无关文件仍存在。
 - 页面路径为 `pages/settings/settings`，`initialized=false`，`globalData.state=null`，运行摘要和存储错误均为空。
 - 原始结果（不含账本内容）：`artifacts/phase7/local-clear-stable.txt`。
@@ -160,7 +160,7 @@
 
 ## 发布边界
 
-- 当前只有测试 AppID `wx9567fb4ff6336d0b`，没有正式小程序主体和生产 AppID。
+- 当前只有测试 AppID `[REDACTED_TEST_APP_ID]`，没有正式小程序主体和生产 AppID。
 - 正式发布前仍需在明确授权的环境中完成当前 schema v3 JSON 导出/恢复、关闭重开、真机冒烟和产品视觉确认；隔离 fixture 与历史 schema 证据不能替代发布验收。
 
 ## 阶段十七视觉证据文档收口（2026-08-11）
